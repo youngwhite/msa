@@ -29,6 +29,8 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     mfn_mosi
     mult_mosi
     text_bert_mosi
+    misa_mosi
+    self_mm_mosi
     tfn_mosi_ablation_masked
     lmf_mosi_ablation_masked
     mfn_mosi_ablation_realseq
@@ -78,6 +80,14 @@ args_for() {
     # head at 10x, bs 16); it converges in a few epochs.
     text_bert_mosi)
         echo "--model text_bert --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 2e-5 --weight-decay 0.01 --batch-size 16 --grad-clip 1.0 --patience 3 --epochs 12" ;;
+    # MISA: MMSA hyper-parameters (lr 1e-4, bs 16, hidden 128, clip 0.8 by value,
+    # weights diff 0.1 / sim 0.3 / recon 1.0). Fine-tunes BERT.
+    misa_mosi)
+        echo "--model misa --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-4 --weight-decay 0 --batch-size 16 --grad-clip 0.8 --clip-mode value --epochs 30 --patience 8" ;;
+    # Self-MM: MMSA's four learning rates expressed relative to --lr (its
+    # "other" rate, 1e-3): BERT at 0.05x, audio/vision at 5x.
+    self_mm_mosi)
+        echo "--model self_mm --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 0.001 --batch-size 16 --grad-clip 0 --epochs 30 --patience 8" ;;
     # Ablations: our masked/length-aware defaults instead of MMSA's padding
     # behaviour. Kept apart from the acceptance runs so reproduction fidelity and
     # our own changes are never confounded.

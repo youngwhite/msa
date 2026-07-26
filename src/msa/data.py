@@ -116,6 +116,9 @@ class MMSADataset(Dataset):
 
     def __getitem__(self, idx: int) -> dict[str, torch.Tensor]:
         return {
+            # Self-MM keeps per-sample pseudo-labels across epochs and needs to
+            # address them; every other model ignores this.
+            "index": torch.tensor(idx, dtype=torch.long),
             "text": self.text[idx],
             "audio": self.audio[idx],
             "vision": self.vision[idx],

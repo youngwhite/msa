@@ -24,6 +24,9 @@ class MSAModel(nn.Module):
       models with auxiliary objectives rather than special-casing the trainer.
     * `param_groups` lets a model ask for per-module learning rates (a fine-tuned
       text encoder usually wants a smaller one) without the trainer knowing why.
+    * `on_train_epoch_start` / `on_train_batch_end` exist for models that carry
+      state between batches. Self-MM is the only one so far: it rewrites its own
+      unimodal training targets as it goes.
     """
 
     #: Filled in by @register_model.
@@ -49,3 +52,13 @@ class MSAModel(nn.Module):
 
     def param_groups(self, lr: float, weight_decay: float) -> list[dict]:
         return [{"params": list(self.parameters()), "lr": lr, "weight_decay": weight_decay}]
+
+    def on_train_batch_end(
+        self, outputs: dict[str, torch.Tensor], batch: dict[str, torch.Tensor], epoch: int
+    ) -> None:
+        """Called after each optimiser step, for models that carry state across
+        batches. Self-MM regenerates its unimodal pseudo-labels here. No-op by
+        default, so the loop stays identical for every other model."""
+
+    def on_train_epoch_start(self, epoch: int) -> None:
+        """Called before each training epoch."""

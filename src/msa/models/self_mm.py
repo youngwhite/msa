@@ -1,0 +1,220 @@
+"""Self-MM — Self-Supervised Multi-Task Learning (Yu et al., AAAI 2021).
+
+MOSI labels the utterance, not the modalities. So a model with a per-modality
+branch has nothing to train those branches on, and they end up supervised only
+through the fusion head. Self-MM manufactures the missing supervision: it keeps a
+running pseudo-label per modality per sample, and adjusts it from how far that
+modality's representation sits from the positive and negative class centres
+relative to how far the fused representation sits.
+
+The pseudo-labels move while training runs, which is why this model needs the
+`on_train_batch_end` hook. It is the only model in the storyline that carries
+state between batches; everything else in the shared training loop is untouched.
+
+Ported from MMSA (`models/multiTask/SELF_MM.py` and its trainer, MIT, THUIAR).
+The label update follows the trainer's `update_labels`, including its details:
+the momentum term `(n-1)/(n+1)` with `n` the epoch number, clamping to +/-H, and
+updates starting only from the second epoch (the first supplies the centres).
+"""
+
+from __future__ import annotations
+
+import torch
+import torch.nn as nn
+
+from ..config import DatasetSpec
+from ..registry import register_model
+from .base import MSAModel
+from .bert import BertTextEncoder
+from .functional import last_valid_state
+
+MODES = ("fusion", "text", "audio", "vision")
+
+
+class _AudioVisualSubNet(nn.Module):
+    """LSTM over a modality, read at its last real step, then projected."""
+
+    def __init__(self, in_size: int, hidden: int, out_size: int, dropout: float) -> None:
+        super().__init__()
+        self.rnn = nn.LSTM(in_size, hidden, num_layers=1, batch_first=True)
+        self.dropout = nn.Dropout(dropout)
+        self.linear = nn.Linear(hidden, out_size)
+
+    def forward(self, x: torch.Tensor, lengths: torch.Tensor) -> torch.Tensor:
+        outputs, _ = self.rnn(x)
+        return self.linear(self.dropout(last_valid_state(outputs, lengths)))
+
+
+def _head(in_dim: int, hidden: int, dropout: float) -> nn.Sequential:
+    return nn.Sequential(
+        nn.Dropout(dropout), nn.Linear(in_dim, hidden), nn.ReLU(),
+        nn.Linear(hidden, hidden), nn.ReLU(), nn.Linear(hidden, 1),
+    )
+
+
+@register_model("self_mm")
+class SelfMM(MSAModel):
+    @classmethod
+    def build(cls, spec: DatasetSpec, **kwargs) -> MSAModel:
+        # Needs the training-set size up front: the pseudo-labels are per sample.
+        kwargs.setdefault("train_size", spec.split_sizes["train"])
+        return cls(
+            text_dim=spec.text_dim, audio_dim=spec.audio_dim,
+            vision_dim=spec.vision_dim, **kwargs,
+        )
+
+    def __init__(
+        self,
+        text_dim: int,
+        audio_dim: int,
+        vision_dim: int,
+        train_size: int,
+        audio_hidden: int = 16,
+        vision_hidden: int = 32,
+        audio_out: int = 16,
+        vision_out: int = 32,
+        audio_dropout: float = 0.0,
+        vision_dropout: float = 0.0,
+        text_dropout: float = 0.1,
+        fusion_dim: int = 128,
+        post_text_dim: int = 32,
+        post_audio_dim: int = 16,
+        post_vision_dim: int = 32,
+        fusion_dropout: float = 0.0,
+        post_text_dropout: float = 0.1,
+        post_audio_dropout: float = 0.1,
+        post_vision_dropout: float = 0.0,
+        label_bound: float = 3.0,
+        exclude_zero: bool = True,
+        pretrained: str = "bert-base-uncased",
+        finetune: bool = True,
+    ) -> None:
+        super().__init__()
+        self.label_bound = label_bound
+        self.exclude_zero = exclude_zero
+
+        self.encoder = BertTextEncoder(pretrained, finetune)
+        text_out = self.encoder.hidden_size
+        self.audio_model = _AudioVisualSubNet(audio_dim, audio_hidden, audio_out, audio_dropout)
+        self.vision_model = _AudioVisualSubNet(
+            vision_dim, vision_hidden, vision_out, vision_dropout
+        )
+
+        self.fusion_head = _head(text_out + audio_out + vision_out, fusion_dim, fusion_dropout)
+        self.text_head = _head(text_out, post_text_dim, post_text_dropout)
+        self.audio_head = _head(audio_out, post_audio_dim, post_audio_dropout)
+        self.vision_head = _head(vision_out, post_vision_dim, post_vision_dropout)
+        self.text_dropout = nn.Dropout(text_dropout)
+
+        widths = {
+            "fusion": text_out + audio_out + vision_out,
+            "text": text_out, "audio": audio_out, "vision": vision_out,
+        }
+        # Per-sample pseudo-labels and the representation each was derived from.
+        # Buffers, so they move with the model and land in the checkpoint.
+        for mode in MODES:
+            self.register_buffer(f"label_{mode}", torch.zeros(train_size))
+            self.register_buffer(f"feature_{mode}", torch.zeros(train_size, widths[mode]))
+            self.register_buffer(f"center_pos_{mode}", torch.zeros(widths[mode]))
+            self.register_buffer(f"center_neg_{mode}", torch.zeros(widths[mode]))
+        # Per sample, not global: a sample's pseudo-labels start at the true
+        # label the first time it is seen. A single global flag would leave every
+        # sample after the first batch initialised to zero.
+        self.register_buffer("label_seen", torch.zeros(train_size, dtype=torch.bool))
+
+    def param_groups(self, lr: float, weight_decay: float) -> list[dict]:
+        """Four rates, as MMSA uses: BERT 5e-5, audio/vision 5e-3, the rest 1e-3.
+
+        Expressed relative to `lr` (the "other" rate) so one CLI flag scales all
+        of them together.
+        """
+        encoder = list(self.encoder.parameters())
+        av = list(self.audio_model.parameters()) + list(self.vision_model.parameters())
+        seen = {id(p) for p in encoder + av}
+        rest = [p for p in self.parameters() if id(p) not in seen]
+        return [
+            {"params": encoder, "lr": lr * 0.05, "weight_decay": weight_decay},
+            {"params": av, "lr": lr * 5.0, "weight_decay": weight_decay},
+            {"params": rest, "lr": lr, "weight_decay": weight_decay},
+        ]
+
+    def forward(self, batch: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
+        text = self.encoder(batch["text_bert"])[:, 0]        # [CLS]
+        audio = self.audio_model(batch["audio"], batch["audio_length"])
+        vision = self.vision_model(batch["vision"], batch["vision_length"])
+        fusion = torch.cat([self.text_dropout(text), audio, vision], dim=1)
+        return {
+            "M": self.fusion_head(fusion).view(-1),
+            "T": self.text_head(text).view(-1),
+            "A": self.audio_head(audio).view(-1),
+            "V": self.vision_head(vision).view(-1),
+            "feature_fusion": fusion,
+            "feature_text": text,
+            "feature_audio": audio,
+            "feature_vision": vision,
+        }
+
+    def compute_loss(
+        self, outputs: dict[str, torch.Tensor], batch: dict[str, torch.Tensor]
+    ) -> torch.Tensor:
+        index, label = batch["index"], batch["label"]
+        fresh = ~self.label_seen[index]
+        if fresh.any():
+            for mode in MODES:
+                getattr(self, f"label_{mode}")[index[fresh]] = label[fresh]
+        # A unimodal branch is trusted in proportion to how far its pseudo-label
+        # has drifted from the fused one — samples where the modality says
+        # something different are the ones worth learning from.
+        loss = torch.abs(outputs["M"] - self.label_fusion[index]).mean()
+        for key, mode in (("T", "text"), ("A", "audio"), ("V", "vision")):
+            target = getattr(self, f"label_{mode}")[index]
+            weight = torch.tanh(torch.abs(target - self.label_fusion[index]))
+            loss = loss + (weight * torch.abs(outputs[key] - target)).mean()
+        return loss
+
+    @torch.no_grad()
+    def on_train_batch_end(
+        self, outputs: dict[str, torch.Tensor], batch: dict[str, torch.Tensor], epoch: int
+    ) -> None:
+        index = batch["index"]
+        if epoch > 1 and bool(self.label_seen.all()):
+            self._update_labels(outputs, index, epoch)
+        for mode in MODES:
+            getattr(self, f"feature_{mode}")[index] = outputs[f"feature_{mode}"].detach()
+        self._update_centers()
+        self.label_seen[index] = True
+
+    def _update_centers(self) -> None:
+        for mode in MODES:
+            labels = getattr(self, f"label_{mode}")
+            features = getattr(self, f"feature_{mode}")
+            positive = labels > 0 if self.exclude_zero else labels >= 0
+            negative = labels < 0
+            if positive.any():
+                getattr(self, f"center_pos_{mode}").copy_(features[positive].mean(0))
+            if negative.any():
+                getattr(self, f"center_neg_{mode}").copy_(features[negative].mean(0))
+
+    def _relative_distance(self, features: torch.Tensor, mode: str) -> torch.Tensor:
+        """(distance to the negative centre - to the positive one), scaled.
+
+        Large and positive when the sample looks clearly positive.
+        """
+        to_pos = torch.norm(features - getattr(self, f"center_pos_{mode}"), dim=-1)
+        to_neg = torch.norm(features - getattr(self, f"center_neg_{mode}"), dim=-1)
+        return (to_neg - to_pos) / (to_pos + 1e-8)
+
+    def _update_labels(
+        self, outputs: dict[str, torch.Tensor], index: torch.Tensor, epoch: int
+    ) -> None:
+        fused = self.label_fusion[index]
+        delta_fusion = self._relative_distance(outputs["feature_fusion"].detach(), "fusion")
+        for mode in ("text", "audio", "vision"):
+            delta = self._relative_distance(outputs[f"feature_{mode}"].detach(), mode)
+            alpha = delta / (delta_fusion + 1e-8)
+            proposed = 0.5 * alpha * fused + 0.5 * (fused + delta - delta_fusion)
+            proposed = torch.clamp(proposed, -self.label_bound, self.label_bound)
+            # Momentum: later epochs move the label less.
+            buffer = getattr(self, f"label_{mode}")
+            buffer[index] = ((epoch - 1) / (epoch + 1) * buffer[index]
+                             + 2 / (epoch + 1) * proposed)

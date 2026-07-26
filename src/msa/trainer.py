@@ -161,14 +161,16 @@ class Trainer:
         preds, trues = np.concatenate(preds), np.concatenate(trues)
         return eval_sentiment(preds, trues), preds
 
-    def train_one_epoch(self) -> float:
+    def train_one_epoch(self, epoch: int = 1) -> float:
         """One pass over the training split; returns the sample-weighted mean loss."""
         self.model.train()
+        self.model.on_train_epoch_start(epoch)
         total, seen = 0.0, 0
         for batch in self.loaders["train"]:
             batch = self._to_device(batch)
             self.optimizer.zero_grad(set_to_none=True)
-            loss = self.model.compute_loss(self.model(batch), batch)
+            outputs = self.model(batch)
+            loss = self.model.compute_loss(outputs, batch)
             loss.backward()
             if self.cfg.grad_clip:
                 if self.cfg.clip_mode == "value":
@@ -176,6 +178,7 @@ class Trainer:
                 else:
                     nn.utils.clip_grad_norm_(self.model.parameters(), self.cfg.grad_clip)
             self.optimizer.step()
+            self.model.on_train_batch_end(outputs, batch, epoch)
             n = batch["label"].numel()
             # Weight by batch size: the last batch is usually partial, and a plain
             # mean over batches would over-weight it (MMSA reports that variant).
@@ -194,7 +197,7 @@ class Trainer:
         start = perf_counter()
 
         for epoch in range(1, cfg.epochs + 1):
-            train_loss = self.train_one_epoch()
+            train_loss = self.train_one_epoch(epoch)
             valid_metrics, _ = self.evaluate("valid")
             score = valid_metrics[cfg.select_on]
             history.append(
