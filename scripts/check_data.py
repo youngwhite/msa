@@ -7,6 +7,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import sys
 from collections import Counter
 
 import numpy as np
@@ -37,6 +38,9 @@ def report_raw_pickle(path) -> None:
         print(f"  {split:5s}: {keys}")
 
 
+PROBLEMS: list[str] = []
+
+
 def report_split(ds: MMSADataset) -> None:
     y = ds.labels.numpy()
     counts = Counter(ds.annotations)
@@ -56,8 +60,10 @@ def report_split(ds: MMSADataset) -> None:
           f"mean={y.mean():.3f} std={y.std():.3f}")
     print(f"  annotations  {dict(counts)}")
     for name, t in (("text", ds.text), ("audio", ds.audio), ("vision", ds.vision)):
-        finite = torch.isfinite(t).all().item()
+        finite = bool(torch.isfinite(t).all())
         print(f"  {name:6s}       finite={finite} mean={t.mean():.4f} std={t.std():.4f}")
+        if not finite:
+            PROBLEMS.append(f"{ds.split}/{name}: non-finite values survived _clean()")
 
 
 def cross_check_labels(spec, datasets: dict[str, MMSADataset]) -> None:
@@ -77,8 +83,21 @@ def cross_check_labels(spec, datasets: dict[str, MMSADataset]) -> None:
         worst = max(diffs) if diffs else float("nan")
         print(f"  {split:5s}: ids missing from csv={len(missing)}  "
               f"max |label diff|={worst:.6f}")
-    overlap = set(datasets["train"].ids) & set(datasets["test"].ids)
-    print(f"  train/test id overlap: {len(overlap)}")
+        if missing:
+            PROBLEMS.append(f"{split}: {len(missing)} sample ids are absent from label.csv")
+        if diffs and worst > 1e-6:
+            PROBLEMS.append(
+                f"{split}: a feature-file label differs from label.csv by {worst:.6f}"
+            )
+
+    # The one failure that invalidates every number downstream.
+    for a, b in (("train", "test"), ("train", "valid"), ("valid", "test")):
+        overlap = set(datasets[a].ids) & set(datasets[b].ids)
+        print(f"  {a}/{b} id overlap: {len(overlap)}")
+        if overlap:
+            PROBLEMS.append(
+                f"{a} and {b} share {len(overlap)} sample id(s) — the split leaks"
+            )
 
 
 def main() -> None:
@@ -113,7 +132,13 @@ def main() -> None:
     print(f"  raw text    {datasets['train'].raw_text[0][:80]!r}")
     print(f"  label       {batch['label'][0].item():.2f} "
           f"(7-way class {batch['label_7'][0].item()})")
-    print("\nOK")
+
+    if PROBLEMS:
+        print(f"\n{len(PROBLEMS)} PROBLEM(S):")
+        for problem in PROBLEMS:
+            print(f"  - {problem}")
+        sys.exit(1)
+    print("\nOK: splits are disjoint and every label agrees with label.csv")
 
 
 if __name__ == "__main__":
