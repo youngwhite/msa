@@ -1,0 +1,3 @@
+如果真的不喜欢 tmux
+touch ~/.no_auto_tmux
+然后断开连接，再重新连接。
