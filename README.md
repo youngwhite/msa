@@ -33,7 +33,10 @@ label.csv                    2199 条 video_id/clip_id/text/label/mode
 ## 用法
 
 ```bash
-# 数据体检：结构、划分、标签分布、NaN、与 label.csv 交叉核对
+# 一条命令跑完所有闸门（lint + 数据 + 不变量 + 已存结果 + 复现性）
+bash scripts/check_all.sh          # 加 --fast 跳过两项 GPU 训练检查
+
+# 数据体检：结构、划分、标签分布、NaN、与 label.csv 交叉核对、split 泄漏
 python scripts/check_data.py --dataset mosi [--unaligned]
 
 # 训练：结果写到 outputs/<model>_<dataset>_<device>/seed<N>/，另有 summary.json
@@ -107,7 +110,8 @@ src/msa/models/base.py    MSAModel 契约：forward(batch)->{"M":...} / compute_
 src/msa/models/functional.py 序列池化（按长度取末状态 / 掩码均值）
 src/msa/models/lf_lstm.py 后期融合 LSTM 基线（按真实长度取末状态）
 src/msa/models/tfn.py     Tensor Fusion Network（移植自 MMSA，MIT）
-scripts/check_data.py     数据体检
+scripts/check_all.sh      一条命令跑完所有闸门
+scripts/check_data.py     数据体检 + 泄漏检查
 scripts/check_invariants.py 不变量回归检查
 scripts/check_repro.py    复现性自检
 scripts/verify_runs.py    审计已落盘结果（从预测重算指标）

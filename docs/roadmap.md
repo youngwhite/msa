@@ -79,10 +79,33 @@
 
 ## 工程基础设施
 
-已完成：设备无关（CUDA/MPS/CPU）、逐比特复现、不变量回归检查、运行落盘 provenance。
+已完成：
 
-已完成：单一 trainer + 模型注册表、多 seed 汇总（样本标准差 ddof=1）、`scripts/verify_runs.py` 结果审计。
-
-第 1 阶段进度：TFN 已移植并复现（见 `docs/experiments.md`）。
+- 设备无关（CUDA / Apple Silicon MPS / CPU），同设备同 seed 逐比特可复现
+- 单一 trainer + 模型注册表；加模型不改训练循环
+- 多 seed 汇总（样本标准差 ddof=1）
+- 四道闸门：`check_data` / `check_invariants` / `check_repro` / `verify_runs`，`bash scripts/check_all.sh` 一次跑完
+- 运行落盘 provenance（超参、环境、git commit 与 dirty 标记、预测哈希）；结果产物入库，clone 后可重新审计
 
 后续：配对 bootstrap 显著性检验、跨模型结果汇总表生成。
+
+## 当前进度与下一步
+
+**本节是会话之间的交接点，每完成一件事就更新它。**
+
+第 1 阶段（复现）进度：
+
+| 模型 | 状态 | 备注 |
+|---|---|---|
+| LF-LSTM（自建基线） | 完成 | 非复现目标，用于验证链路 |
+| TFN | **完成** | MAE 与 Acc-7 精确复现，Acc-2/Corr 偏低约 1.1σ；详见 experiments |
+| MulT | 未开始 | **下一个**。跨模态注意力，需先移植 transformer encoder 模块，代码量明显大于 TFN |
+| MISA | 未开始 | 表征解耦，含多项辅助损失——会是 `MSAModel.compute_loss` 的第一个真实用例 |
+| Self-MM | 未开始 | 自监督单模态标签，需要 trainer 支持训练中更新标签，可能要扩展契约 |
+| 纯文本微调 BERT（对照组） | 未开始 | 需要 transformers 依赖与 `param_groups` 分层学习率 |
+
+阻塞项与待决：
+
+- **MOSEI 尚未下载**。路线图定的是主数据集用 MOSEI（MOSI 测试集仅 686 条，判别力不足），第 1 阶段完成前需要补上。
+- **MPS 未在真机验证**。无 Apple Silicon 硬件，需在 Mac 上先跑 `scripts/check_repro.py`。
+- 配对 bootstrap 检验尚未实现，第 1 阶段验收要用。

@@ -1,0 +1,215 @@
+{
+  "model": "lf_lstm",
+  "dataset": "CMU-MOSI",
+  "seed": 42,
+  "best_epoch": 2,
+  "best_valid_score": 1.4046971492436775,
+  "select_on": "mae",
+  "test": {
+    "mae": 1.4554614551452263,
+    "corr": 0.18470136949202565,
+    "acc7": 0.15451895043731778,
+    "acc5": 0.15451895043731778,
+    "acc2_has0": 0.45481049562682213,
+    "f1_has0": 0.29736195099470153,
+    "acc2_non0": 0.4298780487804878,
+    "f1_non0": 0.27218934468431577
+  },
+  "valid": {
+    "mae": 1.4046971492436775,
+    "corr": 0.08656769684117346,
+    "acc7": 0.2096069868995633,
+    "acc5": 0.2096069868995633,
+    "acc2_has0": 0.5895196506550219,
+    "f1_has0": 0.4584405232253018,
+    "acc2_non0": 0.5694444444444444,
+    "f1_non0": 0.43226821220358685
+  },
+  "test_pred_sha256_16": "3e45dd46940a3119",
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.3211160070056855,
+      "valid_mae": 1.4087409469498298,
+      "valid_corr": 0.08817787702134208,
+      "valid_acc7": 0.21397379912663755,
+      "valid_acc5": 0.21397379912663755,
+      "valid_acc2_has0": 0.5982532751091703,
+      "valid_f1_has0": 0.4478726704369199,
+      "valid_acc2_non0": 0.5740740740740741,
+      "valid_f1_non0": 0.41873638344226577
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.3127733301893574,
+      "valid_mae": 1.4046971492436775,
+      "valid_corr": 0.08656769684117346,
+      "valid_acc7": 0.2096069868995633,
+      "valid_acc5": 0.2096069868995633,
+      "valid_acc2_has0": 0.5895196506550219,
+      "valid_f1_has0": 0.4584405232253018,
+      "valid_acc2_non0": 0.5694444444444444,
+      "valid_f1_non0": 0.43226821220358685
+    },
+    {
+      "epoch": 3,
+      "train_loss": 1.3071796671252385,
+      "valid_mae": 1.406219616109367,
+      "valid_corr": 0.08111537403056794,
+      "valid_acc7": 0.22270742358078602,
+      "valid_acc5": 0.22270742358078602,
+      "valid_acc2_has0": 0.5895196506550219,
+      "valid_f1_has0": 0.5634307077890681,
+      "valid_acc2_non0": 0.5879629629629629,
+      "valid_f1_non0": 0.5581222570841947
+    },
+    {
+      "epoch": 4,
+      "train_loss": 1.308485376686322,
+      "valid_mae": 1.4052666520219963,
+      "valid_corr": 0.08109893007249146,
+      "valid_acc7": 0.2183406113537118,
+      "valid_acc5": 0.2183406113537118,
+      "valid_acc2_has0": 0.5851528384279476,
+      "valid_f1_has0": 0.5747183747094324,
+      "valid_acc2_non0": 0.5833333333333334,
+      "valid_f1_non0": 0.5704656862745098
+    },
+    {
+      "epoch": 5,
+      "train_loss": 1.2970055338006896,
+      "valid_mae": 1.411611586923032,
+      "valid_corr": 0.08484919881770597,
+      "valid_acc7": 0.22270742358078602,
+      "valid_acc5": 0.22270742358078602,
+      "valid_acc2_has0": 0.5720524017467249,
+      "valid_f1_has0": 0.5712515760930418,
+      "valid_acc2_non0": 0.5740740740740741,
+      "valid_f1_non0": 0.571049031986532
+    },
+    {
+      "epoch": 6,
+      "train_loss": 1.2945731083552043,
+      "valid_mae": 1.408019103630401,
+      "valid_corr": 0.09224348439854604,
+      "valid_acc7": 0.22707423580786026,
+      "valid_acc5": 0.22707423580786026,
+      "valid_acc2_has0": 0.5851528384279476,
+      "valid_f1_has0": 0.5847736438043547,
+      "valid_acc2_non0": 0.5879629629629629,
+      "valid_f1_non0": 0.58547074824908
+    },
+    {
+      "epoch": 7,
+      "train_loss": 1.2908984463534252,
+      "valid_mae": 1.4223354471823013,
+      "valid_corr": 0.09051885302705855,
+      "valid_acc7": 0.23580786026200873,
+      "valid_acc5": 0.23580786026200873,
+      "valid_acc2_has0": 0.5807860262008734,
+      "valid_f1_has0": 0.5836508514669951,
+      "valid_acc2_non0": 0.5879629629629629,
+      "valid_f1_non0": 0.5887453971487585
+    },
+    {
+      "epoch": 8,
+      "train_loss": 1.2855213765414704,
+      "valid_mae": 1.437578844223741,
+      "valid_corr": 0.041341194757605476,
+      "valid_acc7": 0.23580786026200873,
+      "valid_acc5": 0.23580786026200873,
+      "valid_acc2_has0": 0.5327510917030568,
+      "valid_f1_has0": 0.5353916720504591,
+      "valid_acc2_non0": 0.5416666666666666,
+      "valid_f1_non0": 0.5425214911998628
+    },
+    {
+      "epoch": 9,
+      "train_loss": 1.2738462270605972,
+      "valid_mae": 1.433523476888389,
+      "valid_corr": 0.05599067286987448,
+      "valid_acc7": 0.23580786026200873,
+      "valid_acc5": 0.23580786026200873,
+      "valid_acc2_has0": 0.5502183406113537,
+      "valid_f1_has0": 0.5545106643771799,
+      "valid_acc2_non0": 0.5555555555555556,
+      "valid_f1_non0": 0.5578615627041776
+    },
+    {
+      "epoch": 10,
+      "train_loss": 1.2780410864642848,
+      "valid_mae": 1.4303106566866672,
+      "valid_corr": 0.06804646120083264,
+      "valid_acc7": 0.2314410480349345,
+      "valid_acc5": 0.2314410480349345,
+      "valid_acc2_has0": 0.5720524017467249,
+      "valid_f1_has0": 0.5762002015451797,
+      "valid_acc2_non0": 0.5787037037037037,
+      "valid_f1_non0": 0.5810174715647353
+    }
+  ],
+  "elapsed_sec": 6.239979788661003,
+  "env": {
+    "python": "3.12.3",
+    "platform": "Linux-6.8.0-90-generic-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "torch": "2.11.0+cu128",
+    "numpy": "2.5.1",
+    "cuda_version": "12.8",
+    "cuda_available": true,
+    "mps_available": false,
+    "cpu_threads": 12,
+    "cudnn_version": 91900,
+    "cudnn_deterministic": true,
+    "cublas_workspace_config": ":4096:8",
+    "deterministic_algorithms": true,
+    "git": {
+      "commit": "8ea438f1324ed60c86c0b6c79cab169d8503a65f",
+      "dirty": false
+    },
+    "device": "cuda",
+    "device_description": "cuda:0 NVIDIA GeForce RTX 5070 Ti (sm_120)"
+  },
+  "config": {
+    "epochs": 40,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "grad_clip": 1.0,
+    "patience": 8,
+    "select_on": "mae",
+    "seed": 42
+  },
+  "cli": {
+    "list_models": false,
+    "model": "lf_lstm",
+    "dataset": "mosi",
+    "unaligned": false,
+    "seeds": [
+      42,
+      43,
+      44
+    ],
+    "epochs": 40,
+    "batch_size": 32,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "grad_clip": 1.0,
+    "patience": 8,
+    "select_on": "mae",
+    "model_arg": [
+      "modalities=a"
+    ],
+    "num_workers": 0,
+    "num_threads": null,
+    "device": "cuda",
+    "deterministic": true,
+    "deterministic_warn_only": false,
+    "run_group": "mod_a",
+    "quiet": true
+  },
+  "model_kwargs": {
+    "modalities": "a"
+  },
+  "aligned": true,
+  "batch_size": 32
+}

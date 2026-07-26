@@ -1,0 +1,148 @@
+{
+  "model": "lf_lstm",
+  "dataset": "CMU-MOSI",
+  "aligned": true,
+  "seeds": [
+    42
+  ],
+  "cli": {
+    "list_models": false,
+    "model": "lf_lstm",
+    "dataset": "mosi",
+    "unaligned": false,
+    "seeds": [
+      42
+    ],
+    "epochs": 40,
+    "batch_size": 32,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "grad_clip": 1.0,
+    "patience": 8,
+    "select_on": "mae",
+    "model_arg": [],
+    "num_workers": 0,
+    "num_threads": 8,
+    "device": "cpu",
+    "deterministic": true,
+    "deterministic_warn_only": false,
+    "run_group": "lf_lstm_mosi_cpu",
+    "quiet": true
+  },
+  "model_kwargs": {},
+  "config": {
+    "epochs": 40,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "grad_clip": 1.0,
+    "patience": 8,
+    "select_on": "mae",
+    "seed": 42
+  },
+  "env": {
+    "python": "3.12.3",
+    "platform": "Linux-6.8.0-90-generic-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "torch": "2.11.0+cu128",
+    "numpy": "2.5.1",
+    "cuda_version": "12.8",
+    "cuda_available": true,
+    "mps_available": false,
+    "cpu_threads": 8,
+    "cudnn_version": 91900,
+    "cudnn_deterministic": true,
+    "cublas_workspace_config": ":4096:8",
+    "deterministic_algorithms": true,
+    "git": {
+      "commit": "8ea438f1324ed60c86c0b6c79cab169d8503a65f",
+      "dirty": false
+    },
+    "device": "cpu",
+    "device_description": "cpu (8 threads)"
+  },
+  "summary": {
+    "mae": {
+      "mean": 0.9799680325471452,
+      "std": 0.0,
+      "min": 0.9799680325471452,
+      "max": 0.9799680325471452,
+      "n": 1,
+      "per_seed": {
+        "42": 0.9799680325471452
+      }
+    },
+    "corr": {
+      "mean": 0.6398358174094863,
+      "std": 0.0,
+      "min": 0.6398358174094863,
+      "max": 0.6398358174094863,
+      "n": 1,
+      "per_seed": {
+        "42": 0.6398358174094863
+      }
+    },
+    "acc7": {
+      "mean": 0.3469387755102041,
+      "std": 0.0,
+      "min": 0.3469387755102041,
+      "max": 0.3469387755102041,
+      "n": 1,
+      "per_seed": {
+        "42": 0.3469387755102041
+      }
+    },
+    "acc5": {
+      "mean": 0.38629737609329445,
+      "std": 0.0,
+      "min": 0.38629737609329445,
+      "max": 0.38629737609329445,
+      "n": 1,
+      "per_seed": {
+        "42": 0.38629737609329445
+      }
+    },
+    "acc2_has0": {
+      "mean": 0.760932944606414,
+      "std": 0.0,
+      "min": 0.760932944606414,
+      "max": 0.760932944606414,
+      "n": 1,
+      "per_seed": {
+        "42": 0.760932944606414
+      }
+    },
+    "f1_has0": {
+      "mean": 0.7610724942769244,
+      "std": 0.0,
+      "min": 0.7610724942769244,
+      "max": 0.7610724942769244,
+      "n": 1,
+      "per_seed": {
+        "42": 0.7610724942769244
+      }
+    },
+    "acc2_non0": {
+      "mean": 0.7713414634146342,
+      "std": 0.0,
+      "min": 0.7713414634146342,
+      "max": 0.7713414634146342,
+      "n": 1,
+      "per_seed": {
+        "42": 0.7713414634146342
+      }
+    },
+    "f1_non0": {
+      "mean": 0.7721582553899627,
+      "std": 0.0,
+      "min": 0.7721582553899627,
+      "max": 0.7721582553899627,
+      "n": 1,
+      "per_seed": {
+        "42": 0.7721582553899627
+      }
+    }
+  },
+  "checksums": {
+    "42": "0201e2133a68f4e9"
+  }
+}

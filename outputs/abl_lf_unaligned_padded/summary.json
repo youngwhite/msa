@@ -1,0 +1,163 @@
+{
+  "model": "lf_lstm",
+  "dataset": "CMU-MOSI",
+  "aligned": false,
+  "seeds": [
+    42,
+    43
+  ],
+  "cli": {
+    "list_models": false,
+    "model": "lf_lstm",
+    "dataset": "mosi",
+    "unaligned": true,
+    "seeds": [
+      42,
+      43
+    ],
+    "epochs": 20,
+    "batch_size": 32,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "grad_clip": 1.0,
+    "patience": 8,
+    "select_on": "mae",
+    "model_arg": [
+      "use_lengths=False"
+    ],
+    "num_workers": 0,
+    "num_threads": null,
+    "device": "cuda",
+    "deterministic": true,
+    "deterministic_warn_only": false,
+    "run_group": "abl_lf_unaligned_padded",
+    "quiet": true
+  },
+  "model_kwargs": {
+    "use_lengths": false
+  },
+  "config": {
+    "epochs": 20,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "grad_clip": 1.0,
+    "patience": 8,
+    "select_on": "mae",
+    "seed": 42
+  },
+  "env": {
+    "python": "3.12.3",
+    "platform": "Linux-6.8.0-90-generic-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "torch": "2.11.0+cu128",
+    "numpy": "2.5.1",
+    "cuda_version": "12.8",
+    "cuda_available": true,
+    "mps_available": false,
+    "cpu_threads": 12,
+    "cudnn_version": 91900,
+    "cudnn_deterministic": true,
+    "cublas_workspace_config": ":4096:8",
+    "deterministic_algorithms": true,
+    "git": {
+      "commit": "8ea438f1324ed60c86c0b6c79cab169d8503a65f",
+      "dirty": false
+    },
+    "device": "cuda",
+    "device_description": "cuda:0 NVIDIA GeForce RTX 5070 Ti (sm_120)"
+  },
+  "summary": {
+    "mae": {
+      "mean": 0.9513542786316604,
+      "std": 0.007285747507230203,
+      "min": 0.946202477163285,
+      "max": 0.9565060801000359,
+      "n": 2,
+      "per_seed": {
+        "42": 0.9565060801000359,
+        "43": 0.946202477163285
+      }
+    },
+    "corr": {
+      "mean": 0.6627616239887048,
+      "std": 0.003291496340295576,
+      "min": 0.660434184606231,
+      "max": 0.6650890633711785,
+      "n": 2,
+      "per_seed": {
+        "42": 0.660434184606231,
+        "43": 0.6650890633711785
+      }
+    },
+    "acc7": {
+      "mean": 0.3389212827988338,
+      "std": 0.027830733370316007,
+      "min": 0.31924198250728864,
+      "max": 0.358600583090379,
+      "n": 2,
+      "per_seed": {
+        "42": 0.31924198250728864,
+        "43": 0.358600583090379
+      }
+    },
+    "acc5": {
+      "mean": 0.38265306122448983,
+      "std": 0.036076876591150386,
+      "min": 0.35714285714285715,
+      "max": 0.40816326530612246,
+      "n": 2,
+      "per_seed": {
+        "42": 0.35714285714285715,
+        "43": 0.40816326530612246
+      }
+    },
+    "acc2_has0": {
+      "mean": 0.7798833819241983,
+      "std": 0.0,
+      "min": 0.7798833819241983,
+      "max": 0.7798833819241983,
+      "n": 2,
+      "per_seed": {
+        "42": 0.7798833819241983,
+        "43": 0.7798833819241983
+      }
+    },
+    "f1_has0": {
+      "mean": 0.7797435618994721,
+      "std": 0.0008202246499537818,
+      "min": 0.7791635754873935,
+      "max": 0.7803235483115508,
+      "n": 2,
+      "per_seed": {
+        "42": 0.7791635754873935,
+        "43": 0.7803235483115508
+      }
+    },
+    "acc2_non0": {
+      "mean": 0.7919207317073171,
+      "std": 0.00107790667863807,
+      "min": 0.7911585365853658,
+      "max": 0.7926829268292683,
+      "n": 2,
+      "per_seed": {
+        "42": 0.7926829268292683,
+        "43": 0.7911585365853658
+      }
+    },
+    "f1_non0": {
+      "mean": 0.7924097387548028,
+      "std": 0.00024098098572151118,
+      "min": 0.792239339465662,
+      "max": 0.7925801380439434,
+      "n": 2,
+      "per_seed": {
+        "42": 0.7925801380439434,
+        "43": 0.792239339465662
+      }
+    }
+  },
+  "checksums": {
+    "42": "e036790d3bc3b775",
+    "43": "56bc5809c4d90ac8"
+  }
+}

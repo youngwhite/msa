@@ -3,6 +3,9 @@ datasets/
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
-outputs/
+# Results are committed (~800KB of json + predictions) so any clone can
+# re-audit the documented numbers; checkpoints are not (584MB, and every
+# run is bit-for-bit reproducible anyway).
+outputs/**/best.pt
 checkpoints/
 *.egg-info/
