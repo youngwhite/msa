@@ -23,6 +23,11 @@ no group at all, so they stay at their initial values for the whole run. On MOSI
 tensors. We train every parameter and give the factors `factor_lr` through
 `param_groups`, which is what the code was evidently trying to express.
 `freeze_mmsa_quirk=True` restores the original behaviour for comparison.
+
+A second discrepancy, also corrected towards MMSA: its config assigns 0.3 to a
+`post_fusion_dropout` slot, but LMF's forward never applies that layer — it is
+declared and forgotten. Applying it costs ~0.04 MAE, so our default is 0.0,
+i.e. MMSA's actual behaviour rather than its stated configuration.
 """
 
 from __future__ import annotations
@@ -51,7 +56,7 @@ class LowRankFusion(MSAModel):
         text_dropout: float = 0.3,
         audio_dropout: float = 0.3,
         vision_dropout: float = 0.3,
-        post_fusion_dropout: float = 0.3,
+        post_fusion_dropout: float = 0.0,
         factor_lr: float | None = None,
         use_lengths: bool = True,
         mask_pooling: bool = True,
@@ -125,6 +130,7 @@ class LowRankFusion(MSAModel):
         fused = (torch.matmul(a, self.audio_factor)
                  * torch.matmul(v, self.vision_factor)
                  * torch.matmul(t, self.text_factor))
+        # No-op at the default 0.0; see the module docstring for why.
         fused = self.post_fusion_dropout(fused)
         # (1, rank) x (batch, rank, 1) -> (batch, 1, 1)
         out = torch.matmul(self.fusion_weights, fused.permute(1, 0, 2)).squeeze(1)
