@@ -13,6 +13,7 @@ import torch.nn as nn
 
 from ..registry import register_model
 from .base import MSAModel
+from .functional import last_valid_state
 
 
 class _ModalityEncoder(nn.Module):
@@ -23,16 +24,12 @@ class _ModalityEncoder(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x: torch.Tensor, lengths: torch.Tensor | None = None) -> torch.Tensor:
-        out, (h, _) = self.lstm(self.norm(x))
-        if lengths is None:
-            return self.dropout(h[-1])
         # Read the state at the last real step. Padding is not harmless: BERT
         # gives [PAD] tokens non-zero embeddings, and even all-zero audio/vision
-        # frames keep driving the recurrence, so h[-1] is a state that has run
-        # ~35 of 50 steps past the end of the utterance.
-        idx = lengths.clamp(min=1, max=out.shape[1]) - 1
-        idx = idx.view(-1, 1, 1).expand(-1, 1, out.shape[-1])
-        return self.dropout(out.gather(1, idx).squeeze(1))
+        # frames keep driving the recurrence, so the final step is a state that
+        # has run ~35 of 50 steps past the end of the utterance.
+        out, _ = self.lstm(self.norm(x))
+        return self.dropout(last_valid_state(out, lengths))
 
 
 @register_model("lf_lstm")

@@ -84,7 +84,9 @@ src/msa/metrics.py        MAE, Corr, Acc-7, Acc-2, F1（has0 与 non0 两套口�
 src/msa/registry.py       模型注册表：名字 -> 类
 src/msa/trainer.py        唯一的训练循环 + 多 seed 汇总
 src/msa/models/base.py    MSAModel 契约：forward(batch)->{"M":...} / compute_loss / param_groups
+src/msa/models/functional.py 序列池化（按长度取末状态 / 掩码均值）
 src/msa/models/lf_lstm.py 后期融合 LSTM 基线（按真实长度取末状态）
+src/msa/models/tfn.py     Tensor Fusion Network（移植自 MMSA，MIT）
 scripts/check_data.py     数据体检
 scripts/check_invariants.py 不变量回归检查
 scripts/check_repro.py    复现性自检
@@ -108,8 +110,20 @@ class MyModel(MSAModel):
 
 在 `src/msa/models/__init__.py` 里 import 一次即完成注册，训练循环无需改动。**这是与 MMSA 的关键差别**：它每加一个模型要复制一份 trainer（14 个文件 2325 行，`TFN.py` 与 `LMF.py` 名字归一后仅差 14 行），评测协议因此会静默漂移。本仓库全部代码 1409 行，对比其 10399 行。
 
-## 当前基线
+## 当前结果
 
-CMU-MOSI aligned，LF-LSTM，CUDA，5 个 seed（42-46）：MAE 0.971 ± 0.035 / Corr 0.646 ± 0.010 / Acc-2(non0) 76.4% ± 1.1% / Acc-7 34.6% ± 2.3%。
+| 模型 | 数据 | seed | MAE ↓ | Acc-2(non0) | Acc-7 |
+|------|------|------|-------|-------------|-------|
+| LF-LSTM | MOSI aligned | 42-46 | 0.971 ± 0.035 | 76.4% ± 1.1% | 34.6% ± 2.3% |
+| TFN | MOSI unaligned | 42-46 | 0.948 ± 0.026 | 77.5% ± 1.3% | 34.9% ± 2.0% |
+| TFN | MOSI unaligned | 1111-1115 | 0.954 ± 0.033 | 78.5% ± 1.8% | 35.6% ± 2.5% |
+| *MMSA 报告的 TFN* | MOSI unaligned | 1111-1115 | *0.947* | *79.1%* | *34.5%* |
+
+TFN 复现命令：
+
+```bash
+python scripts/train.py --model tfn --unaligned --seeds 1111 1112 1113 1114 1115 \
+    --lr 1e-3 --weight-decay 0 --batch-size 32 --patience 8
+```
 
 **单 seed 的 MAE 波动可达 ±0.035，比不少论文声称的模型改进还大——请始终多 seed 汇报。** 详见 `docs/experiments.md`。

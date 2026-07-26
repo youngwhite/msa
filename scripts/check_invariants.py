@@ -19,6 +19,7 @@ from torch.utils.data import DataLoader
 from msa.config import get_dataset_spec
 from msa.data import SPLITS, MMSADataset, load_pickle
 from msa.metrics import eval_sentiment
+from msa.models.functional import masked_mean
 from msa.models.lf_lstm import _ModalityEncoder
 
 FAILURES: list[str] = []
@@ -108,6 +109,28 @@ def check_encoder_masking() -> None:
           f"max diff {(unmasked - out).abs().max():.2e}")
 
 
+def check_pooling() -> None:
+    print("\n== sequence pooling ==")
+    x = torch.zeros(2, 6, 3)
+    x[0, :2] = torch.tensor([[1.0, 2.0, 3.0], [3.0, 4.0, 5.0]])
+    x[1, :6] = 2.0
+    lengths = torch.tensor([2, 6])
+
+    got = masked_mean(x, lengths)
+    want = torch.tensor([[2.0, 3.0, 4.0], [2.0, 2.0, 2.0]])
+    check("masked_mean averages over real frames only", torch.allclose(got, want),
+          f"got {got.tolist()}")
+
+    padded = masked_mean(x, None)
+    ratio = padded[0] / got[0]
+    check("unmasked mean scales a sample by valid_len/padded_width "
+          "(MMSA's __normalize behaviour)",
+          torch.allclose(ratio, torch.full((3,), 2 / 6), atol=1e-6),
+          f"ratio {ratio[0]:.4f}, expected {2/6:.4f}")
+    check("both pooling modes agree when nothing is padded",
+          torch.allclose(masked_mean(x[1:], lengths[1:]), masked_mean(x[1:], None)))
+
+
 def check_metrics() -> None:
     print("\n== metrics ==")
     rng = np.random.default_rng(0)
@@ -182,6 +205,7 @@ def main() -> None:
     check_label_conventions(spec)
     check_padding_conventions(spec)
     check_encoder_masking()
+    check_pooling()
     check_metrics()
     check_loader_order(spec)
     check_pickle_cache(spec)
