@@ -10,7 +10,9 @@ from __future__ import annotations
 import os
 import platform
 import random
+import subprocess
 import sys
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -33,7 +35,11 @@ def set_seed(seed: int, deterministic: bool = True, warn_only: bool = False) -> 
     coverage is thinner than CUDA's), and record it in the run's metadata.
     """
     configure_cublas_workspace()
-    os.environ["PYTHONHASHSEED"] = str(seed)  # inherited by dataloader workers
+    # Only affects interpreters started *after* this point (i.e. spawn-mode
+    # dataloader workers); the current process fixed its hash seed at startup.
+    # Nothing here depends on hash ordering — it is set for the sake of any
+    # subprocess that might.
+    os.environ["PYTHONHASHSEED"] = str(seed)
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)  # also seeds CUDA and MPS generators
@@ -51,6 +57,32 @@ def seed_worker(worker_id: int) -> None:
     worker_seed = torch.initial_seed() % 2**32
     np.random.seed(worker_seed)
     random.seed(worker_seed)
+
+
+def git_revision() -> dict[str, object]:
+    """Which commit produced a number, and whether the tree was dirty at the time.
+
+    A result recorded without this is unauditable: the code it came from cannot
+    be recovered. Returns None values outside a git checkout rather than failing.
+    """
+    repo = Path(__file__).resolve().parents[2]
+    try:
+        head = subprocess.run(
+            ["git", "-C", str(repo), "rev-parse", "HEAD"],
+            capture_output=True, text=True, timeout=10, check=False,
+        )
+        if head.returncode != 0:
+            return {"commit": None, "dirty": None}
+        status = subprocess.run(
+            ["git", "-C", str(repo), "status", "--porcelain"],
+            capture_output=True, text=True, timeout=10, check=False,
+        )
+        return {
+            "commit": head.stdout.strip(),
+            "dirty": bool(status.stdout.strip()) if status.returncode == 0 else None,
+        }
+    except (OSError, subprocess.SubprocessError):
+        return {"commit": None, "dirty": None}
 
 
 def collect_env(device: torch.device | None = None) -> dict[str, object]:
@@ -73,6 +105,7 @@ def collect_env(device: torch.device | None = None) -> dict[str, object]:
         "cudnn_deterministic": torch.backends.cudnn.deterministic,
         "cublas_workspace_config": os.environ.get("CUBLAS_WORKSPACE_CONFIG"),
         "deterministic_algorithms": torch.are_deterministic_algorithms_enabled(),
+        "git": git_revision(),
     }
     if device is not None:
         env["device"] = str(device)

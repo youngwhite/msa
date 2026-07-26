@@ -90,7 +90,13 @@ class MMSADataset(Dataset):
 
         # Number of real BERT tokens; the rest of the 50 steps are [PAD], whose
         # embeddings are *not* zero, so consumers must not read past this.
+        # text_bert rows are (input_ids, attention_mask, token_type_ids).
         self.text_lengths = self.text_bert[:, 1, :].sum(dim=1).clamp(min=1).long()
+
+        # 7-way class index, precomputed once: round to the nearest integer score
+        # in [-3, 3] and shift to 0..6. Unused by the regression baselines, kept
+        # for classification heads.
+        self.labels_7 = (torch.clamp(torch.round(self.labels), -3, 3) + 3).long()
 
         if aligned:
             # Word-aligned: audio/vision share the text timeline. Verified on
@@ -109,7 +115,6 @@ class MMSADataset(Dataset):
         return len(self.labels)
 
     def __getitem__(self, idx: int) -> dict[str, torch.Tensor]:
-        label = self.labels[idx]
         return {
             "text": self.text[idx],
             "audio": self.audio[idx],
@@ -118,8 +123,8 @@ class MMSADataset(Dataset):
             "text_length": self.text_lengths[idx],
             "audio_length": self.audio_lengths[idx],
             "vision_length": self.vision_lengths[idx],
-            "label": label,
-            "label_7": torch.clamp(torch.round(label), -3, 3).long() + 3,
+            "label": self.labels[idx],
+            "label_7": self.labels_7[idx],
         }
 
     @property

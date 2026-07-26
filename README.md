@@ -1,6 +1,6 @@
 # MSA — 多模态情感分析
 
-基于 MMSA 预处理特征的多模态情感分析研究代码。当前跑通了 CMU-MOSI 的数据加载、评测指标与一个 LF-LSTM 基线。代码在 CUDA / Apple Silicon (MPS) / CPU 上通用，且同设备同 seed 下逐比特可复现。
+基于 MMSA 预处理特征的多模态情感分析研究代码。当前实现了 CMU-MOSI 的完整训练/评测链路、LF-LSTM 基线与 TFN 复现。代码在 CUDA / Apple Silicon (MPS) / CPU 上通用，且同设备同 seed 下逐比特可复现。
 
 ## 环境
 
@@ -50,6 +50,9 @@ python scripts/check_invariants.py
 
 # 复现性自检：同一设备上连跑两次，比对权重与预测的哈希
 python scripts/check_repro.py --device auto
+
+# 审计已落盘的全部结果：从预测重算指标、校验哈希与多 seed 汇总
+python scripts/verify_runs.py
 ```
 
 改动 `msa.data` / `msa.metrics` / 模型之后，请先跑 `check_invariants.py`（失败即退出码非零）。
@@ -71,7 +74,24 @@ python scripts/check_repro.py --device auto
 
 若某个算子在当前后端没有确定性实现（MPS 的算子覆盖比 CUDA 薄），用 `--deterministic-warn-only` 降级为告警，或 `--no-deterministic` 关掉——两种情况都会记录进 `result.json` 的 `env` 字段。
 
-每次运行都会存 `result.json`（含完整 args、环境指纹、逐 epoch 历史、预测哈希）、`best.pt` 和 `test_predictions.npy`。
+## 如何审计一个数字
+
+论文里的表格数字应当可以一路追溯到产生它的代码和预测。本仓库的链路：
+
+```
+outputs/<group>/summary.json          多 seed 的 mean/std/min/max + 每个 seed 的值
+outputs/<group>/seedN/result.json     超参、环境指纹、git commit 与是否 dirty、逐 epoch 历史
+outputs/<group>/seedN/test_predictions.npy  按测试集顺序排列的预测（第 i 行对应第 i 个样本）
+outputs/<group>/seedN/best.pt         被选中的那个 epoch 的权重
+```
+
+`python scripts/verify_runs.py` 会遍历全部运行，**从预测重新算一遍指标**并与 `result.json` 比对、校验预测哈希、再用每个 seed 的结果重新推导 `summary.json`。任何对不上的地方要么是产物损坏，要么是有人改了指标或汇总口径却没重跑实验——两种都会让结论失效。它还会标记出自 dirty 工作树的运行（那种运行无法从 commit 还原出代码）。
+
+几条口径约定，写在这里以免误读：
+
+- **`std` 是样本标准差（ddof=1）**，即对"再跑几个 seed 会有多大波动"的无偏估计。numpy 默认的 ddof=0 在 n=5 时会低估 11%，而本项目的核心论点正是拿这个波动去比对已发表的差距。
+- **模型选择只看验证集**，测试集在选完之后只碰一次。`--select-on mae` 等价于 MMSA 的 `KeyEval: Loss`（其回归损失即 L1）。
+- **指标按整个 split 的拼接预测计算**，每个样本等权。MMSA 用于选模型的 `Loss` 是按 batch 平均的，最后一个不满批会被过度加权——细微但真实的协议差异。
 
 ## 代码结构
 
@@ -90,6 +110,7 @@ src/msa/models/tfn.py     Tensor Fusion Network（移植自 MMSA，MIT）
 scripts/check_data.py     数据体检
 scripts/check_invariants.py 不变量回归检查
 scripts/check_repro.py    复现性自检
+scripts/verify_runs.py    审计已落盘结果（从预测重算指标）
 scripts/train.py          训练 + 评测（任意注册模型，多 seed）
 docs/                     roadmap / decisions / experiments
 ```
@@ -108,15 +129,15 @@ class MyModel(MSAModel):
     # 有辅助损失就覆写 compute_loss；文本编码器要单独学习率就覆写 param_groups
 ```
 
-在 `src/msa/models/__init__.py` 里 import 一次即完成注册，训练循环无需改动。**这是与 MMSA 的关键差别**：它每加一个模型要复制一份 trainer（14 个文件 2325 行，`TFN.py` 与 `LMF.py` 名字归一后仅差 14 行），评测协议因此会静默漂移。本仓库全部代码 1409 行，对比其 10399 行。
+在 `src/msa/models/__init__.py` 里 import 一次即完成注册，训练循环无需改动。**这是与 MMSA 的关键差别**：它每加一个模型要复制一份 trainer（14 个文件 2325 行，`TFN.py` 与 `LMF.py` 名字归一后仅差 14 行），评测协议因此会静默漂移。本仓库全部代码 1932 行，对比其 10399 行。
 
 ## 当前结果
 
 | 模型 | 数据 | seed | MAE ↓ | Acc-2(non0) | Acc-7 |
 |------|------|------|-------|-------------|-------|
-| LF-LSTM | MOSI aligned | 42-46 | 0.971 ± 0.035 | 76.4% ± 1.1% | 34.6% ± 2.3% |
-| TFN | MOSI unaligned | 42-46 | 0.948 ± 0.026 | 77.5% ± 1.3% | 34.9% ± 2.0% |
-| TFN | MOSI unaligned | 1111-1115 | 0.954 ± 0.033 | 78.5% ± 1.8% | 35.6% ± 2.5% |
+| LF-LSTM | MOSI aligned | 42-46 | 0.971 ± 0.039 | 76.4% ± 1.2% | 34.6% ± 2.6% |
+| TFN | MOSI unaligned | 42-46 | 0.948 ± 0.029 | 77.5% ± 1.4% | 34.9% ± 2.3% |
+| TFN | MOSI unaligned | 1111-1115 | 0.954 ± 0.037 | 78.5% ± 2.0% | 35.6% ± 2.8% |
 | *MMSA 报告的 TFN* | MOSI unaligned | 1111-1115 | *0.947* | *79.1%* | *34.5%* |
 
 TFN 复现命令：
@@ -126,4 +147,4 @@ python scripts/train.py --model tfn --unaligned --seeds 1111 1112 1113 1114 1115
     --lr 1e-3 --weight-decay 0 --batch-size 32 --patience 8
 ```
 
-**单 seed 的 MAE 波动可达 ±0.035，比不少论文声称的模型改进还大——请始终多 seed 汇报。** 详见 `docs/experiments.md`。
+**单 seed 的 MAE 波动可达 ±0.039（样本标准差），比不少论文声称的模型改进还大——请始终多 seed 汇报。** 详见 `docs/experiments.md`。

@@ -18,9 +18,10 @@ from torch.utils.data import DataLoader
 
 from msa.config import get_dataset_spec
 from msa.data import SPLITS, MMSADataset, load_pickle
-from msa.metrics import eval_sentiment
+from msa.metrics import METRIC_KEYS, eval_sentiment
 from msa.models.functional import masked_mean
 from msa.models.lf_lstm import _ModalityEncoder
+from msa.trainer import RunResult, summarize
 
 FAILURES: list[str] = []
 
@@ -144,7 +145,10 @@ def check_metrics() -> None:
         ref = {
             "mae": np.abs(y_pred - y_true).mean(),
             "corr": np.corrcoef(y_pred, y_true)[0, 1],
+            # rounding before clipping, i.e. the opposite order to metrics.py —
+            # if the two ever disagree, one of them is wrong
             "acc7": (np.clip(np.rint(y_pred), -3, 3) == np.clip(np.rint(y_true), -3, 3)).mean(),
+            "acc5": (np.clip(np.rint(y_pred), -2, 2) == np.clip(np.rint(y_true), -2, 2)).mean(),
             "acc2_has0": ((y_pred >= 0) == (y_true >= 0)).mean(),
             "acc2_non0": ((y_pred[nz] > 0) == (y_true[nz] > 0)).mean(),
         }
@@ -159,6 +163,26 @@ def check_metrics() -> None:
     check("inverted predictions give acc2 0", inverted["acc2_non0"] == 0)
     constant = eval_sentiment(np.ones(10), np.arange(10, dtype=float))
     check("a constant prediction gives corr 0 rather than NaN", constant["corr"] == 0.0)
+    flat_truth = eval_sentiment(np.arange(10, dtype=float), np.ones(10))
+    check("a constant ground truth gives corr 0 rather than NaN", flat_truth["corr"] == 0.0)
+
+
+def check_summary_convention() -> None:
+    print("\n== multi-seed summary ==")
+    values = [0.94, 1.02, 0.97, 0.99, 1.05]
+    runs = [
+        RunResult(model="m", dataset="d", seed=i, best_epoch=1, best_valid_score=0.0,
+                  select_on="mae", test={k: v for k in METRIC_KEYS},
+                  valid={}, test_pred_sha256_16="")
+        for i, v in enumerate(values)
+    ]
+    stats = summarize(runs)["mae"]
+    check("summary std is the sample std (ddof=1), not numpy's ddof=0 default",
+          abs(stats["std"] - float(np.std(values, ddof=1))) < 1e-12
+          and abs(stats["std"] - float(np.std(values, ddof=0))) > 1e-6,
+          f"ddof=1 {np.std(values, ddof=1):.6f} vs ddof=0 {np.std(values, ddof=0):.6f}")
+    check("a single run reports std 0 rather than NaN",
+          summarize(runs[:1])["mae"]["std"] == 0.0)
 
 
 def check_loader_order(spec) -> None:
@@ -207,6 +231,7 @@ def main() -> None:
     check_encoder_masking()
     check_pooling()
     check_metrics()
+    check_summary_convention()
     check_loader_order(spec)
     check_pickle_cache(spec)
     check_beats_trivial(spec)

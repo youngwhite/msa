@@ -65,10 +65,3 @@ def configure_threads(num_threads: int | None) -> int:
 def supports_pin_memory(device: torch.device) -> bool:
     """Pinned host memory only helps (and only exists) for CUDA transfers."""
     return device.type == "cuda"
-
-
-def empty_cache(device: torch.device) -> None:
-    if device.type == "cuda":
-        torch.cuda.empty_cache()
-    elif device.type == "mps" and hasattr(torch, "mps"):
-        torch.mps.empty_cache()
