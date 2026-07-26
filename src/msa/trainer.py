@@ -37,6 +37,14 @@ class TrainConfig:
     lr: float = 1e-3
     weight_decay: float = 1e-4
     grad_clip: float = 1.0
+    #: How grad_clip is applied. MMSA's TFN/LMF/MFN do not clip at all, MulT and
+    #: MISA clip by *value*, MMIM clips by norm — so this has to be selectable.
+    clip_mode: str = "norm"          # "norm" | "value"
+    #: Optional ReduceLROnPlateau on the validation selection metric, as MulT and
+    #: MMIM use. "none" leaves the learning rate alone.
+    lr_schedule: str = "none"        # "none" | "plateau"
+    lr_schedule_factor: float = 0.1
+    lr_schedule_patience: int = 5
     patience: int = 8
     #: Validation metric used to pick the reported epoch. `mae` reproduces MMSA's
     #: "KeyEval: Loss" for regression, since its criterion is L1.
@@ -49,6 +57,10 @@ class TrainConfig:
     keep_checkpoint: bool = False
 
     def __post_init__(self) -> None:
+        if self.clip_mode not in ("norm", "value"):
+            raise ValueError(f"clip_mode must be 'norm' or 'value', got {self.clip_mode!r}")
+        if self.lr_schedule not in ("none", "plateau"):
+            raise ValueError(f"lr_schedule must be 'none' or 'plateau', got {self.lr_schedule!r}")
         if self.select_on not in METRIC_KEYS:
             raise ValueError(
                 f"select_on={self.select_on!r} is not a metric; "
@@ -119,6 +131,13 @@ class Trainer:
         # Only CUDA has pinned host memory, so only there is an async copy real.
         self.non_blocking = supports_pin_memory(device)
         self.optimizer = torch.optim.Adam(model.param_groups(cfg.lr, cfg.weight_decay))
+        self.scheduler = None
+        if cfg.lr_schedule == "plateau":
+            direction = "min" if cfg.select_on in LOWER_IS_BETTER else "max"
+            self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+                self.optimizer, mode=direction,
+                factor=cfg.lr_schedule_factor, patience=cfg.lr_schedule_patience,
+            )
 
     def _to_device(self, batch: dict) -> dict:
         return {
@@ -152,7 +171,10 @@ class Trainer:
             loss = self.model.compute_loss(self.model(batch), batch)
             loss.backward()
             if self.cfg.grad_clip:
-                nn.utils.clip_grad_norm_(self.model.parameters(), self.cfg.grad_clip)
+                if self.cfg.clip_mode == "value":
+                    nn.utils.clip_grad_value_(self.model.parameters(), self.cfg.grad_clip)
+                else:
+                    nn.utils.clip_grad_norm_(self.model.parameters(), self.cfg.grad_clip)
             self.optimizer.step()
             n = batch["label"].numel()
             # Weight by batch size: the last batch is usually partial, and a plain
@@ -190,6 +212,8 @@ class Trainer:
                       f"valid_corr={valid_metrics['corr']:.4f}  "
                       f"valid_acc2={valid_metrics['acc2_non0']:.4f}"
                       f"{' *' if improved else ''}")
+            if self.scheduler is not None:
+                self.scheduler.step(score)
             if epoch - best_epoch >= cfg.patience:
                 if verbose:
                     print(f"early stop: no valid improvement for {cfg.patience} epochs")

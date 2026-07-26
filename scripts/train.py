@@ -66,6 +66,12 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--weight-decay", type=float, default=1e-4)
     ap.add_argument("--grad-clip", type=float, default=1.0)
+    ap.add_argument("--clip-mode", default="norm", choices=("norm", "value"),
+                    help="clip gradients by norm or by value; MulT and MISA clip by value")
+    ap.add_argument("--lr-schedule", default="none", choices=("none", "plateau"),
+                    help="ReduceLROnPlateau on the validation selection metric")
+    ap.add_argument("--lr-schedule-factor", type=float, default=0.1)
+    ap.add_argument("--lr-schedule-patience", type=int, default=5)
     ap.add_argument("--patience", type=int, default=8)
     ap.add_argument("--select-on", default="mae", choices=METRIC_KEYS,
                     help="validation metric used to pick the reported epoch")
@@ -135,6 +141,10 @@ def main() -> None:
             lr=args.lr,
             weight_decay=args.weight_decay,
             grad_clip=args.grad_clip,
+            clip_mode=args.clip_mode,
+            lr_schedule=args.lr_schedule,
+            lr_schedule_factor=args.lr_schedule_factor,
+            lr_schedule_patience=args.lr_schedule_patience,
             patience=args.patience,
             select_on=args.select_on,
             seed=seed,
