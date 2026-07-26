@@ -143,9 +143,14 @@ def main() -> None:
     if args.all:
         results = []
         for summary_path in sorted(OUTPUT_ROOT.glob("*/summary.json")):
-            model = json.loads(summary_path.read_text()).get("model", "")
-            if model in reference:
-                results.append(judge(summary_path.parent.name, model, reference))
+            payload = json.loads(summary_path.read_text())
+            model, group = payload.get("model", ""), summary_path.parent.name
+            # Acceptance groups are named <model>_<dataset>. Ablations and
+            # diagnostics carry a suffix and are not judged against MMSA — they
+            # deliberately deviate from the reference.
+            dataset = payload.get("dataset", "").lower().replace("cmu-", "")
+            if model in reference and group == f"{model}_{dataset}":
+                results.append(judge(group, model, reference))
         if not results:
             print("no group matches a model in the reference table")
             return

@@ -29,7 +29,6 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     tfn_mosi_ablation_masked
     lmf_mosi_ablation_masked
     tfn_mosi_mmsaseeds
-    tfn_mosi_faithful
 )
 
 # TFN reproduces MMSA's reported MOSI result, so those groups use MMSA's
@@ -65,10 +64,10 @@ args_for() {
         echo "--model tfn --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 0 --grad-clip 0 --epochs 200" ;;
     lmf_mosi_ablation_masked)
         echo "--model lmf --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 0.005 --batch-size 64 --grad-clip 0 --epochs 200" ;;
+    # Same faithful config as the acceptance run, but on MMSA's own default
+    # seeds — a check on how much of any residual gap is just the seed draw.
     tfn_mosi_mmsaseeds)
-        echo "--model tfn --unaligned --seeds 1111 1112 1113 1114 1115 --device cuda --lr 1e-3 --weight-decay 0" ;;
-    tfn_mosi_faithful)
-        echo "--model tfn --unaligned --seeds 42 43 44 45 46 --device cuda --lr 1e-3 --weight-decay 0 --model-arg use_lengths=False --model-arg mask_pooling=False" ;;
+        echo "--model tfn --unaligned --seeds 1111 1112 1113 1114 1115 --device cuda --lr 1e-3 --weight-decay 0 --grad-clip 0 --epochs 200 --model-arg use_lengths=False --model-arg mask_pooling=False" ;;
     *)  return 1 ;;
     esac
 }

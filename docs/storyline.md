@@ -7,11 +7,13 @@
 - 判定：`python scripts/check_acceptance.py --all`，规则见 [roadmap 验收标准](roadmap.md)
 - 重跑：`bash scripts/reproduce_all.sh <组名>`
 
-## 全局须知：参照值带乐观偏差
+## 全局须知：复现组是忠实移植，我们的改动单列
 
-MMSA 的调参流程按**测试集**评估候选配置（`run.py` 中用验证集的那行被注释掉了），而其 `config_regression.json` 的取值正落在 `config_tune.json` 的搜索空间内。**它公布的每个数字都是「按测试集挑出的超参在测试集上的成绩」。**
+**验收组逐行复刻参照实现**（`--model-arg use_lengths=False --model-arg mask_pooling=False`），我们自己的改进（按真实长度读末状态、掩码均值池化）放在 `*_ablation_masked` 组里单独评估。
 
-只用验证集选模型的诚实协议，系统性地难以匹配这类数字，量级约 1-2 个百分点。看下面每一节的对比时请带上这个前提——差距不等于"我们的实现更差"。完整证据见 [investigations.md](investigations.md#tfn-acc2)。
+这条协议是被 LMF 逼出来的：原先验收组带着我们的改动，导致"复现是否到位"与"我们的改动是否有益"混为一谈，TFN 和 LMF 都因此被误判为未复现。详见 [investigations.md](investigations.md#protocol-faithful)——**这是本项目到目前为止最重要的方法论教训**。
+
+另一件事实记录在案但**不要用来解释复现差距**：MMSA 的超参是按测试集挑的（`run.py` 中用验证集的那行被注释掉）。TFN 与 LMF 在忠实移植下均复现成功，说明该偏差在这两个模型上实际影响不大。见 [investigations.md](investigations.md#mmsa-test-selection)。
 
 ---
 
@@ -29,44 +31,59 @@ MMSA 的调参流程按**测试集**评估候选配置（`run.py` 中用验证�
 
 ---
 
-## 1. TFN — Tensor Fusion Network (Zadeh et al., EMNLP 2017) ✅ 已复现
+## 1. TFN — Tensor Fusion Network (Zadeh et al., EMNLP 2017) ✅ 复现成功
 
-**解决了什么**：早期工作把三个模态的向量直接拼接，模型只能学到模态间的线性组合。TFN 用三路外积（各自先补一个 1）显式构造出所有一元、二元、三元交互项，让融合层能直接看到 `text ⊗ audio ⊗ vision`。
+**解决了什么**：早期工作把三个模态的向量直接拼接，模型只能学到线性组合。TFN 给每个模态向量补一个 1 后做三路外积，显式构造出全部一元、二元、三元交互项，让融合层直接看到 `text ⊗ audio ⊗ vision`。
 
-**代价**：融合张量维度是 (32+1)×(128+1)×(32+1) = 140,481，后接全连接层——**9.5M 参数里绝大部分在这一层**。这个代价正是下一步 LMF 要解决的问题。
+**代价**：融合张量维度 (32+1)×(128+1)×(32+1) = 140,481，后接全连接层——**9.50M 参数里绝大部分在这一层**。这正是下一步 LMF 要解决的问题。
 
-**复现结果**（unaligned，10 seed，MMSA 超参：lr 1e-3、无 weight decay、bs 32、patience 8）：
+**验收**（unaligned，10 seed 42-51，MMSA 超参 lr 1e-3 / 无 weight decay / bs 32 / patience 8，忠实移植）：
 
 | 指标 | 我们 | MMSA | 落后（SE） | 判定 |
 |---|---|---|---|---|
-| MAE ↓ | 0.9546 ± 0.0301 | 0.9473 | +0.8 | 通过 |
-| Acc-7 | 0.3516 ± 0.0197 | 0.3446 | −1.1 | 通过（更优） |
-| Acc-5 | 0.3955 ± 0.0269 | 0.3939 | −0.2 | 通过 |
-| Acc-2(non0) | 0.7779 ± 0.0103 | 0.7908 | +4.0 | 差距已归因 |
-| Corr | 0.6529 ± 0.0086 | 0.6733 | +7.5 | 差距已归因 |
+| MAE ↓ | 0.9511 ± 0.0249 | 0.9473 | +0.5 | 通过 |
+| Acc-7 | 0.3528 ± 0.0187 | 0.3446 | −1.4 | 通过（更优） |
+| Acc-2(non0) | 0.7855 ± 0.0165 | 0.7908 | +1.0 | 通过（标记待查） |
+| Corr | 0.6602 ± 0.0095 | 0.6733 | +4.3 | 残留待查（非主指标） |
 
-**判定：复现成功。** MAE 与 Acc-7/Acc-5 达标；Acc-2 与 Corr 的差距经七项排查后归因于参照值的测试集选择偏差（见上方「全局须知」），裁定记录在 `docs/acceptance_status.json`。
+**判定：复现成功。**
 
-**实现上值得记住的三点**：
+**移植中发现的四件事**：
 
-1. **MMSA 的 trainer 不做梯度裁剪**，我们原先默认裁到 1.0。改为不裁剪后 MAE 从 0.9585 改善到 0.9546。移植任何模型时都要核对这一项。
-2. **MMSA 用 `while True` + patience，没有轮数上限**；我们原先上限 40，10 个 seed 中有 1 个被截断。验收组已改为 200 轮，由 patience 主导。
-3. **两处 MMSA 的实现细节被保留为可选项而非默认**：文本 LSTM 读 `h[-1]`（穿过 `[PAD]` 尾巴）、audio/vision 按 padded 宽度求均值（等于把语句长度泄漏进特征幅度）。我们默认用掩码版本，忠实版可用 `--model-arg use_lengths=False --model-arg mask_pooling=False` 复现，实测两者差距在噪声内。
-4. TFN 把输出经 `sigmoid × 6 − 3` 压到标签区间；MMSA 把该区间的两个常数存成 `requires_grad=False` 的 Parameter，于是优化器要写成 `Adam(list(model.parameters())[2:])` 跳过它们——一种按位置切参数的写法，构造顺序一变就会静默丢参数。我们用 buffer，无此问题。
+1. **MMSA 的 trainer 不做梯度裁剪**，我们原先默认裁到 1.0 —— 已对齐（MAE 0.9585 → 0.9546）
+2. **MMSA 无轮数上限**（`while True` + patience），我们原先 40 轮，10 seed 中 1 个被截断 —— 已改 200 轮
+3. **padding 与池化方式是差距主因**：用我们的掩码版时 Acc-2 低 4.0 SE，改忠实移植后降到 +1.0 SE
+4. TFN 把输出经 `sigmoid × 6 − 3` 压到标签区间；MMSA 把这两个常数存成 `requires_grad=False` 的 Parameter，于是优化器要写 `Adam(list(model.parameters())[2:])` 跳过它们——按位置切参数，构造顺序一变就会静默丢参数。我们用 buffer
+
+**消融**（`tfn_mosi_ablation_masked`，我们的掩码默认）：MAE 0.9546、Acc-2 0.7779——在 TFN 上掩码版 MAE 略好、Acc-2 略差，差距均在噪声附近。
 
 **运行**：`bash scripts/reproduce_all.sh tfn_mosi`
 
----
+## 2. LMF — Low-rank Multimodal Fusion (Liu et al., ACL 2018) ✅ 复现成功
 
-## 2. LMF — Low-rank Multimodal Fusion (2018) ⬜ 待复现
+**解决了什么**：TFN 的融合张量随模态数指数增长。LMF 把融合权重张量分解成 `rank` 个模态特定因子，先各自投影再逐元素相乘，**从不显式构造那个张量**，把代价从 O(∏dᵢ) 降到 O(r·Σdᵢ)。
 
-**要解决的问题**：TFN 的融合张量随模态数指数增长。LMF 用低秩分解把外积与权重张量一起分解，把那一层的参数量从 O(∏dᵢ) 降到 O(r·Σdᵢ)。
+**效果立竿见影**：我们的 LMF 是 **0.505M 参数，对比 TFN 的 9.50M——19 倍压缩**，而指标基本持平。这是故事线里"用更少的钱办同样的事"的一步。
 
-**MMSA 参照值**：MAE 0.9504 / Acc-2(non0) 0.7918 / Acc-7 0.3382（unaligned）
+**验收**（unaligned，10 seed 42-51，MMSA 超参 lr 1e-3 / weight decay 5e-3 / bs 64 / rank 3 / hidden [128,16,128]，忠实移植）：
 
-**复现时要核对**：秩 r 的取值、各模态子网维度、是否与 TFN 共用 `SubNet`。
+| 指标 | 我们 | MMSA | 落后（SE） | 判定 |
+|---|---|---|---|---|
+| MAE ↓ | 0.9513 ± 0.0335 | 0.9504 | +0.1 | 通过 |
+| Acc-7 | 0.3362 ± 0.0172 | 0.3382 | +0.4 | 通过 |
+| Acc-2(non0) | 0.7854 ± 0.0128 | 0.7918 | +1.6 | 通过（标记待查） |
+| Corr | — | 0.6510 | — | 通过 |
 
----
+**判定：复现成功。**
+
+**移植中发现的两个 MMSA 缺陷**（均已记录在 [investigations.md](investigations.md#lmf-optimizer)）：
+
+1. **优化器按位置切参数，切错了**：`parameters()[:3]` 拿到的是 audio 子网的 BatchNorm 与 linear_1 权重而非 fusion factor，且索引 3、4 落在所有参数组之外——**两个参数从初始化起从未更新**。实测复刻该行为会让 MAE 从 0.9628 恶化到 0.9806，**是 bug 不是特性**。我们用 `param_groups` 正确路由。
+2. **配置声明了 post-fusion dropout，forward 里从未调用**。照配置施加会让 MAE 从 0.9628 恶化到 0.9906。我们对齐其**实际行为**（默认 0.0），而非书面配置。
+
+**消融**（`lmf_mosi_ablation_masked`）：MAE 0.9628、Acc-2 0.7803——掩码池化在 LMF 上明显有害（+2.4 SE），与 TFN 上的结论相反。**同一个改动对不同模型效果相反，这本身值得记一笔。**
+
+**运行**：`bash scripts/reproduce_all.sh lmf_mosi`
 
 ## 3. MFN / Graph-MFN ⬜ 待复现
 
@@ -120,6 +137,8 @@ MMSA 的调参流程按**测试集**评估候选配置（`run.py` 中用验证�
 
 ## 复盘要点（随进度更新）
 
-1. **噪声大于多数"改进"**：MOSI 测试集 686 条，1% Acc-2 ≈ 1σ。故事线里相邻若干模型的差距可能在统计上无法区分——这是结论，不是失败。
-2. **参照值带测试集选择偏差**：见上方「全局须知」。所有对比都要带这个前提。
-3. **移植时的固定核对清单**（每个模型都要过一遍）：梯度裁剪、轮数上限、`use_bert`、数据是 aligned 还是 unaligned、超参是否逐项对齐、padding 处理方式。前两项在 TFN 上都是真差异。
+1. **复现组必须是忠实移植**。带上我们自己的改动会让 TFN 和 LMF 双双被误判为未复现。这是目前最贵的一课，详见 [investigations.md](investigations.md#protocol-faithful)。
+2. **归因之前先排除自己**。我曾把 TFN 的 Acc-2 差距归因于 MMSA 的测试集选择偏差并写入裁定，后被 LMF 推翻——真实原因是我们自己的池化改动。裁定是关于因果的断言，下断言前先测最廉价的假设。[修正留痕](investigations.md#tfn-retraction)。
+3. **噪声大于多数"改进"**：MOSI 测试集 686 条，1% Acc-2 ≈ 1σ。故事线里相邻若干模型的差距可能在统计上无法区分——这是结论，不是失败。
+4. **移植核对清单**（每个模型逐项过）：梯度裁剪、轮数上限、padding/池化、optimizer 参数分组、`use_bert`、aligned/unaligned、**配置里声明但 forward 从未调用的层**。TFN 命中前三项，LMF 命中第四、第七项。
+5. **参照实现里已发现两个真 bug**：LMF 的优化器按位置切参数导致两个参数从不更新；LMF 的 post-fusion dropout 声明后从未调用。移植时以 forward 的实际执行路径为准，不要只读配置。
