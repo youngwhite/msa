@@ -24,9 +24,12 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     mod_v
     mod_av
     mod_tav
+    ef_lstm_mosi
+    lf_dnn_mosi
     tfn_mosi
     lmf_mosi
     mfn_mosi
+    graph_mfn_mosi
     mult_mosi
     text_bert_mosi
     misa_mosi
@@ -34,6 +37,7 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     tfn_mosi_ablation_masked
     lmf_mosi_ablation_masked
     mfn_mosi_ablation_realseq
+    graph_mfn_mosi_ablation_frozen
     tfn_mosi_mmsaseeds
 )
 
@@ -88,6 +92,19 @@ args_for() {
     # "other" rate, 1e-3): BERT at 0.05x, audio/vision at 5x.
     self_mm_mosi)
         echo "--model self_mm --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 0.001 --batch-size 16 --grad-clip 0 --epochs 30 --patience 8" ;;
+    # EF-LSTM / LF-DNN: the two pre-TFN baselines. EF-LSTM needs aligned data
+    # (a per-step concatenation requires a shared clock); LF-DNN is unaligned and
+    # pools each modality first.
+    ef_lstm_mosi)
+        echo "--model ef_lstm --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 0.005 --batch-size 32 --grad-clip 0 --epochs 200" ;;
+    lf_dnn_mosi)
+        echo "--model lf_dnn --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 0.01 --batch-size 128 --grad-clip 0 --epochs 200 --model-arg use_lengths=False --model-arg mask_pooling=False" ;;
+    # Graph-MFN: aligned, and unlike MFN its config leaves need_normalized False,
+    # so it receives the real per-step audio and vision sequences.
+    graph_mfn_mosi)
+        echo "--model graph_mfn --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 2e-3 --weight-decay 0.005 --batch-size 32 --grad-clip 0 --epochs 200" ;;
+    graph_mfn_mosi_ablation_frozen)
+        echo "--model graph_mfn --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 2e-3 --weight-decay 0.005 --batch-size 32 --grad-clip 0 --epochs 200 --model-arg freeze_graph_networks=True" ;;
     # Ablations: our masked/length-aware defaults instead of MMSA's padding
     # behaviour. Kept apart from the acceptance runs so reproduction fidelity and
     # our own changes are never confounded.
