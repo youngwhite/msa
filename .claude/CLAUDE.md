@@ -8,7 +8,8 @@
 
 - venv 在 `.venv/`，所有命令用 `.venv/bin/python`
 - GPU 是 RTX 5070 Ti（Blackwell sm_120），**PyTorch 必须是 cu128 及以上的轮子**，PyPI 默认版本没有 sm_120 kernel
-- 数据集 `datasets/CMU-MOSI/`（不入库，879MB）。MOSEI 尚未下载
+- 数据集 `datasets/CMU-MOSI/`（不入库，879MB，sha256 记在 `DatasetSpec.file_sha256`）。MOSEI 尚未下载
+- **换机器**：`bash scripts/setup.sh` 建环境 + 校验数据 + 跑闸门；完整步骤见 `docs/migration.md`
 
 ## 不可违背的约定
 

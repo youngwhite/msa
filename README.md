@@ -18,9 +18,11 @@ python -m venv .venv
 .venv/bin/pip install -e .
 ```
 
+换机器请看 [`docs/migration.md`](docs/migration.md)：`bash scripts/setup.sh` 一条命令建环境、校验数据集哈希并跑完全部闸门。
+
 ## 数据
 
-`datasets/CMU-MOSI/`（已下载，不入库）：
+`datasets/CMU-MOSI/`（已下载，不入库；sha256 记录在 `DatasetSpec.file_sha256`）：
 
 ```
 Processed/aligned_50.pkl     词级对齐，text/audio/vision 均为 50 帧
