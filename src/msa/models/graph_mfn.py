@@ -35,6 +35,7 @@ from itertools import chain, combinations
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from ..registry import register_model
 from .base import MSAModel
@@ -44,6 +45,15 @@ def _mlp(in_dim: int, hidden: int, out_dim: int, dropout: float) -> nn.Sequentia
     return nn.Sequential(
         nn.Linear(in_dim, hidden), nn.ReLU(), nn.Dropout(dropout), nn.Linear(hidden, out_dim)
     )
+
+
+def _linear_stack(*dims: int) -> nn.Sequential:
+    """Plain stacked Linears with no activation between them.
+
+    That is how MMSA builds the graph's vertex and efficacy networks (its
+    `pattern_model` is a bare `nn.Linear`), so the port keeps it.
+    """
+    return nn.Sequential(*[nn.Linear(a, b) for a, b in zip(dims[:-1], dims[1:], strict=True)])
 
 
 class DynamicFusionGraph(nn.Module):
@@ -76,7 +86,7 @@ class DynamicFusionGraph(nn.Module):
             multimodal = ((2 ** len(key) - 2) - len(key)) * node_dim
             total_efficacies += 2 ** len(key) - 2
             shapes[key] = unimodal + multimodal
-            networks["_".join(map(str, key))] = _mlp(shapes[key], hidden, node_dim, dropout)
+            networks["_".join(map(str, key))] = _linear_stack(shapes[key], hidden, node_dim)
         # nn.ModuleDict, not a plain dict — see the module docstring.
         self.networks = nn.ModuleDict(networks)
         if freeze_networks:
@@ -85,8 +95,8 @@ class DynamicFusionGraph(nn.Module):
 
         total_efficacies += 2 ** self.num_modalities - 1
         top_in = sum(in_dims) + (2 ** self.num_modalities - self.num_modalities - 1) * node_dim
-        self.top_network = _mlp(top_in, hidden, node_dim, dropout)
-        self.efficacy_model = _mlp(sum(in_dims), hidden, total_efficacies, dropout)
+        self.top_network = _linear_stack(top_in, hidden, node_dim)
+        self.efficacy_model = _linear_stack(sum(in_dims), hidden, node_dim, total_efficacies)
 
     def forward(self, modalities: list[torch.Tensor]) -> torch.Tensor:
         outputs = {(i,): tensor for i, tensor in enumerate(modalities)}
@@ -128,8 +138,10 @@ class GraphMemoryFusionNetwork(MSAModel):
         vision_hidden: int = 256,
         memsize: int = 300,
         node_dim: int = 64,
-        graph_hidden: int = 32,
+        graph_hidden: int = 100,
         graph_dropout: float = 0.0,
+        proposal_hidden: int = 32,
+        proposal_dropout: float = 0.0,
         gamma1_hidden: int = 128,
         gamma1_dropout: float = 0.5,
         gamma2_hidden: int = 64,
@@ -156,6 +168,9 @@ class GraphMemoryFusionNetwork(MSAModel):
             [text_hidden, audio_hidden, vision_hidden], node_dim,
             graph_hidden, graph_dropout, freeze_graph_networks,
         )
+        # The graph's summary is node_dim wide; the memory is memsize wide, so a
+        # small MLP proposes what to write.
+        self.proposal_net = _mlp(node_dim, proposal_hidden, memsize, proposal_dropout)
         gamma_in = node_dim + memsize
         self.gamma1 = _mlp(gamma_in, gamma1_hidden, memsize, gamma1_dropout)
         self.gamma2 = _mlp(gamma_in, gamma2_hidden, memsize, gamma2_dropout)
@@ -177,18 +192,21 @@ class GraphMemoryFusionNetwork(MSAModel):
         memory = zeros(self.memsize)
 
         for step in range(steps):
-            prev_t, prev_a, prev_v = c_t, c_a, c_v
+            # Graph-MFN feeds the graph the *hidden* states before and after the
+            # step, unlike MFN which attends over the memory cells.
+            prev_t, prev_a, prev_v = h_t, h_a, h_v
             h_t, c_t = self.lstm_t(text[:, step], (h_t, c_t))
             h_a, c_a = self.lstm_a(audio[:, step], (h_a, c_a))
             h_v, c_v = self.lstm_v(vision[:, step], (h_v, c_v))
 
             singletons = [
-                self.transform_t(torch.cat([prev_t, c_t], dim=1)),
-                self.transform_a(torch.cat([prev_a, c_a], dim=1)),
-                self.transform_v(torch.cat([prev_v, c_v], dim=1)),
+                F.relu(self.transform_t(torch.cat([prev_t, h_t], dim=1))),
+                F.relu(self.transform_a(torch.cat([prev_a, h_a], dim=1))),
+                F.relu(self.transform_v(torch.cat([prev_v, h_v], dim=1))),
             ]
-            proposal = torch.tanh(self.graph(singletons))
-            gated = torch.cat([proposal, memory], dim=1)
+            attended = self.graph(singletons)
+            proposal = torch.tanh(self.proposal_net(attended))
+            gated = torch.cat([attended, memory], dim=1)
             memory = (torch.sigmoid(self.gamma1(gated)) * memory
                       + torch.sigmoid(self.gamma2(gated)) * proposal)
 
