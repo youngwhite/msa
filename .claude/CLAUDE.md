@@ -36,7 +36,7 @@ bash scripts/check_all.sh                      # 一条命令跑完所有闸门
 ## 结果如何持久化
 
 - `outputs/<group>/seed<N>/result.json` 与 `test_predictions.npy` **入库**（共 ~800KB），所以任何一次 clone 都能重新审计历史数字
-- `best.pt` 不入库（584MB），需要时重跑即可——运行是逐比特可复现的
+- `best.pt` 默认训练完即删除（需要权重时加 `--keep-checkpoint`）；运行逐比特可复现，重跑即可拿回
 - 每次得到新结果，**同步更新 `docs/experiments.md`**，那是唯一的结论出处
 
 ## 加一个新模型

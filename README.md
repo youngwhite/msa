@@ -87,7 +87,7 @@ python scripts/verify_runs.py
 outputs/<group>/summary.json          多 seed 的 mean/std/min/max + 每个 seed 的值
 outputs/<group>/seedN/result.json     超参、环境指纹、git commit 与是否 dirty、逐 epoch 历史
 outputs/<group>/seedN/test_predictions.npy  按测试集顺序排列的预测（第 i 行对应第 i 个样本）
-outputs/<group>/seedN/best.pt         被选中的那个 epoch 的权重
+outputs/<group>/seedN/best.pt         仅在 --keep-checkpoint 时保留
 ```
 
 `python scripts/verify_runs.py` 会遍历全部运行，**从预测重新算一遍指标**并与 `result.json` 比对、校验预测哈希、再用每个 seed 的结果重新推导 `summary.json`。任何对不上的地方要么是产物损坏，要么是有人改了指标或汇总口径却没重跑实验——两种都会让结论失效。它还会标记出自 dirty 工作树的运行（那种运行无法从 commit 还原出代码）。

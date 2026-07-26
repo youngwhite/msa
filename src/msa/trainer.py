@@ -42,6 +42,11 @@ class TrainConfig:
     #: "KeyEval: Loss" for regression, since its criterion is L1.
     select_on: str = "mae"
     seed: int = 42
+    #: Keep `best.pt` after the run. Off by default: a checkpoint is ~13MB for
+    #: LF-LSTM and 38MB for TFN, the run is bit-for-bit reproducible from the
+    #: recorded config, and the predictions it would produce are already saved.
+    #: Turn it on when you actually need the weights (inspection, fine-tuning).
+    keep_checkpoint: bool = False
 
     def __post_init__(self) -> None:
         if self.select_on not in METRIC_KEYS:
@@ -200,6 +205,10 @@ class Trainer:
         self.model.load_state_dict(torch.load(ckpt_path, map_location=self.device))
         valid_metrics, _ = self.evaluate("valid")
         test_metrics, test_preds = self.evaluate("test")
+        if not cfg.keep_checkpoint:
+            # The checkpoint has done its job: the selected epoch's weights are
+            # loaded and its predictions are about to be written to disk.
+            ckpt_path.unlink(missing_ok=True)
         result = RunResult(
             model=getattr(self.model, "name", type(self.model).__name__),
             dataset=self.dataset,

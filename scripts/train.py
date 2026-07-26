@@ -8,7 +8,7 @@ Usage:
 Layout of the results (everything needed to audit a number):
     outputs/<group>/seed<N>/result.json          metrics, config, env, git commit
     outputs/<group>/seed<N>/test_predictions.npy predictions in test-split order
-    outputs/<group>/seed<N>/best.pt              the selected checkpoint
+    outputs/<group>/seed<N>/best.pt              only with --keep-checkpoint
     outputs/<group>/summary.json                 mean/std across the seeds
 """
 
@@ -80,6 +80,9 @@ def build_parser() -> argparse.ArgumentParser:
                     help="allow nondeterministic kernels; the run stops being reproducible")
     ap.add_argument("--deterministic-warn-only", action="store_true",
                     help="warn instead of raising when an op has no deterministic kernel")
+    ap.add_argument("--keep-checkpoint", action="store_true",
+                    help="keep best.pt after the run (default: discard it — runs are "
+                         "reproducible and the predictions are saved anyway)")
     ap.add_argument("--run-group", default=None,
                     help="output subdirectory (default: <model>_<dataset>_<device>)")
     ap.add_argument("--quiet", action="store_true", help="suppress per-epoch lines")
@@ -135,6 +138,7 @@ def main() -> None:
             patience=args.patience,
             select_on=args.select_on,
             seed=seed,
+            keep_checkpoint=args.keep_checkpoint,
         )
         trainer = Trainer(model, loaders, device, cfg, dataset=spec.name)
         result, preds = trainer.fit(run_dir / "best.pt", verbose=not args.quiet)

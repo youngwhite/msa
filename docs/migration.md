@@ -77,4 +77,4 @@ bash scripts/check_all.sh
 - **跨设备类型的数字不会逐比特相同**（CUDA / MPS / CPU 归约顺序不同），各设备内部可复现。新机器若换了 GPU 型号，重跑的数字可能与 `docs/experiments.md` 有细微出入——这是硬件事实，不是回归。
 - **CPU 上还须钉住线程数**（`--num-threads N`），否则线程数不同结果就不同。
 
-`outputs/` 里的 `best.pt` 不入库（584MB）。需要某个 checkpoint 就按 `result.json` 里记录的命令重跑，运行是逐比特可复现的。
+`best.pt` 默认训练结束即删除，也不入库。需要某个 checkpoint 时用 `--keep-checkpoint` 重跑——按 `result.json` 里记录的命令，结果逐比特一致。
