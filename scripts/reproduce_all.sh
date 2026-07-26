@@ -28,6 +28,7 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     lmf_mosi
     mfn_mosi
     mult_mosi
+    text_bert_mosi
     tfn_mosi_ablation_masked
     lmf_mosi_ablation_masked
     mfn_mosi_ablation_realseq
@@ -72,6 +73,11 @@ args_for() {
     # patience 5); early stopping still uses patience 8.
     mult_mosi)
         echo "--model mult --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 2e-3 --weight-decay 0.005 --batch-size 16 --grad-clip 0.6 --clip-mode value --lr-schedule plateau --lr-schedule-patience 5 --patience 8 --epochs 200" ;;
+    # Text-only fine-tuned BERT: our control group, not a reproduction target —
+    # MMSA has no text-only entry. Standard BERT fine-tuning settings (lr 2e-5,
+    # head at 10x, bs 16); it converges in a few epochs.
+    text_bert_mosi)
+        echo "--model text_bert --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 2e-5 --weight-decay 0.01 --batch-size 16 --grad-clip 1.0 --patience 3 --epochs 12" ;;
     # Ablations: our masked/length-aware defaults instead of MMSA's padding
     # behaviour. Kept apart from the acceptance runs so reproduction fidelity and
     # our own changes are never confounded.

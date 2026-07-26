@@ -1,6 +1,7 @@
 """Importing this package registers every model with `msa.registry`."""
 
 from .base import MSAModel
+from .bert import TextOnlyBert
 from .lf_lstm import LateFusionLSTM
 from .lmf import LowRankFusion
 from .mfn import MemoryFusionNetwork
@@ -14,4 +15,5 @@ __all__ = [
     "MemoryFusionNetwork",
     "MultimodalTransformer",
     "TensorFusionNetwork",
+    "TextOnlyBert",
 ]
