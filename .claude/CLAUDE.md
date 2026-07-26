@@ -43,6 +43,14 @@ bash scripts/check_all.sh                      # 一条命令跑完所有闸门
 
 `bash scripts/reproduce_all.sh` 重跑 `docs/experiments.md` 里的全部实验（约 25 分钟）并自动做最后一项比对。**新实验进入文档时，必须同时在这个脚本里加一条**，否则下一个人无法重现它。
 
+## 阶段性任务完成后：同步到远端
+
+```bash
+bash scripts/sync.sh          # 先跑全部闸门，全绿才推送；有一项失败就不推
+```
+
+远端是 `git@github.com:youngwhite/msa.git`。**用户已授权：每次阶段性任务审核通过后自动同步，不必逐次确认。** 闸门不过就不要推——远端不应该保存一个自己的检查都过不了的状态，因为下一个人（或下一台机器）是从远端开始的。
+
 ## 结果如何持久化
 
 - `outputs/<group>/seed<N>/result.json` 与 `test_predictions.npy` **入库**（共 ~800KB），所以任何一次 clone 都能重新审计历史数字

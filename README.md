@@ -59,6 +59,9 @@ python scripts/check_repro.py --device auto
 # 审计已落盘的全部结果：从预测重算指标、校验哈希与多 seed 汇总
 python scripts/verify_runs.py
 
+# 阶段性任务完成后同步到远端：闸门全绿才推送
+bash scripts/sync.sh
+
 # 重跑 docs/experiments.md 里的全部实验，并与 git 里的预测逐一比对（约 25 分钟）
 bash scripts/reproduce_all.sh              # 也可只跑一组：reproduce_all.sh tfn_mosi_masked
 ```
@@ -123,6 +126,7 @@ scripts/verify_runs.py    审计已落盘结果（从预测重算指标）
 scripts/check_reproduction.py 重训练的预测 vs git 里 committed 的预测
 scripts/reproduce_all.sh  重跑文档里的全部实验（是 docs 与代码之间的唯一链接）
 scripts/setup.sh          新机器一键引导
+scripts/sync.sh           闸门全绿则推送到远端
 scripts/train.py          训练 + 评测（任意注册模型，多 seed）
 docs/                     roadmap / decisions / experiments
 ```
