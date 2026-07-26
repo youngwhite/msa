@@ -11,7 +11,12 @@ The pseudo-labels move while training runs, which is why this model needs the
 `on_train_batch_end` hook. It is the only model in the storyline that carries
 state between batches; everything else in the shared training loop is untouched.
 
-Ported from MMSA (`models/multiTask/SELF_MM.py` and its trainer, MIT, THUIAR).
+Ported from MMSA (`models/multiTask/SELF_MM.py` and its trainer, MIT, THUIAR),
+and checked line by line against the authors' own release
+(github.com/thuiar/Self-MM). Note the two differ in hyper-parameters for MOSI —
+the authors use batch 32, audio lr 1e-3, video lr 1e-4, LSTM widths 32/64, while
+MMSA uses batch 16, both 5e-3, widths 16/32. We follow MMSA's, since MMSA's table
+is what the acceptance criterion compares against.
 The label update follows the trainer's `update_labels`, including its details:
 the momentum term `(n-1)/(n+1)` with `n` the epoch number, clamping to +/-H, and
 updates starting only from the second epoch (the first supplies the centres).
@@ -21,6 +26,7 @@ from __future__ import annotations
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from ..config import DatasetSpec
 from ..registry import register_model
@@ -45,11 +51,27 @@ class _AudioVisualSubNet(nn.Module):
         return self.linear(self.dropout(last_valid_state(outputs, lengths)))
 
 
-def _head(in_dim: int, hidden: int, dropout: float) -> nn.Sequential:
-    return nn.Sequential(
-        nn.Dropout(dropout), nn.Linear(in_dim, hidden), nn.ReLU(),
-        nn.Linear(hidden, hidden), nn.ReLU(), nn.Linear(hidden, 1),
-    )
+class _Branch(nn.Module):
+    """dropout -> linear -> relu (the representation) -> linear -> relu -> linear.
+
+    The intermediate after the first ReLU is what the pseudo-label machinery
+    measures distances in — checked against the authors' release, where
+    `Feature_t`/`Feature_a`/`Feature_v`/`Feature_f` are these post-layer states,
+    not the raw encoder outputs. Using the raw outputs puts the class centres in
+    a different (and much wider) space and changes the label dynamics.
+    """
+
+    def __init__(self, in_dim: int, hidden: int, dropout: float) -> None:
+        super().__init__()
+        self.dropout = nn.Dropout(dropout)
+        self.layer_1 = nn.Linear(in_dim, hidden)
+        self.layer_2 = nn.Linear(hidden, hidden)
+        self.layer_3 = nn.Linear(hidden, 1)
+
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        representation = F.relu(self.layer_1(self.dropout(x)))
+        prediction = self.layer_3(F.relu(self.layer_2(representation)))
+        return prediction.view(-1), representation
 
 
 @register_model("self_mm")
@@ -75,7 +97,6 @@ class SelfMM(MSAModel):
         vision_out: int = 32,
         audio_dropout: float = 0.0,
         vision_dropout: float = 0.0,
-        text_dropout: float = 0.1,
         fusion_dim: int = 128,
         post_text_dim: int = 32,
         post_audio_dim: int = 16,
@@ -100,15 +121,18 @@ class SelfMM(MSAModel):
             vision_dim, vision_hidden, vision_out, vision_dropout
         )
 
-        self.fusion_head = _head(text_out + audio_out + vision_out, fusion_dim, fusion_dropout)
-        self.text_head = _head(text_out, post_text_dim, post_text_dropout)
-        self.audio_head = _head(audio_out, post_audio_dim, post_audio_dropout)
-        self.vision_head = _head(vision_out, post_vision_dim, post_vision_dropout)
-        self.text_dropout = nn.Dropout(text_dropout)
+        self.fusion_branch = _Branch(
+            text_out + audio_out + vision_out, fusion_dim, fusion_dropout
+        )
+        self.text_branch = _Branch(text_out, post_text_dim, post_text_dropout)
+        self.audio_branch = _Branch(audio_out, post_audio_dim, post_audio_dropout)
+        self.vision_branch = _Branch(vision_out, post_vision_dim, post_vision_dropout)
 
+        # The centres live in the branches' representation spaces, not the
+        # encoders' output spaces.
         widths = {
-            "fusion": text_out + audio_out + vision_out,
-            "text": text_out, "audio": audio_out, "vision": vision_out,
+            "fusion": fusion_dim, "text": post_text_dim,
+            "audio": post_audio_dim, "vision": post_vision_dim,
         }
         # Per-sample pseudo-labels and the representation each was derived from.
         # Buffers, so they move with the model and land in the checkpoint.
@@ -149,16 +173,17 @@ class SelfMM(MSAModel):
         text = self.encoder(batch["text_bert"])[:, 0]        # [CLS]
         audio = self.audio_model(batch["audio"], batch["audio_length"])
         vision = self.vision_model(batch["vision"], batch["vision_length"])
-        fusion = torch.cat([self.text_dropout(text), audio, vision], dim=1)
+
+        m, f_fusion = self.fusion_branch(torch.cat([text, audio, vision], dim=1))
+        t, f_text = self.text_branch(text)
+        a, f_audio = self.audio_branch(audio)
+        v, f_vision = self.vision_branch(vision)
         return {
-            "M": self.fusion_head(fusion).view(-1),
-            "T": self.text_head(text).view(-1),
-            "A": self.audio_head(audio).view(-1),
-            "V": self.vision_head(vision).view(-1),
-            "feature_fusion": fusion,
-            "feature_text": text,
-            "feature_audio": audio,
-            "feature_vision": vision,
+            "M": m, "T": t, "A": a, "V": v,
+            "feature_fusion": f_fusion,
+            "feature_text": f_text,
+            "feature_audio": f_audio,
+            "feature_vision": f_vision,
         }
 
     def compute_loss(
