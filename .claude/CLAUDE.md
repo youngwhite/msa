@@ -31,7 +31,17 @@ bash scripts/check_all.sh                      # 一条命令跑完所有闸门
 .venv/bin/python scripts/verify_runs.py        # 从落盘预测重算全部指标
 ```
 
-四个闸门脚本：`check_data.py`（数据体检 + 泄漏检查）、`check_invariants.py`（指标/标签/padding/汇总口径）、`check_repro.py`（同设备连跑两次比哈希）、`verify_runs.py`（审计已落盘结果）。全部以退出码表示成败。
+闸门脚本（全部以退出码表示成败）：
+
+| 脚本 | 回答什么问题 |
+|---|---|
+| `check_data.py` | 数据是不是那份数据？split 有没有泄漏？（`--verify-files` 查 sha256） |
+| `check_invariants.py` | 指标/标签/padding/汇总口径的实现对不对？ |
+| `check_repro.py` | 同一台机器连跑两次，结果是否逐比特一致？ |
+| `verify_runs.py` | 已落盘的指标能否由落盘预测重算出来？ |
+| `check_reproduction.py` | **重新训练**得到的预测，与 git 里committed 的是否一致？ |
+
+`bash scripts/reproduce_all.sh` 重跑 `docs/experiments.md` 里的全部实验（约 25 分钟）并自动做最后一项比对。**新实验进入文档时，必须同时在这个脚本里加一条**，否则下一个人无法重现它。
 
 ## 结果如何持久化
 
