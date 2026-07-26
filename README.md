@@ -18,6 +18,18 @@ python -m venv .venv
 .venv/bin/pip install -e .
 ```
 
+## 文档导航
+
+| 想做什么 | 读哪个 |
+|---|---|
+| **了解项目现状、复盘、审计** | [`docs/storyline.md`](docs/storyline.md) ← 主文档，按技术演进逐个模型 |
+| 知道下一步做什么 | [`docs/roadmap.md`](docs/roadmap.md) 末尾「当前进度与下一步」 |
+| 查某个数字怎么来的 | [`docs/experiments.md`](docs/experiments.md) |
+| 想改动某个设计前先了解为什么 | [`docs/decisions.md`](docs/decisions.md) |
+| **避免重复排查同一个问题** | [`docs/investigations.md`](docs/investigations.md) |
+| 换机器 | [`docs/migration.md`](docs/migration.md) |
+| 参照值从哪来 | [`docs/mmsa_reference_mosi.json`](docs/mmsa_reference_mosi.json)、[`docs/acceptance_status.json`](docs/acceptance_status.json) |
+
 换机器请看 [`docs/migration.md`](docs/migration.md)：`bash scripts/setup.sh` 一条命令建环境、校验数据集哈希并跑完全部闸门。
 
 ## 数据
