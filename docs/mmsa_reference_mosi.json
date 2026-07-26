@@ -1,0 +1,128 @@
+{
+  "source": "MMSA results/result-stat.md (THUIAR, MIT), MOSI regression table",
+  "extracted_from_commit": "a94e65d",
+  "note": "MMSA reports single numbers with no variance and does not state its seed set for this table; its defaults are seeds 1111-1115. Percentages are converted to fractions; MAE was tabulated as e.g. 94.88 meaning 0.9488.",
+  "models": {
+    "ef_lstm": {
+      "acc2_has0": 0.7737999999999999,
+      "f1_has0": 0.7735,
+      "acc2_non0": 0.7848,
+      "f1_non0": 0.7851,
+      "acc5": 0.40149999999999997,
+      "acc7": 0.3539,
+      "mae": 0.9488,
+      "corr": 0.669,
+      "data_setting": "aligned"
+    },
+    "lf_dnn": {
+      "acc2_has0": 0.7752,
+      "f1_has0": 0.7746,
+      "acc2_non0": 0.7863,
+      "f1_non0": 0.7863,
+      "acc5": 0.38049999999999995,
+      "acc7": 0.3452,
+      "mae": 0.9548000000000001,
+      "corr": 0.6584,
+      "data_setting": "unaligned"
+    },
+    "tfn": {
+      "acc2_has0": 0.7798999999999999,
+      "f1_has0": 0.7795000000000001,
+      "acc2_non0": 0.7908,
+      "f1_non0": 0.7911,
+      "acc5": 0.39390000000000003,
+      "acc7": 0.3446,
+      "mae": 0.9473,
+      "corr": 0.6733,
+      "data_setting": "unaligned"
+    },
+    "lmf": {
+      "acc2_has0": 0.779,
+      "f1_has0": 0.778,
+      "acc2_non0": 0.7918000000000001,
+      "f1_non0": 0.7915000000000001,
+      "acc5": 0.38130000000000003,
+      "acc7": 0.3382,
+      "mae": 0.9504,
+      "corr": 0.6509999999999999,
+      "data_setting": "unaligned"
+    },
+    "mfn": {
+      "acc2_has0": 0.7767000000000001,
+      "f1_has0": 0.7763,
+      "acc2_non0": 0.7887000000000001,
+      "f1_non0": 0.789,
+      "acc5": 0.4047,
+      "acc7": 0.3583,
+      "mae": 0.9268000000000001,
+      "corr": 0.6701999999999999,
+      "data_setting": "aligned"
+    },
+    "graph_mfn": {
+      "acc2_has0": 0.7714,
+      "f1_has0": 0.7707999999999999,
+      "acc2_non0": 0.7835,
+      "f1_non0": 0.7835,
+      "acc5": 0.38630000000000003,
+      "acc7": 0.3464,
+      "mae": 0.9556999999999999,
+      "corr": 0.6486,
+      "data_setting": "aligned"
+    },
+    "mult": {
+      "acc2_has0": 0.7970999999999999,
+      "f1_has0": 0.7963,
+      "acc2_non0": 0.8098000000000001,
+      "f1_non0": 0.8095,
+      "acc5": 0.4268,
+      "acc7": 0.3691,
+      "mae": 0.8798999999999999,
+      "corr": 0.7021999999999999,
+      "data_setting": "unaligned"
+    },
+    "misa": {
+      "acc2_has0": 0.8184,
+      "f1_has0": 0.8181999999999999,
+      "acc2_non0": 0.8354,
+      "f1_non0": 0.8358,
+      "acc5": 0.4708,
+      "acc7": 0.41369999999999996,
+      "mae": 0.7765000000000001,
+      "corr": 0.7781,
+      "data_setting": "unaligned"
+    },
+    "self_mm": {
+      "acc2_has0": 0.8344,
+      "f1_has0": 0.8336,
+      "acc2_non0": 0.8545999999999999,
+      "f1_non0": 0.8543000000000001,
+      "acc5": 0.5347,
+      "acc7": 0.4667,
+      "mae": 0.708,
+      "corr": 0.7963,
+      "data_setting": "unaligned"
+    },
+    "tetfn": {
+      "acc2_has0": 0.8323999999999999,
+      "f1_has0": 0.8312999999999999,
+      "acc2_non0": 0.8537,
+      "f1_non0": 0.8533,
+      "acc5": 0.5364,
+      "acc7": 0.45770000000000005,
+      "mae": 0.7084,
+      "corr": 0.7984,
+      "data_setting": "aligned"
+    },
+    "cenet": {
+      "acc2_has0": 0.8353,
+      "f1_has0": 0.8349,
+      "acc2_non0": 0.8521,
+      "f1_non0": 0.8522,
+      "acc5": 0.5086999999999999,
+      "acc7": 0.449,
+      "mae": 0.7254,
+      "corr": 0.7953,
+      "data_setting": "unaligned"
+    }
+  }
+}
