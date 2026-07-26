@@ -42,6 +42,9 @@ LOWER_IS_BETTER = {"mae"}
 PASS_SE = 1.0    # within this many standard errors: reproduced
 WARN_SE = 2.0    # beyond this: not reproduced
 PRIMARY = ("mae", "acc2_non0")
+#: Below this, a run has not learned anything: MOSI's majority class is ~58% of
+#: the non-zero test samples, so an Acc-2 near that is a collapsed run.
+COLLAPSE_ACC2 = 0.60
 REQUIRED_SEEDS = 10
 
 
@@ -104,6 +107,18 @@ def judge(group: str, model: str, reference: dict, verbose: bool = True) -> bool
         print(f"  {metric:12s}{mean:10.4f}{sd:9.4f}{ref[metric]:10.4f}"
               f"{gap:+11.4f}{in_se:+8.1f}  {tag}{marker}")
 
+    # A collapsed seed inflates the spread, which inflates SE, which *widens* the
+    # tolerance — so instability can buy a pass. Report it; never drop the seed,
+    # since selecting seeds is exactly what the criterion forbids.
+    collapsed = [
+        seed for seed, value in stats["acc2_non0"]["per_seed"].items()
+        if value < COLLAPSE_ACC2
+    ]
+    if collapsed:
+        print(f"  ! {len(collapsed)}/{n} seed(s) collapsed to chance "
+              f"(Acc-2 < {COLLAPSE_ACC2}): {', '.join(collapsed)}")
+        print("    The mean and the standard error both reflect those runs. A wide "
+              "spread makes this test weaker, not the model better.")
     if n < REQUIRED_SEEDS:
         print(f"  ! only {n} seeds; the criterion asks for {REQUIRED_SEEDS} "
               f"(seeds 42-51). This verdict is provisional.")
