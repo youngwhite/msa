@@ -46,6 +46,48 @@
 
 ---
 
+## <a id="grad-accumulation"></a>梯度累积：影响 MulT / MISA / Self-MM 三个模型（2026-07-26）
+
+### 现象
+
+Self-MM 的 10 seed 验收**七个指标全部低约 5 SE**。如此均匀的落后不像某个模块实现错误（那通常只打击特定指标），更像训练动力学层面的差异。
+
+### 结论
+
+MMSA 的 `update_epochs` 是**梯度累积**：优化器每 N 个 batch 才 step 一次。三个模型都用：**MulT 8、Self-MM 4、MISA 2**。我们原先每个 batch 都 step，等效批大小与更新次数都不同。
+
+原作者的配置文件里有一行注释直接印证：`# the batch_size of each epoch is update_epochs * batch_size`。
+
+已加入 `TrainConfig.accumulate_steps`。实现细节按 MMSA 的实际行为：窗口内梯度**求和不平均**（平均会改变等效步长），epoch 末尾不足一窗口的梯度**丢弃**。
+
+**教训**：移植时 trainer 的循环结构和模型定义同等重要。核对清单已加入这一项。
+
+---
+
+## <a id="self-mm-features"></a>Self-MM：伪标签的特征空间用错（2026-07-26）
+
+对照**作者自己的实现**（`thuiar/Self-MM`，非 MMSA）发现：伪标签机制里的 `Feature_f/t/a/v` 是**各分支第一层线性 + ReLU 之后**的状态（fusion 128 / text 32 / audio 16 / vision 32 维），不是编码器的原始输出（816 / 768 / 16 / 32 维）。
+
+我原先用的是原始输出。类中心因此落在完全不同且宽得多的空间里，而"到正负类中心的相对距离"正是 Self-MM 生成伪标签的唯一依据——**这是它的核心机制，不是细节**。
+
+修正后单 seed 5 epoch 即达 MAE 0.753 / Acc-2 0.845 / Corr 0.796，而修正前 10 seed 均值为 0.756 / 0.835。
+
+**教训**：只对照 MMSA 不够。MMSA 是二次实现，作者的原始发布才是第一手依据。已把原始仓库的获取方式写进本文件末尾。
+
+---
+
+## <a id="ef-lstm-collapse"></a>EF-LSTM 有 20% 的 seed 训练崩溃，且这让验收判据变松（2026-07-26）
+
+10 个 seed 中 **seed 46 和 48 完全崩溃**：MAE 1.46（≈ 恒定预测）、Acc-2 0.422（= 多数类比例）。其余 8 个正常（MAE 0.95–1.03，Acc-2 0.76–0.80）。
+
+崩溃把标准差从约 0.03 抬到 0.21，SE 随之放大约 7 倍。而验收判据用的是"落后多少个 SE"——**于是不稳定的模型反而更容易通过**。EF-LSTM 因此被判"通过"，但那不是它的优点，是判据的缺陷。
+
+`check_acceptance.py` 现在会点名崩溃的 seed 并写明"宽的离散度让这个检验更弱，而不是让模型更好"。**只报告不剔除**——剔除 seed 正是判据明令禁止的。
+
+**待办**：判据可以补一个稳健性维度（例如同时看中位数，或对崩溃 seed 数设上限）。改动判据要按 `docs/decisions.md` 的模板记一条决策，且**不得在已有结果之后调整以迎合结果**。
+
+---
+
 ## <a id="tfn-acc2"></a>TFN 的 Acc-2 低于 MMSA（2026-07-26）— 已解决
 
 ### 现象
@@ -134,3 +176,28 @@ MMSA 的 LMF 在 `__init__` 中按配置创建 `self.post_fusion_dropout = nn.Dr
 我们最初照配置施加了这个 dropout，代价是 **MAE 从 0.9628 恶化到 0.9906**（10 seed）。现默认 `post_fusion_dropout=0.0`，即对齐 MMSA 的**实际行为**而非其**书面配置**。
 
 **教训**：移植时以 forward 的实际执行路径为准，不能只看配置文件。配置里的键可能是历史遗留。
+
+
+---
+
+## 原论文实现的获取方式
+
+对照 MMSA 不够——它是二次实现。原始发布在这些仓库（scratchpad 里的克隆不随会话保留，需要时重新拉）：
+
+```bash
+for r in declare-lab/MISA thuiar/Self-MM yaohungt/Multimodal-Transformer \
+         Justin1904/Low-rank-Multimodal-Fusion pliang279/MFN; do
+  git clone --depth 1 https://github.com/$r.git
+done
+```
+
+`A2Zadeh/TensorFusionNetwork` 已失效（克隆报 404）。
+
+**已核对并记录的配置分歧**（原作者 vs MMSA，均以 MMSA 为准，因为验收对标的是 MMSA 的表）：
+
+| 模型 | 原作者 | MMSA |
+|---|---|---|
+| Self-MM (MOSI) | bs 32、audio lr 1e-3、video lr 1e-4、LSTM 32/64 | bs 16、均 5e-3、LSTM 16/32 |
+| MISA | diff_weight 0.3、sim_weight 1.0 | 0.1、0.3 |
+
+MISA 的结构与原实现逐项一致（融合层顺序、transformer `nhead=2 / num_layers=1`、`sp_weight` 默认 0 即该损失确实未启用）。

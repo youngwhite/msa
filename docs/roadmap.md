@@ -129,24 +129,38 @@ python scripts/check_acceptance.py --all         # 全部有参照的组
 
 ## 当前进度与下一步
 
-**本节是会话之间的交接点，每完成一件事就更新它。**
+**本节是会话之间的交接点，每完成一件事就更新它。** 最后更新：2026-07-26。
 
-第 1 阶段（复现）进度：
+### 第 1 阶段（复现）进度
 
-| 模型 | 状态 | 备注 |
+全部 11 个模型已实现并注册（`python scripts/train.py --list-models`）。验收状态：
+
+| 模型 | 状态 | 10 seed 结果 / 备注 |
 |---|---|---|
-| LF-LSTM（自建基线） | 完成 | 非复现目标，用于验证链路 |
-| TFN | **完成** | 忠实移植 10 seed 验收通过：MAE +0.5 SE、Acc-7 更优、Acc-2 +1.0 SE |
-| LMF | **完成** | 忠实移植 10 seed 验收通过：MAE +0.1 SE；0.505M 参数 vs TFN 9.50M |
-| MFN | **完成** | 忠实移植 10 seed 通过：Acc-2 +0.3 SE。消融发现喂真实序列反而更差 |
-| Graph-MFN | 未开始 | 同为 aligned 组 |
-| MulT | **进行中** | 已移植，10 seed 验收运行中 |
-| MISA | 未开始 | 表征解耦，含多项辅助损失——会是 `MSAModel.compute_loss` 的第一个真实用例 |
-| Self-MM | 未开始 | 自监督单模态标签，需要 trainer 支持训练中更新标签，可能要扩展契约 |
-| 纯文本微调 BERT（对照组） | 未开始 | 需要 transformers 依赖与 `param_groups` 分层学习率 |
+| EF-LSTM | ✅ 通过（有保留） | MAE 1.0717±0.210；**2/10 seed 崩溃**，宽方差让判据变松，见 investigations |
+| LF-DNN | ✅ 通过 | MAE 0.9600 (+0.5 SE)、Acc-2 0.7858 (+0.2 SE) |
+| TFN | ✅ 通过 | MAE 0.9511 (+0.5 SE)、Acc-7 优于 MMSA |
+| LMF | ✅ 通过 | MAE 0.9513 (+0.1 SE)；0.505M 参数 vs TFN 9.50M |
+| MFN | ✅ 通过 | Acc-2 0.7870 (+0.3 SE)；消融发现喂真实序列反而更差 |
+| Graph-MFN | ⏳ 运行中 8/10 | — |
+| MulT | ⏳ 待重跑 | 需带 `--accumulate-steps 8` 重跑 |
+| MISA | ⏳ 待重跑 | 旧结果 Acc-2 +2.7 SE；需带 `--accumulate-steps 2 --epochs 200` 重跑 |
+| Self-MM | ⏳ 待重跑 | 旧结果全指标 +5.5 SE；**已修正特征空间 bug**，单 seed 5 epoch 即达 MAE 0.753 |
+| 纯文本 BERT（对照） | ✅ 完成 | MAE 0.8018±0.020、Acc-2 0.8258、Acc-7 0.4105 |
+| LF-LSTM（自建基线） | ✅ 完成 | 非复现目标 |
 
-阻塞项与待决：
+### 下一步（按顺序）
 
-- **MOSEI 尚未下载**。路线图定的是主数据集用 MOSEI（MOSI 测试集仅 686 条，判别力不足），第 1 阶段完成前需要补上。
-- **MPS 未在真机验证**。无 Apple Silicon 硬件，需在 Mac 上先跑 `scripts/check_repro.py`。
+1. **等后台批次跑完**（`scripts/reproduce_all.sh` 依次跑 graph_mfn → misa → self_mm → mult → graph_mfn 冻结消融）。日志在 `/tmp/.../scratchpad/final_*.log`，会话结束后可能丢失；直接看 `outputs/<组>/summary.json` 的 seed 数判断进度。
+2. **用 `scripts/verify_runs.py` 检查 provenance**：本次保存时后台仍在跑，那期间产生的运行可能带 `dirty=true`，**必须重跑**。
+3. **`python scripts/check_acceptance.py --all`** 拿到全部判定。
+4. **未达标的模型逐项对照原论文源码**（获取方式见 `docs/investigations.md` 末尾），不要只对照 MMSA。
+5. **出总表**：`python scripts/summary_table.py`，填进 `docs/storyline.md`。
+6. **补齐 storyline 的 8 个章节**（目前 0-3 节已写，4-7 节是待复现时写的占位）。
+
+### 阻塞项与待决
+
+- **MOSEI 尚未下载**。路线图定的是主数据集用 MOSEI（MOSI 测试集仅 686 条，判别力不足）。
+- **MPS 未在真机验证**。无 Apple Silicon 硬件。
 - 配对 bootstrap 检验尚未实现，第 1 阶段验收要用。
+- EF-LSTM 的崩溃 seed 说明判据缺稳健性维度，见 `docs/investigations.md#ef-lstm-collapse`。改判据前先记决策，**不得在已有结果之后调整以迎合结果**。
