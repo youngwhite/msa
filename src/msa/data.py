@@ -155,9 +155,10 @@ def build_dataloaders(
     """
     spec = get_dataset_spec(dataset)
     pin = supports_pin_memory(device) if device is not None else False
-    loaders = {}
+    loaders, datasets = {}, {}
     for split in SPLITS:
         ds = MMSADataset(spec, split, aligned=aligned)
+        datasets[split] = ds
         sampler = None
         if split == "train":
             sampler = RandomSampler(
@@ -174,4 +175,34 @@ def build_dataloaders(
             worker_init_fn=seed_worker if num_workers > 0 else None,
             persistent_workers=num_workers > 0,
         )
+    check_matches_spec(datasets, spec)
     return loaders, spec
+
+
+def check_matches_spec(datasets: dict[str, MMSADataset], spec: DatasetSpec) -> None:
+    """Fail loudly if the feature file is not the dataset the spec describes.
+
+    Models are constructed from `spec`'s dimensions, so a mismatch here would
+    otherwise surface as an obscure shape error inside a model — or not at all,
+    if the shapes happen to line up on different data.
+    """
+    problems = []
+    for split, ds in datasets.items():
+        expected = spec.split_sizes.get(split)
+        if expected is not None and len(ds) != expected:
+            problems.append(f"{split} has {len(ds)} samples, spec says {expected}")
+    dims = next(iter(datasets.values())).feature_dims
+    for modality, declared in (
+        ("text", spec.text_dim), ("audio", spec.audio_dim), ("vision", spec.vision_dim)
+    ):
+        if dims[modality] != declared:
+            problems.append(
+                f"{modality} features are {dims[modality]}-dimensional, spec says {declared}"
+            )
+    if problems:
+        raise ValueError(
+            f"{spec.name} does not match its DatasetSpec:\n  "
+            + "\n  ".join(problems)
+            + f"\nEither the feature files were replaced or {spec.name}'s entry in "
+              "msa/config.py is stale — fix one of them before trusting any result."
+        )

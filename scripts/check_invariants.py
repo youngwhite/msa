@@ -11,13 +11,14 @@ from __future__ import annotations
 
 import argparse
 import sys
+from dataclasses import replace
 
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
 from msa.config import get_dataset_spec
-from msa.data import SPLITS, MMSADataset, load_pickle
+from msa.data import SPLITS, MMSADataset, check_matches_spec, load_pickle
 from msa.metrics import METRIC_KEYS, eval_sentiment
 from msa.models.functional import masked_mean
 from msa.models.lf_lstm import _ModalityEncoder
@@ -84,6 +85,27 @@ def check_padding_conventions(spec) -> None:
             check("[aligned] audio/vision are zero past the text length "
                   "(so one length serves all three modalities)", bad == 0,
                   f"{bad} violations")
+
+
+def check_spec_integrity(spec) -> None:
+    print("\n== dataset matches its spec ==")
+    datasets = {split: MMSADataset(spec, split) for split in SPLITS}
+    try:
+        check_matches_spec(datasets, spec)
+        check("the feature file matches the declared dims and split sizes", True,
+              f"{ {k: len(v) for k, v in datasets.items()} }")
+    except ValueError as exc:
+        check("the feature file matches the declared dims and split sizes", False, str(exc))
+
+    for broken, what in (
+        (replace(spec, text_dim=spec.text_dim + 1), "a wrong feature dimension"),
+        (replace(spec, split_sizes={**spec.split_sizes, "train": 1}), "a wrong split size"),
+    ):
+        try:
+            check_matches_spec(datasets, broken)
+            check(f"{what} is rejected", False, "it was accepted")
+        except ValueError:
+            check(f"{what} is rejected", True)
 
 
 def check_encoder_masking() -> None:
@@ -226,6 +248,7 @@ def main() -> None:
     spec = get_dataset_spec(args.dataset)
     print(f"invariant checks on {spec.name}")
 
+    check_spec_integrity(spec)
     check_label_conventions(spec)
     check_padding_conventions(spec)
     check_encoder_masking()
