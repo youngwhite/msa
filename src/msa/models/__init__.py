@@ -3,6 +3,13 @@
 from .base import MSAModel
 from .lf_lstm import LateFusionLSTM
 from .lmf import LowRankFusion
+from .mfn import MemoryFusionNetwork
 from .tfn import TensorFusionNetwork
 
-__all__ = ["MSAModel", "LateFusionLSTM", "LowRankFusion", "TensorFusionNetwork"]
+__all__ = [
+    "MSAModel",
+    "LateFusionLSTM",
+    "LowRankFusion",
+    "MemoryFusionNetwork",
+    "TensorFusionNetwork",
+]

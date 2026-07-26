@@ -26,8 +26,10 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     mod_tav
     tfn_mosi
     lmf_mosi
+    mfn_mosi
     tfn_mosi_ablation_masked
     lmf_mosi_ablation_masked
+    mfn_mosi_ablation_realseq
     tfn_mosi_mmsaseeds
 )
 
@@ -57,6 +59,13 @@ args_for() {
     # rank 3, hidden [128,16,128]); no clipping and no epoch cap, as MMSA trains.
     lmf_mosi)
         echo "--model lmf --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 0.005 --batch-size 64 --grad-clip 0 --epochs 200 --model-arg use_lengths=False --model-arg mask_pooling=False" ;;
+    # MFN: MMSA hyper-parameters for MOSI (bs 128, lr 2e-3, memsize 400,
+    # hidden [256,32,256]) on ALIGNED data, and with audio/vision collapsed to
+    # their utterance mean the way MMSA's config does it.
+    mfn_mosi)
+        echo "--model mfn --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 2e-3 --weight-decay 0 --batch-size 128 --grad-clip 0 --epochs 200" ;;
+    mfn_mosi_ablation_realseq)
+        echo "--model mfn --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 2e-3 --weight-decay 0 --batch-size 128 --grad-clip 0 --epochs 200 --model-arg collapse_av_to_mean=False" ;;
     # Ablations: our masked/length-aware defaults instead of MMSA's padding
     # behaviour. Kept apart from the acceptance runs so reproduction fidelity and
     # our own changes are never confounded.
