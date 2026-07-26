@@ -9,3 +9,5 @@ __pycache__/
 outputs/**/best.pt
 checkpoints/
 *.egg-info/
+.claude/settings.local.json
+.claude/*.tmp.*
