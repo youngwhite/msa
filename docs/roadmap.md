@@ -138,8 +138,9 @@ python scripts/check_acceptance.py --all         # 全部有参照的组
 | LF-LSTM（自建基线） | 完成 | 非复现目标，用于验证链路 |
 | TFN | **完成** | 忠实移植 10 seed 验收通过：MAE +0.5 SE、Acc-7 更优、Acc-2 +1.0 SE |
 | LMF | **完成** | 忠实移植 10 seed 验收通过：MAE +0.1 SE；0.505M 参数 vs TFN 9.50M |
-| MFN / Graph-MFN | 未开始 | **下一个**。跨时间记忆；注意用 **aligned** 数据，与 TFN/LMF 不同 |
-| MulT | 未开始 | 跨模态注意力，需先移植 transformer encoder 模块，代码量明显大于 TFN |
+| MFN | **完成** | 忠实移植 10 seed 通过：Acc-2 +0.3 SE。消融发现喂真实序列反而更差 |
+| Graph-MFN | 未开始 | 同为 aligned 组 |
+| MulT | **进行中** | 已移植，10 seed 验收运行中 |
 | MISA | 未开始 | 表征解耦，含多项辅助损失——会是 `MSAModel.compute_loss` 的第一个真实用例 |
 | Self-MM | 未开始 | 自监督单模态标签，需要 trainer 支持训练中更新标签，可能要扩展契约 |
 | 纯文本微调 BERT（对照组） | 未开始 | 需要 transformers 依赖与 `param_groups` 分层学习率 |
