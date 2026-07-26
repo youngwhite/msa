@@ -21,37 +21,8 @@ import torch.nn.functional as F
 
 from ..registry import register_model
 from .base import MSAModel
-from .functional import last_valid_state, masked_mean
-
-
-class _SubNet(nn.Module):
-    """BatchNorm -> dropout -> 3 x (linear + ReLU), for the pooled audio/vision vector."""
-
-    def __init__(self, in_size: int, hidden: int, dropout: float) -> None:
-        super().__init__()
-        self.norm = nn.BatchNorm1d(in_size)
-        self.drop = nn.Dropout(p=dropout)
-        self.linear_1 = nn.Linear(in_size, hidden)
-        self.linear_2 = nn.Linear(hidden, hidden)
-        self.linear_3 = nn.Linear(hidden, hidden)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        y = self.drop(self.norm(x))
-        y = F.relu(self.linear_1(y))
-        y = F.relu(self.linear_2(y))
-        return F.relu(self.linear_3(y))
-
-
-class _TextSubNet(nn.Module):
-    def __init__(self, in_size: int, hidden: int, out_size: int, dropout: float) -> None:
-        super().__init__()
-        self.rnn = nn.LSTM(in_size, hidden, num_layers=1, batch_first=True)
-        self.dropout = nn.Dropout(dropout)
-        self.linear_1 = nn.Linear(hidden, out_size)
-
-    def forward(self, x: torch.Tensor, lengths: torch.Tensor | None) -> torch.Tensor:
-        outputs, _ = self.rnn(x)
-        return self.linear_1(self.dropout(last_valid_state(outputs, lengths)))
+from .blocks import SubNet, TextSubNet
+from .functional import masked_mean
 
 
 @register_model("tfn")
@@ -81,9 +52,9 @@ class TensorFusionNetwork(MSAModel):
         self.vision_hidden = vision_hidden
         self.text_out = text_out
 
-        self.audio_subnet = _SubNet(audio_dim, audio_hidden, audio_dropout)
-        self.vision_subnet = _SubNet(vision_dim, vision_hidden, vision_dropout)
-        self.text_subnet = _TextSubNet(text_dim, text_hidden, text_out, text_dropout)
+        self.audio_subnet = SubNet(audio_dim, audio_hidden, audio_dropout)
+        self.vision_subnet = SubNet(vision_dim, vision_hidden, vision_dropout)
+        self.text_subnet = TextSubNet(text_dim, text_hidden, text_out, text_dropout)
 
         fusion_size = (text_out + 1) * (vision_hidden + 1) * (audio_hidden + 1)
         self.post_fusion_dropout = nn.Dropout(p=post_fusion_dropout)

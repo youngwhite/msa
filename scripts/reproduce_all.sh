@@ -25,6 +25,7 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     mod_av
     mod_tav
     tfn_mosi
+    lmf_mosi
     tfn_mosi_mmsaseeds
     tfn_mosi_faithful
 )
@@ -51,6 +52,10 @@ args_for() {
     # Acceptance run: 10 registered seeds, judged by scripts/check_acceptance.py
     tfn_mosi)
         echo "--model tfn --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 0 --grad-clip 0 --epochs 200" ;;
+    # LMF: MMSA hyper-parameters for MOSI (bs 64, lr 1e-3, weight decay 5e-3,
+    # rank 3, hidden [128,16,128]); no clipping and no epoch cap, as MMSA trains.
+    lmf_mosi)
+        echo "--model lmf --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 0.005 --batch-size 64 --grad-clip 0 --epochs 200" ;;
     tfn_mosi_mmsaseeds)
         echo "--model tfn --unaligned --seeds 1111 1112 1113 1114 1115 --device cuda --lr 1e-3 --weight-decay 0" ;;
     tfn_mosi_faithful)
