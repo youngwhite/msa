@@ -78,7 +78,7 @@ args_for() {
     # value, 0.6) and decays its learning rate on plateau (factor 0.1,
     # patience 5); early stopping still uses patience 8.
     mult_mosi)
-        echo "--model mult --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 2e-3 --weight-decay 0.005 --batch-size 16 --grad-clip 0.6 --clip-mode value --lr-schedule plateau --lr-schedule-patience 5 --patience 8 --epochs 200" ;;
+        echo "--model mult --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 2e-3 --weight-decay 0.005 --batch-size 16 --grad-clip 0.6 --clip-mode value --lr-schedule plateau --lr-schedule-patience 5 --patience 8 --epochs 200 --accumulate-steps 8" ;;
     # Text-only fine-tuned BERT: our control group, not a reproduction target —
     # MMSA has no text-only entry. Standard BERT fine-tuning settings (lr 2e-5,
     # head at 10x, bs 16); it converges in a few epochs.
@@ -87,11 +87,11 @@ args_for() {
     # MISA: MMSA hyper-parameters (lr 1e-4, bs 16, hidden 128, clip 0.8 by value,
     # weights diff 0.1 / sim 0.3 / recon 1.0). Fine-tunes BERT.
     misa_mosi)
-        echo "--model misa --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-4 --weight-decay 0 --batch-size 16 --grad-clip 0.8 --clip-mode value --epochs 200 --patience 8" ;;
+        echo "--model misa --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-4 --weight-decay 0 --batch-size 16 --grad-clip 0.8 --clip-mode value --epochs 200 --patience 8 --accumulate-steps 2" ;;
     # Self-MM: MMSA's four learning rates expressed relative to --lr (its
     # "other" rate, 1e-3): BERT at 0.05x, audio/vision at 5x.
     self_mm_mosi)
-        echo "--model self_mm --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 0.001 --batch-size 16 --grad-clip 0 --epochs 200 --patience 8" ;;
+        echo "--model self_mm --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 0.001 --batch-size 16 --grad-clip 0 --epochs 200 --patience 8 --accumulate-steps 4" ;;
     # EF-LSTM / LF-DNN: the two pre-TFN baselines. EF-LSTM needs aligned data
     # (a per-step concatenation requires a shared clock); LF-DNN is unaligned and
     # pools each modality first.

@@ -72,6 +72,8 @@ def build_parser() -> argparse.ArgumentParser:
                     help="ReduceLROnPlateau on the validation selection metric")
     ap.add_argument("--lr-schedule-factor", type=float, default=0.1)
     ap.add_argument("--lr-schedule-patience", type=int, default=5)
+    ap.add_argument("--accumulate-steps", type=int, default=1,
+                    help="optimiser step once per N batches (MMSA's update_epochs)")
     ap.add_argument("--patience", type=int, default=8)
     ap.add_argument("--select-on", default="mae", choices=METRIC_KEYS,
                     help="validation metric used to pick the reported epoch")
@@ -145,6 +147,7 @@ def main() -> None:
             lr_schedule=args.lr_schedule,
             lr_schedule_factor=args.lr_schedule_factor,
             lr_schedule_patience=args.lr_schedule_patience,
+            accumulate_steps=args.accumulate_steps,
             patience=args.patience,
             select_on=args.select_on,
             seed=seed,

@@ -128,12 +128,19 @@ class SelfMM(MSAModel):
         Expressed relative to `lr` (the "other" rate) so one CLI flag scales all
         of them together.
         """
+        # The standard BERT recipe MMSA follows: biases and LayerNorm weights are
+        # exempt from weight decay.
+        no_decay = ("bias", "LayerNorm.weight", "LayerNorm.bias")
+        decayed, plain = [], []
+        for name, param in self.encoder.named_parameters():
+            (plain if any(k in name for k in no_decay) else decayed).append(param)
         encoder = list(self.encoder.parameters())
         av = list(self.audio_model.parameters()) + list(self.vision_model.parameters())
         seen = {id(p) for p in encoder + av}
         rest = [p for p in self.parameters() if id(p) not in seen]
         return [
-            {"params": encoder, "lr": lr * 0.05, "weight_decay": weight_decay},
+            {"params": decayed, "lr": lr * 0.05, "weight_decay": weight_decay},
+            {"params": plain, "lr": lr * 0.05, "weight_decay": 0.0},
             {"params": av, "lr": lr * 5.0, "weight_decay": weight_decay},
             {"params": rest, "lr": lr, "weight_decay": weight_decay},
         ]

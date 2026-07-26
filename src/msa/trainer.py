@@ -45,6 +45,10 @@ class TrainConfig:
     lr_schedule: str = "none"        # "none" | "plateau"
     lr_schedule_factor: float = 0.1
     lr_schedule_patience: int = 5
+    #: Optimiser steps once per this many batches. MMSA calls it `update_epochs`
+    #: and uses it for MulT (8), Self-MM (4) and MISA (2); a partial window at
+    #: the end of an epoch is discarded, as there.
+    accumulate_steps: int = 1
     patience: int = 8
     #: Validation metric used to pick the reported epoch. `mae` reproduces MMSA's
     #: "KeyEval: Loss" for regression, since its criterion is L1.
@@ -68,6 +72,8 @@ class TrainConfig:
             )
         if self.epochs < 1:
             raise ValueError(f"epochs must be >= 1, got {self.epochs}")
+        if self.accumulate_steps < 1:
+            raise ValueError(f"accumulate_steps must be >= 1, got {self.accumulate_steps}")
         if self.patience < 1:
             raise ValueError(f"patience must be >= 1, got {self.patience}")
 
@@ -165,19 +171,24 @@ class Trainer:
         """One pass over the training split; returns the sample-weighted mean loss."""
         self.model.train()
         self.model.on_train_epoch_start(epoch)
+        accumulate = self.cfg.accumulate_steps
         total, seen = 0.0, 0
-        for batch in self.loaders["train"]:
+        for step, batch in enumerate(self.loaders["train"]):
             batch = self._to_device(batch)
-            self.optimizer.zero_grad(set_to_none=True)
+            if step % accumulate == 0:
+                self.optimizer.zero_grad(set_to_none=True)
             outputs = self.model(batch)
             loss = self.model.compute_loss(outputs, batch)
+            # Gradients are summed, not averaged, over the window — what MMSA
+            # does; averaging would change the effective step size.
             loss.backward()
             if self.cfg.grad_clip:
                 if self.cfg.clip_mode == "value":
                     nn.utils.clip_grad_value_(self.model.parameters(), self.cfg.grad_clip)
                 else:
                     nn.utils.clip_grad_norm_(self.model.parameters(), self.cfg.grad_clip)
-            self.optimizer.step()
+            if (step + 1) % accumulate == 0:
+                self.optimizer.step()
             self.model.on_train_batch_end(outputs, batch, epoch)
             n = batch["label"].numel()
             # Weight by batch size: the last batch is usually partial, and a plain
