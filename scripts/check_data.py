@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from msa.config import get_dataset_spec
+from msa.config import get_dataset_spec, verify_files
 from msa.data import SPLITS, MMSADataset, load_pickle
 from msa.device import resolve_device
 from msa.repro import collect_env
@@ -105,12 +105,26 @@ def main() -> None:
     ap.add_argument("--dataset", default="mosi")
     ap.add_argument("--unaligned", action="store_true",
                     help="inspect unaligned_50.pkl instead of aligned_50.pkl")
+    ap.add_argument("--verify-files", action="store_true",
+                    help="also hash the dataset files (~900MB, a few seconds) and "
+                         "compare against the sha256 recorded in the DatasetSpec")
     args = ap.parse_args()
 
     spec = get_dataset_spec(args.dataset)
     aligned = not args.unaligned
     print(f"dataset {spec.name} at {spec.root} "
           f"({'aligned' if aligned else 'unaligned'})")
+
+    if args.verify_files:
+        print("\n== dataset file hashes ==")
+        file_problems = verify_files(spec)
+        for problem in file_problems:
+            print(f"  {problem}")
+        if file_problems:
+            PROBLEMS.append(f"{len(file_problems)} dataset file(s) do not match their "
+                            f"recorded sha256. Source:\n  {spec.source}")
+        else:
+            print(f"  all {len(spec.file_sha256)} files match their recorded sha256")
 
     report_environment()
     report_raw_pickle(spec.aligned_pkl if aligned else spec.unaligned_pkl)

@@ -32,6 +32,12 @@ class DatasetSpec:
     vision_dim: int
     #: Expected number of samples per split, as published for the dataset.
     split_sizes: dict[str, int]
+    #: sha256 of each file, relative to `root`. The features are not in git, so
+    #: this is what tells a fresh machine it downloaded the same data — a
+    #: truncated or re-extracted file would otherwise be silently trained on.
+    file_sha256: dict[str, str]
+    #: Where the files come from, printed when they are missing.
+    source: str
 
 
 def mosi() -> DatasetSpec:
@@ -46,6 +52,20 @@ def mosi() -> DatasetSpec:
         audio_dim=5,    # COVAREP
         vision_dim=20,  # Facet
         split_sizes={"train": 1284, "valid": 229, "test": 686},
+        file_sha256={
+            "Processed/aligned_50.pkl":
+                "d3994fd25681f9c7ad6e9c6596a6fe9b4beb85ff7d478ba978b124139002e5f9",
+            "Processed/unaligned_50.pkl":
+                "78e0f8b5ef8ff71558e7307848fc1fa929ecb078203f565ab22b9daab2e02524",
+            "label.csv":
+                "dec8b0affc5c7c923688040f091dddb61966afc729f54630ef91d3f51624b821",
+        },
+        source=(
+            "MMSA's preprocessed release (THUIAR) — the MOSI folder of\n"
+            "  https://drive.google.com/drive/folders/1A2S4pqCHryGmiqnNSPLv7rEg63WvjCSk\n"
+            "  or https://pan.baidu.com/s/1a1bDX5htPsZjsRyHcvCKHw?pwd=qq0b (code qq0b)\n"
+            "  Text features are BERT-based, not the GloVe ones from the original CMU SDK."
+        ),
     )
 
 
@@ -57,3 +77,30 @@ def get_dataset_spec(name: str) -> DatasetSpec:
     if key not in DATASETS:
         raise KeyError(f"unknown dataset {name!r}, available: {sorted(DATASETS)}")
     return DATASETS[key]()
+
+
+def verify_files(spec: DatasetSpec) -> list[str]:
+    """Check the dataset files against their recorded sha256.
+
+    Returns a list of problems (empty means everything matches). Hashing ~900MB
+    takes a few seconds, so this is called explicitly — by `scripts/setup.sh` on
+    a new machine and by `check_data.py --verify-files` — not on every load.
+    """
+    import hashlib
+
+    problems = []
+    for relative, expected in spec.file_sha256.items():
+        path = spec.root / relative
+        if not path.exists():
+            problems.append(f"missing: {path}")
+            continue
+        digest = hashlib.sha256()
+        with open(path, "rb") as handle:
+            for chunk in iter(lambda: handle.read(1 << 22), b""):
+                digest.update(chunk)
+        actual = digest.hexdigest()
+        if actual != expected:
+            problems.append(
+                f"{path}\n    expected sha256 {expected}\n    actual   sha256 {actual}"
+            )
+    return problems
