@@ -64,25 +64,32 @@ def git_revision() -> dict[str, object]:
 
     A result recorded without this is unauditable: the code it came from cannot
     be recovered. Returns None values outside a git checkout rather than failing.
+
+    `dirty` counts *tracked* modifications only. Untracked files — scratch notes,
+    editor state, an ignored dataset directory — do not change what the committed
+    code does, and counting them would flag every run in a normal working
+    directory, turning the flag into an alarm nobody reads.
     """
     repo = Path(__file__).resolve().parents[2]
-    try:
-        head = subprocess.run(
-            ["git", "-C", str(repo), "rev-parse", "HEAD"],
-            capture_output=True, text=True, timeout=10, check=False,
-        )
-        if head.returncode != 0:
-            return {"commit": None, "dirty": None}
-        status = subprocess.run(
-            ["git", "-C", str(repo), "status", "--porcelain"],
-            capture_output=True, text=True, timeout=10, check=False,
-        )
-        return {
-            "commit": head.stdout.strip(),
-            "dirty": bool(status.stdout.strip()) if status.returncode == 0 else None,
-        }
-    except (OSError, subprocess.SubprocessError):
+
+    def git(*args: str) -> str | None:
+        try:
+            done = subprocess.run(
+                ["git", "-C", str(repo), *args],
+                capture_output=True, text=True, timeout=10, check=False,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return None
+        return done.stdout if done.returncode == 0 else None
+
+    head = git("rev-parse", "HEAD")
+    if head is None:
         return {"commit": None, "dirty": None}
+    status = git("status", "--porcelain", "--untracked-files=no")
+    return {
+        "commit": head.strip(),
+        "dirty": bool(status.strip()) if status is not None else None,
+    }
 
 
 def collect_env(device: torch.device | None = None) -> dict[str, object]:
