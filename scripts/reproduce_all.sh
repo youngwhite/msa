@@ -27,6 +27,7 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     tfn_mosi
     lmf_mosi
     mfn_mosi
+    mult_mosi
     tfn_mosi_ablation_masked
     lmf_mosi_ablation_masked
     mfn_mosi_ablation_realseq
@@ -66,6 +67,11 @@ args_for() {
         echo "--model mfn --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 2e-3 --weight-decay 0 --batch-size 128 --grad-clip 0 --epochs 200" ;;
     mfn_mosi_ablation_realseq)
         echo "--model mfn --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 2e-3 --weight-decay 0 --batch-size 128 --grad-clip 0 --epochs 200 --model-arg collapse_av_to_mean=False" ;;
+    # MulT: MMSA hyper-parameters for MOSI. First model here that clips (by
+    # value, 0.6) and decays its learning rate on plateau (factor 0.1,
+    # patience 5); early stopping still uses patience 8.
+    mult_mosi)
+        echo "--model mult --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 2e-3 --weight-decay 0.005 --batch-size 16 --grad-clip 0.6 --clip-mode value --lr-schedule plateau --lr-schedule-patience 5 --patience 8 --epochs 200" ;;
     # Ablations: our masked/length-aware defaults instead of MMSA's padding
     # behaviour. Kept apart from the acceptance runs so reproduction fidelity and
     # our own changes are never confounded.

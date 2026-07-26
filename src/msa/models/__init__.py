@@ -4,6 +4,7 @@ from .base import MSAModel
 from .lf_lstm import LateFusionLSTM
 from .lmf import LowRankFusion
 from .mfn import MemoryFusionNetwork
+from .mult import MultimodalTransformer
 from .tfn import TensorFusionNetwork
 
 __all__ = [
@@ -11,5 +12,6 @@ __all__ = [
     "LateFusionLSTM",
     "LowRankFusion",
     "MemoryFusionNetwork",
+    "MultimodalTransformer",
     "TensorFusionNetwork",
 ]
