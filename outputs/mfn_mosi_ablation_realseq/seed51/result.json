@@ -232,7 +232,7 @@
       "valid_f1_non0": 0.8015110936921637
     }
   ],
-  "elapsed_sec": 101.79187422432005,
+  "elapsed_sec": 97.20762316789478,
   "env": {
     "python": "3.12.3",
     "platform": "Linux-6.8.0-90-generic-x86_64-with-glibc2.39",
@@ -248,8 +248,8 @@
     "cublas_workspace_config": ":4096:8",
     "deterministic_algorithms": true,
     "git": {
-      "commit": "909e99239bc874c03cb541f9ecbd1cbb547f04b4",
-      "dirty": false
+      "commit": "ee627673061437cd14673d1c8e716aa4088593ed",
+      "dirty": true
     },
     "device": "cuda",
     "device_description": "cuda:0 NVIDIA GeForce RTX 5070 Ti (sm_120)"
