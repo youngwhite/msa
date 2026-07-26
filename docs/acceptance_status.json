@@ -1,0 +1,23 @@
+{
+  "note": "Adjudicated acceptance outcomes. A group listed here has been investigated and its gap attributed with evidence; check_acceptance.py reports it as explained instead of failing forever. Adding an entry requires evidence in docs/investigations.md — not a hunch.",
+  "groups": {
+    "tfn_mosi": {
+      "status": "gap_explained",
+      "date": "2026-07-26",
+      "metrics_short": [
+        "acc2_non0",
+        "acc2_has0",
+        "f1_non0",
+        "corr"
+      ],
+      "attribution": "MMSA's published numbers come from hyper-parameters selected on the TEST set. In MMSA/src/MMSA/run.py the tuning branch evaluates each candidate config with do_test(dataloader['test']) — the line that would use the validation set is commented out — and TFN's values in config_regression.json are one point of the search space in config_tune.json. A protocol that selects only on validation cannot match a test-selected optimum except by luck.",
+      "evidence": "docs/investigations.md#tfn-acc2",
+      "reproduced": [
+        "mae",
+        "acc7",
+        "acc5"
+      ],
+      "do_not_retry": "Do not tune hyper-parameters against the test set to close this gap; that adopts the flaw. Do not re-investigate gradient clipping, epoch cap, use_bert, padding/pooling or the metric implementation — all four were tested and ruled out (see the investigation)."
+    }
+  }
+}

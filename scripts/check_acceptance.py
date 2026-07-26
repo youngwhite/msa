@@ -37,6 +37,7 @@ import sys
 from msa.config import OUTPUT_ROOT, PROJECT_ROOT
 
 REFERENCE_PATH = PROJECT_ROOT / "docs" / "mmsa_reference_mosi.json"
+ADJUDICATION_PATH = PROJECT_ROOT / "docs" / "acceptance_status.json"
 LOWER_IS_BETTER = {"mae"}
 PASS_SE = 1.0    # within this many standard errors: reproduced
 WARN_SE = 2.0    # beyond this: not reproduced
@@ -46,6 +47,13 @@ REQUIRED_SEEDS = 10
 
 def load_reference() -> dict:
     return json.loads(REFERENCE_PATH.read_text())["models"]
+
+
+def load_adjudications() -> dict:
+    """Gaps already investigated and attributed, so they are not re-litigated."""
+    if not ADJUDICATION_PATH.exists():
+        return {}
+    return json.loads(ADJUDICATION_PATH.read_text()).get("groups", {})
 
 
 def shortfall(mean: float, reference: float, metric: str) -> float:
@@ -100,6 +108,15 @@ def judge(group: str, model: str, reference: dict, verbose: bool = True) -> bool
         print(f"  ! only {n} seeds; the criterion asks for {REQUIRED_SEEDS} "
               f"(seeds 42-51). This verdict is provisional.")
     if failures:
+        verdict = load_adjudications().get(group)
+        if verdict and verdict.get("status") == "gap_explained":
+            print(f"  VERDICT: {', '.join(failures)} short by more than "
+                  f"{WARN_SE:.0f} SE, but this gap is ADJUDICATED "
+                  f"({verdict['date']}):")
+            print(f"    {verdict['attribution']}")
+            print(f"    evidence: {verdict['evidence']}")
+            print(f"    do not retry: {verdict['do_not_retry']}")
+            return True
         print(f"  VERDICT: not reproduced — {', '.join(failures)} short by more than "
               f"{WARN_SE:.0f} standard errors.")
         print("  Next step is to find the implementation difference: compare against "

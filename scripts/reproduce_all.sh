@@ -50,7 +50,7 @@ args_for() {
     mod_tav) echo "--model lf_lstm --seeds 42 43 44 --device cuda --model-arg modalities=tav" ;;
     # Acceptance run: 10 registered seeds, judged by scripts/check_acceptance.py
     tfn_mosi)
-        echo "--model tfn --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 0" ;;
+        echo "--model tfn --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 0 --grad-clip 0 --epochs 200" ;;
     tfn_mosi_mmsaseeds)
         echo "--model tfn --unaligned --seeds 1111 1112 1113 1114 1115 --device cuda --lr 1e-3 --weight-decay 0" ;;
     tfn_mosi_faithful)
