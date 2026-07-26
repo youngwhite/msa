@@ -87,11 +87,11 @@ args_for() {
     # MISA: MMSA hyper-parameters (lr 1e-4, bs 16, hidden 128, clip 0.8 by value,
     # weights diff 0.1 / sim 0.3 / recon 1.0). Fine-tunes BERT.
     misa_mosi)
-        echo "--model misa --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-4 --weight-decay 0 --batch-size 16 --grad-clip 0.8 --clip-mode value --epochs 30 --patience 8" ;;
+        echo "--model misa --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-4 --weight-decay 0 --batch-size 16 --grad-clip 0.8 --clip-mode value --epochs 200 --patience 8" ;;
     # Self-MM: MMSA's four learning rates expressed relative to --lr (its
     # "other" rate, 1e-3): BERT at 0.05x, audio/vision at 5x.
     self_mm_mosi)
-        echo "--model self_mm --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 0.001 --batch-size 16 --grad-clip 0 --epochs 30 --patience 8" ;;
+        echo "--model self_mm --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 0.001 --batch-size 16 --grad-clip 0 --epochs 200 --patience 8" ;;
     # EF-LSTM / LF-DNN: the two pre-TFN baselines. EF-LSTM needs aligned data
     # (a per-step concatenation requires a shared clock); LF-DNN is unaligned and
     # pools each modality first.
