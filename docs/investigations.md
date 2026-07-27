@@ -279,6 +279,62 @@ self.shared_or_private_s = self.sp_discriminator((utt_shared_t + utt_shared_v + 
 
 ---
 
+## <a id="mult-weight-decay"></a>MulT：配置里的 weight_decay 从未到达优化器（2026-07-27）
+
+### 现象
+
+MulT 是缺口最大的一个：七项指标全部落后，MAE +10.3 SE（绝对差 0.061）。
+
+### 已排除的假设
+
+| # | 假设 | 如何验证 | 结论 |
+|---|---|---|---|
+| 1 | 超参不同 | 逐项比对 `dst_feature_dim_nheads [50,10]`、nlevels 4、conv1d kernel 5、六个 dropout | **排除**，全部一致 |
+| 2 | 梯度累积语义 | 比对 MMSA 的 `update_epochs` 循环：求和不平均、尾部残余丢弃 | **排除**，行为一致（连其循环外那句死代码的效果都一致） |
+| 3 | mem 网络层数 | MMSA `get_network('l_mem', layers=3)` 实际是 `max(nlevels=4, 3)` = **4 层不是 3 层** | **排除**，我们也是 `max(layers, 3)` |
+| 4 | 缺少位置编码 | MMSA 同样没有（见 `#mult-position`），却报出 0.8799 | **排除**。那是"偏离论文"，不解释"偏离 MMSA" |
+| 5 | 我们用 `nn.MultiheadAttention` 换掉了 MMSA 手写的注意力 | **数值等价测试**：两边权重对拷、同输入比对输出 | **排除**。self-attention 与 cross-modal 的最大差异均为 **4.8e-7**（float32 噪声） |
+| 6 | 欠拟合 / 早停过早 | 看训练轨迹：train loss 1.73→0.47，valid MAE 1.41→0.92，45 轮后早停 | **排除**，模型在正常收敛 |
+| 7 | **weight_decay** | 见下 | **真差异** |
+
+### 结论
+
+`MMSA/src/MMSA/trains/singleTask/MULT.py:21`：
+
+```python
+optimizer = optim.Adam(model.parameters(), lr=self.args.learning_rate)
+```
+
+**没有 `weight_decay` 参数。** 而 `config_regression.json` 的 mult/mosi 写着 `"weight_decay": 0.005`——该键被读进 `args`，但 trainer 从不使用它。**MMSA 的 MulT 实际以 weight_decay=0 训练**，我们按配置用了 0.005，等于施加了一份对方从不施加的 L2 正则。
+
+### 这是"声明但不生效"的第四种形态
+
+| 实例 | 形态 |
+|---|---|
+| LMF post_fusion_dropout | 创建了，forward 不调用 |
+| MMSA data_loader `__truncate` | 整个函数是死代码 |
+| MISA sp_discriminator | forward 调用了，但输出不进损失 |
+| **MulT weight_decay** | **配置键读进了 args，trainer 不传给优化器** |
+
+### 只有 MulT 被咬到
+
+逐个核对全部 trainer 的优化器构造，与配置里的 weight_decay 交叉比对：
+
+| 模型 | 配置声明 | trainer 传递？ | 是否受影响 |
+|---|---|---|---|
+| EF-LSTM / LF-DNN / MFN / Graph-MFN / LMF | 0.005–0.01 | ✅ | 否 |
+| MISA | 0.0 | ❌ | 否（本来就是 0） |
+| TFN | 未声明 | ❌ | 否（我们也用 0） |
+| **MulT** | **0.005** | ❌ | **是** |
+
+### 处理
+
+`reproduce_all.sh` 的 `mult_mosi` 改为 `--weight-decay 0`。**这个修正独立于它能否缩小差距**——对齐参照实现的实际行为而非书面配置，是 LMF dropout 那次已确立的原则。改动先提交、再跑完整 10 seed，不做"先试探再决定"，以免把诊断和结果混为一谈。
+
+**待验证**：重跑后缺口是否收敛。若仍未复现，第 7 项也要移进"已排除"，继续查。
+
+---
+
 ## <a id="provenance-timing"></a>result.json 记录的 commit 可能是从未执行过的代码（2026-07-27）
 
 ### 现象

@@ -77,8 +77,11 @@ args_for() {
     # MulT: MMSA hyper-parameters for MOSI. First model here that clips (by
     # value, 0.6) and decays its learning rate on plateau (factor 0.1,
     # patience 5); early stopping still uses patience 8.
+    # weight-decay 0, not the 0.005 in MMSA's config: its MulT trainer builds
+    # Adam without the weight_decay argument, so the configured value never
+    # reaches the optimiser. We match the behaviour, not the config file.
     mult_mosi)
-        echo "--model mult --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 2e-3 --weight-decay 0.005 --batch-size 16 --grad-clip 0.6 --clip-mode value --lr-schedule plateau --lr-schedule-patience 5 --patience 8 --epochs 200 --accumulate-steps 8" ;;
+        echo "--model mult --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 2e-3 --weight-decay 0 --batch-size 16 --grad-clip 0.6 --clip-mode value --lr-schedule plateau --lr-schedule-patience 5 --patience 8 --epochs 200 --accumulate-steps 8" ;;
     # Text-only fine-tuned BERT: our control group, not a reproduction target —
     # MMSA has no text-only entry. Standard BERT fine-tuning settings (lr 2e-5,
     # head at 10x, bs 16); it converges in a few epochs.
