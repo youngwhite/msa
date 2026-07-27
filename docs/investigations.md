@@ -331,7 +331,67 @@ optimizer = optim.Adam(model.parameters(), lr=self.args.learning_rate)
 
 `reproduce_all.sh` 的 `mult_mosi` 改为 `--weight-decay 0`。**这个修正独立于它能否缩小差距**——对齐参照实现的实际行为而非书面配置，是 LMF dropout 那次已确立的原则。改动先提交、再跑完整 10 seed，不做"先试探再决定"，以免把诊断和结果混为一谈。
 
-**待验证**：重跑后缺口是否收敛。若仍未复现，第 7 项也要移进"已排除"，继续查。
+### 重跑结果：确认是主因，但不是全部
+
+10 seed，`--weight-decay 0`：
+
+| 指标 | 修正前 | 修正后 | MMSA | SE 倍数 |
+|---|---|---|---|---|
+| MAE ↓ | 0.9406 | **0.9037** | 0.8799 | +10.3 → **+4.4** |
+| Acc-2(non0) | 0.7979 | **0.8079** | 0.8098 | +5.4 → **+0.6 ✅** |
+| Acc-2(has0) | 0.7841 | 0.7936 | 0.7971 | +7.4 → +1.8 |
+| Acc-7 | 0.3485 | 0.3631 | 0.3691 | +6.6 → +1.1 |
+| Acc-5 | 0.4045 | 0.4185 | 0.4268 | +7.8 → +1.2 |
+| Corr | 0.6750 | 0.6904 | 0.7022 | +9.2 → **+5.2** |
+
+**判定仍是未复现**（MAE 是主指标，+4.4 SE 超过门槛），但四个分类类指标已基本对齐。残差集中在 MAE 与 Corr，见下一条。
+
+---
+
+## <a id="mult-out-proj-init"></a>MulT：`nn.MultiheadAttention` 的 out_proj 初始化比参照实现窄 1.73 倍（2026-07-27）
+
+### 怎么找到的
+
+修掉 weight_decay 后 MulT 仍差 MAE +4.4 SE / Corr +5.2 SE。先验证了"预测被压向均值"的假设——**不成立**：
+
+| 组 | pred std / true std | 回归斜率 |
+|---|---|---|
+| mult | 0.883 | 0.779 |
+| self_mm | 0.899 | 0.881 |
+| misa | 0.863 | 0.897 |
+| tfn | 0.794 | 0.829 |
+
+MulT 的预测离散度在各模型里偏高而非偏低，斜率低是相关性低的**结果**（slope = corr × σ_y/σ_p），不是输出标定问题。模型整体精度略低。
+
+### 结论
+
+我们用 `nn.MultiheadAttention` 替换了 MMSA 手写的注意力，并有 `scripts/check_mult_encoder.py` 证明前向数值等价（差异 4.8e-7）。**但那个测试是把权重对拷之后比对的——它验证前向计算，验证不了初始化。**
+
+fairseq/MMSA 的 `reset_parameters`（`multihead_attention.py:39-44`）：
+
+```python
+nn.init.xavier_uniform_(self.in_proj_weight)
+nn.init.xavier_uniform_(self.out_proj.weight)     # <- 这一行
+```
+
+PyTorch 的 `nn.MultiheadAttention._reset_parameters` 只 xavier 了 `in_proj_weight`，**`out_proj.weight` 保留 `nn.Linear` 默认的 `kaiming_uniform_(a=√5)`**。实测（embed_dim=50）：
+
+| | 界 | std |
+|---|---|---|
+| MMSA (xavier_uniform) | 0.2449 | 0.1429 |
+| 我们 (kaiming 默认) | 0.1414 | 0.0818 |
+
+**窄 1.732 倍**，即 `sqrt((50+50)/(6·50/…))` 的比值。`in_proj_weight` 两边一致，只有 out_proj 不同。MulT 有 6 个跨模态 encoder + 3 个 self-attention 栈、每个 4 层，out_proj 的尺度直接决定残差分支初始的贡献大小。
+
+### 影响范围
+
+只有 MulT。`src/msa/models/transformers.py` 仅被 `mult.py` 使用；MISA 两边都用 `nn.TransformerEncoderLayer`，默认初始化相同。
+
+### 教训
+
+**等价测试要覆盖它声称覆盖的全部内容。** 我们的 docstring 写的是"数学相同，参数初始化细节有别"——初始化差异是被**写下来了的**，却没人评估它的量级，于是它以"已知无害"的身份存活了下来。写下一个差异不等于排除了它。
+
+**待验证**：修正初始化后重跑，MAE 与 Corr 的残差是否收敛。
 
 ---
 
@@ -396,7 +456,19 @@ optimizer = optim.Adam(model.parameters(), lr=self.args.learning_rate)
 2. 选模型的 Loss 口径：MMSA 按 batch 平均（末批不满被过度加权），我们按样本加权
 3. MMSA 表未声明 seed 集合（其默认为 1111-1115），我们用 42-51
 
-**可做的检验**：`tfn_mosi_mmsaseeds`（seeds 1111-1115）已有数据，可先算 seed 集合的贡献。
+**已排除：seed 集合（2026-07-27）。** `tfn_mosi_mmsaseeds` 用 MMSA 默认的 1111-1115 跑 TFN，与我们注册的 42-51 对比：
+
+| seed 集合 | MAE | Acc-2(non0) | Acc-7 |
+|---|---|---|---|
+| 42-51（我们） | 0.9511 | 0.7855 | 0.3528 |
+| 1111-1115（MMSA 默认） | 0.9542 | 0.7848 | 0.3557 |
+| MMSA 报告 | 0.9473 | 0.7908 | 0.3446 |
+
+换用 MMSA 自己的 seed，我们的 MAE 与 Acc-2 **反而更差**。方向与假设相反，**排除**。
+
+**剩余候选**：MMSA 按测试集挑超参（`#mmsa-test-selection`）、选模型 Loss 的 batch 平均 vs 样本加权。前者需要自做一次同规模超参搜索才能量化，是当前最大的未验证项。
+
+**注意**：这个偏置的一部分正在被逐个消解——MulT 的 `weight_decay`（`#mult-weight-decay`）与 out_proj 初始化（`#mult-out-proj-init`）都是我们这边的真实错误。**在逐模型的排查穷尽之前，不应把残差归因于 MMSA。** 这是 `#tfn-retraction` 那条教训的直接应用。
 
 **待办**：给验收补一个跨模型的聚合统计量。单模型判据看不见的东西，需要一个总体检验来兜底。改判据前按 `docs/decisions.md` 的模板记决策，**且不得在已有结果之后调整以迎合结果**。
 

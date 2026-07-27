@@ -46,6 +46,13 @@ class _EncoderLayer(nn.Module):
     ) -> None:
         super().__init__()
         self.attention = nn.MultiheadAttention(embed_dim, num_heads, dropout=attn_dropout)
+        # PyTorch xavier-initialises in_proj_weight (matching the reference) but
+        # leaves out_proj.weight at nn.Linear's kaiming_uniform(a=sqrt(5)) — a
+        # bound 1.73x narrower than the reference's xavier_uniform. The forward
+        # pass is identical either way, so the weight-copy equivalence test in
+        # scripts/check_mult_encoder.py cannot see this; only the starting point
+        # differs, and on a stack this deep that is not a detail.
+        nn.init.xavier_uniform_(self.attention.out_proj.weight)
         self.attn_mask = attn_mask
         self.relu_dropout = relu_dropout
         self.res_dropout = res_dropout
