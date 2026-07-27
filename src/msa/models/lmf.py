@@ -15,19 +15,27 @@ MMSA builds the optimiser as
     Adam([{"params": list(model.parameters())[:3], "lr": factor_lr},
           {"params": list(model.parameters())[5:], "lr": learning_rate}], ...)
 
-Positional slicing of `parameters()` does not select the fusion factors — the
-first three entries are the audio SubNet's BatchNorm weight, its bias, and
-linear_1's weight — and indices 3 and 4 (linear_1.bias, linear_2.weight) land in
-no group at all, so they stay at their initial values for the whole run. On MOSI
-`factor_lr == learning_rate`, so the only real effect is those two frozen
-tensors. We train every parameter and give the factors `factor_lr` through
-`param_groups`, which is what the code was evidently trying to express.
-`freeze_mmsa_quirk=True` restores the original behaviour for comparison.
+`parameters()` yields a module's own `nn.Parameter`s before it recurses into
+submodules, so indices 0-2 really are the three fusion factors and the slicing
+gets that part right. What it drops is indices 3 and 4 — `fusion_weights` and
+`fusion_bias` — which land in no group and keep their initial values for the
+whole run. That is the more damaging pair: `fusion_weights` is the (1, rank)
+vector that combines the rank components, and `fusion_bias` starts at zero while
+MOSI's labels do not have zero mean, so the head cannot learn an offset.
 
-A second discrepancy, also corrected towards MMSA: its config assigns 0.3 to a
-`post_fusion_dropout` slot, but LMF's forward never applies that layer — it is
-declared and forgotten. Applying it costs ~0.04 MAE, so our default is 0.0,
-i.e. MMSA's actual behaviour rather than its stated configuration.
+The authors' release slices `[:3]` / `[3:]` — contiguous, every parameter
+covered. MMSA introduced the gap when it changed `[3:]` to `[5:]`. We train every
+parameter and give the factors `factor_lr` through `param_groups`, which is both
+what MMSA was evidently trying to express and what the original does.
+`freeze_mmsa_quirk=True` restores MMSA's behaviour for comparison (MAE 0.9806 vs
+0.9628 over 10 seeds).
+
+A second discrepancy: the config assigns 0.3 to a `post_fusion_dropout` slot, but
+forward never applies that layer — declared and forgotten. This one is *not*
+MMSA's doing; the authors' `model.py` has the identical omission and MMSA
+inherited it. Applying the dropout costs ~0.04 MAE, so our default is 0.0, i.e.
+the behaviour both implementations actually have rather than the one their
+configs state.
 """
 
 from __future__ import annotations

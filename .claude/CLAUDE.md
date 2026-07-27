@@ -21,7 +21,7 @@
 2. **模型选择只看验证集**，测试集在选完之后只碰一次。
 3. **进入文档的数字必须来自干净工作树**（`result.json` 里 `env.git.dirty == false`）。在后台批量跑实验时**不要改代码**——改了就得重跑。这个坑本项目已经踩过三次。
 4. **改动 `msa/data.py`、`msa/metrics.py` 或任何模型后，先跑 `scripts/check_invariants.py`**（退出码非零即回归）。
-5. **移植模型时必须同时对照 MMSA 与原论文的开源实现。** MMSA 是二次实现，已发现它与原作者配置不一致、以及自身的多处 bug。原始仓库获取方式见 `docs/investigations.md` 末尾。移植核对清单（每项都在实际模型上命中过）：梯度裁剪方式、轮数上限、**梯度累积 `update_epochs`**、padding/池化、optimizer 参数分组、配置声明但 forward 未调用的层、`use_bert`、aligned/unaligned。
+5. **移植模型时必须同时对照 MMSA 与原论文的开源实现。** MMSA 是二次实现，已发现它与原作者配置不一致、以及自身的多处 bug。**只对照 MMSA 会忠实复现它偏离论文的地方**——MulT 的位置编码就是这样丢的（MMSA 默认关闭，原作者始终启用，我们照抄了）。完整的九项核对清单与原始仓库获取方式见 `docs/investigations.md#protocol-faithful`。最常踩的：梯度裁剪、轮数上限、**梯度累积 `update_epochs`**、padding/池化、optimizer 的位置切片分组、**声明了但不生效的层（三种形态）**、参照实现是否关掉了论文里的结构件、`use_bert`、aligned/unaligned。发现参照实现有 bug 时**必须回原作者确认是继承的还是二次实现引入的**——两者处理方式相反。
 6. **重构以预测哈希验收。** LF-LSTM 默认路径的哈希是 `172967c7dced83b2`，贯穿多次重构未变。若某次重构改变了它，要么是引入了 bug，要么必须解释清楚为什么该变。
 
 ## 常用命令

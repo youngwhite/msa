@@ -39,10 +39,18 @@
 
 1. **梯度裁剪**——MMSA 的 trainer 一律不裁剪
 2. **轮数上限**——MMSA 用 `while True` + patience，无上限
-3. **padding / 池化行为**——用 `use_lengths=False, mask_pooling=False` 对齐
-4. **optimizer 的参数分组**——MMSA 多处用 `list(model.parameters())[a:b]` 按位置切片，极易切错（见下方 LMF 条目）
-5. `use_bert` 取值、数据是 aligned 还是 unaligned
-6. 配置里声明但 forward 从未使用的层（见下方 LMF 条目）
+3. **梯度累积 `update_epochs`**——MulT 8 / Self-MM 4 / MISA 2（见 `#grad-accumulation`）
+4. **padding / 池化行为**——用 `use_lengths=False, mask_pooling=False` 对齐
+5. **optimizer 的参数分组**——MMSA 多处用 `list(model.parameters())[a:b]` 按位置切片，极易切错（见 `#lmf-optimizer`）
+6. `use_bert` 取值、数据是 aligned 还是 unaligned
+7. **声明了但不生效的东西**，三种形态都要查（见 `#misa-sp-weight`）：
+   - 创建了但 forward 不调用（LMF 的 post_fusion_dropout）
+   - 整个函数是死代码（MMSA data_loader 的 `__truncate`）
+   - **forward 调用了，但输出不进损失**（MISA 的 sp_discriminator）——最难发现，必须追踪输出去向
+8. **参照实现是否关掉了论文里的结构件**——MMSA 给 MulT 的位置编码加了默认关闭的开关（见 `#mult-position`）。查法：把原作者的 `__init__` 与 MMSA 的逐行对读，重点看新增的布尔开关及其默认值
+9. **发现参照实现有 bug 时，回原作者确认是继承的还是二次实现引入的**——两者处理方式相反（见 `#lmf-optimizer-correction`）
+
+第 1-6 项都在实际模型上命中过真差异；第 7-9 项来自 2026-07-27 回头核对原作者实现的那一轮。
 
 ---
 
@@ -167,6 +175,33 @@ MOSI 上 `factor_lr == learning_rate`，所以两组学习率其实相同，唯�
 
 **同类风险**：TFN 的 trainer 用 `list(model.parameters())[2:]` 跳过两个 `requires_grad=False` 的 Parameter。那里恰好是对的，但同样脆弱——构造顺序一变就会静默丢参数。我们用 buffer 存常量，从根上避免。
 
+### <a id="lmf-optimizer-correction"></a>修正（2026-07-27）：被冻结的是哪两个参数，原文写错了
+
+**曾经的说法**：`[:3]` 取到的是 audio_subnet 的 BatchNorm weight/bias 和 linear_1.weight，不是 factor；落在缺口里的是 `linear_1.bias` 与 `linear_2.weight`。
+
+**这两句都是错的。** 实测参数顺序（`named_parameters()` 先产出模块自身的 `nn.Parameter`，再递归子模块）：
+
+```
+[0] audio_factor   [1] vision_factor   [2] text_factor
+[3] fusion_weights [4] fusion_bias
+[5] audio_subnet.norm.weight ...
+```
+
+所以 `[:3]` **正确**选中了三个 factor，落进缺口的是 **`fusion_weights` 和 `fusion_bias`**。"27 个参数覆盖 25 个"这个计数不变，错的只是那两个的身份。
+
+**更正后问题变严重了**，不是变轻：被冻结的是把 rank 个分量线性组合起来的 (1, rank) 向量，以及输出偏置——而 `fusion_bias` 初始化为 **0**。MOSI 的训练标签均值非零，把回归输出的偏置永久钉死在 0 是实质性损伤，远不止"两个随机线性权重没训练"。这也更好地解释了实测的 MAE 0.9806 vs 0.9628。
+
+**并且这个 bug 是 MMSA 独有的。** 原作者 `train_mosi.py:106-107` 写的是：
+
+```python
+factors = list(model.parameters())[:3]
+other   = list(model.parameters())[3:]      # 注意是 3，不是 5
+```
+
+**连续切片、无缺口、全覆盖**，且在原作者的参数顺序下 `[:3]` 恰好就是三个 factor——原作者的写法虽然脆弱但是对的。MMSA 把 `[3:]` 改成 `[5:]` 时引入了缺口。
+
+**教训（新增一条，与既有的不同）**：发现参照实现有 bug 时，**必须回原作者确认这个 bug 是继承来的还是二次实现引入的**。两者的处理完全不同——继承来的 bug 可能是原始方法的一部分（见下条 dropout），二次实现引入的则应当修正。我们此前把两类混为一谈。
+
 ---
 
 ## <a id="lmf-dropout"></a>LMF：配置声明了 post-fusion dropout，forward 里从未调用（2026-07-26）
@@ -177,6 +212,147 @@ MMSA 的 LMF 在 `__init__` 中按配置创建 `self.post_fusion_dropout = nn.Dr
 
 **教训**：移植时以 forward 的实际执行路径为准，不能只看配置文件。配置里的键可能是历史遗留。
 
+### <a id="lmf-dropout-correction"></a>修正（2026-07-27）：这个 bug 是从原作者继承的，不是 MMSA 的
+
+原文把它记成"MMSA 的 LMF"。查原作者发布版（`Justin1904/Low-rank-Multimodal-Fusion`，`model.py:120`）：
+
+```python
+self.post_fusion_dropout = nn.Dropout(p=self.post_fusion_prob)   # 创建
+```
+
+而 `forward`（135-170 行）里**同样一次都没有调用它**。MMSA 只是原样继承。
+
+数值结论不变（我们默认 0.0 仍然正确），但归因必须改：这不是二次实现的失误，而是**原始发布就有的**。与上一条 optimizer 切片形成对照——同一个模型上，一个 bug 是继承的、一个是 MMSA 引入的，处理方式应当不同。
+
+
+---
+
+## <a id="mult-position"></a>MulT：MMSA 关掉了位置编码，我们跟着关了（2026-07-27）
+
+原作者 `yaohungt/Multimodal-Transformer`，`modules/transformer.py:30`——**无条件**创建：
+
+```python
+self.embed_positions = SinusoidalPositionalEmbedding(embed_dim)
+```
+
+MMSA 的同一文件加了开关，默认关闭：
+
+```python
+def __init__(self, ..., position_embedding=False):
+    if position_embedding: self.embed_positions = SinusoidalPositionalEmbedding(embed_dim)
+    else:                  self.embed_positions = None
+```
+
+全仓库 grep `position_embedding=True` 只有 `missingTask/TFR_NET/alignment.py` 传过，**MulT 一次都没有**。
+
+**后果**：MMSA 的 MulT 跑在一个没有任何位置信息的 transformer 上。注意力对输入顺序完全置换不变，模型看到的是三袋无序的帧。我们的移植照抄了 MMSA，所以**当前 `outputs/mult_mosi` 里那个东西不是论文里的 MulT**。
+
+这是"忠实复现二次实现 = 忠实复现它偏离论文的地方"的最清晰案例，也是本轮回头核对原作者代码的直接收获。
+
+**处理方式**（按 LMF 冻结 quirk 的既有模式）：加开关，两个版本都跑。`忠实 MMSA` 版用于验收对标（同协议才可比），`忠实论文` 版用于 storyline 的技术演进叙事。**不要用后者去和 MMSA 的表比**——那会重演 `#protocol-faithful` 那条教训。
+
+---
+
+## <a id="misa-sp-weight"></a>MISA：`sp_weight` 声明为 1.0，但那项损失从未进入损失函数（2026-07-27）
+
+`config_regression.json` 里 MISA/MOSI 有 `"sp_weight": 1.0`。模型也确实构造了 `sp_discriminator`，并且**在 forward 里被调用**（`models/singleTask/MISA.py:228-231`）：
+
+```python
+self.shared_or_private_p_t = self.sp_discriminator(self.utt_private_t)
+...
+self.shared_or_private_s = self.sp_discriminator((utt_shared_t + utt_shared_v + utt_shared_a)/3.0)
+```
+
+但 `sp_weight` 在 trainer 与模型里 grep **零命中**——这四个输出算完即丢弃。该层拿不到梯度，是一个永不训练的死层。
+
+**这是"声明但不生效"模式的第三个实例，而且形态升级了**：
+
+| 实例 | 形态 |
+|---|---|
+| LMF post_fusion_dropout | 创建了，forward 不调用 |
+| MMSA data_loader `__truncate` | 整个函数是死代码 |
+| **MISA sp_discriminator** | **forward 调用了，但输出不进损失** |
+
+第三种最难发现：grep 层名会命中，看 forward 也在跑，只有追踪"输出去了哪里"才能识破。
+
+**对我们的影响：无数值差异。** 我们不实现该层也不实现该损失，与 MMSA 的实际行为一致（无梯度的参数在 Adam 与 `clip_grad_value_` 下都被跳过）。记录在此仅为供后来者省一次排查。
+
+---
+
+## <a id="provenance-timing"></a>result.json 记录的 commit 可能是从未执行过的代码（2026-07-27）
+
+### 现象
+
+`graph_mfn_mosi` 的 10 个 seed 记录了**三个不同的 commit**（`4a8268e` / `e669d22` / `5c299a0`），其中 `misa_mosi/seed47` 还记着 `dirty=true`。
+
+### 成因
+
+`repro.py` 的 `git_revision()` 由 `collect_env()` 在**每个 seed 落盘时**调用。而真正被执行的代码，是**进程启动那一刻载入内存的那份**。时间线：
+
+| 时刻 | 事件 |
+|---|---|
+| 14:21:52 | 提交 `4a8268e` |
+| 14:26:23 | 训练进程启动，载入 `4a8268e` 的代码 |
+| 14:41:41 | seed42 落盘 → 记 `4a8268e` ✅ |
+| 14:45:23 | 提交 `e669d22`（进程仍在跑） |
+| 14:52:01 | seed43 落盘 → 记 `e669d22` ❌ 但跑的仍是 `4a8268e` |
+| 16:54:56 | 提交 `5c299a0` |
+| 16:55:19 | seed49 落盘 → 记 `5c299a0` ❌ |
+
+**10 个 seed 执行的都是 `4a8268e`，但只有 1 个记对了。**
+
+### 为什么这条最严重
+
+本项目的核心主张是"每个数字都能追溯到产生它的代码"。`result.json` 写着 `commit X, dirty=false` 本应意味着 checkout X 就能拿回那份代码——现在它不保证，而 `verify_runs.py` 信任这个字段，查不出来。
+
+### 本次的具体判定
+
+`graph_mfn_mosi` 这组**结果有效**：`git diff --stat 4a8268e 5c299a0 -- <graph_mfn 的全部依赖文件>` 为空（那三次提交只动了 `self_mm.py`、`check_acceptance.py` 和文档），执行的代码路径逐比特相同。这是运气好，不是流程对。
+
+### 修复方向
+
+进程启动时采集一次 git 状态并缓存，作为 `env.git` 的权威值；落盘时再采一次，**两者不一致则额外记录**，由 `verify_runs.py` 报警。这样 CLAUDE.md 第 3 条"后台跑实验时不要改代码"就从一条自觉约定变成了机器可检测的条件。
+
+**附带隐患**：`num_workers>0` 且 spawn 启动时，worker 进程会**重新 import** 一次 msa。若运行期间磁盘上的代码变了，worker 与主进程可能执行不同版本。本项目默认 `num_workers=0`，暂不受影响，但换配置前要想到这一点。
+
+---
+
+## <a id="systematic-bias"></a>逐模型判据看不见的系统性偏置（2026-07-27）
+
+把配置已核实的六组（ef_lstm / graph_mfn / lf_dnn / lmf / mfn / tfn）对 MMSA 的偏差按 SE 列出（正 = 比 MMSA 差）：
+
+| 组 | MAE | Acc-2(non0) |
+|---|---|---|
+| ef_lstm | +1.9 | +1.6 |
+| graph_mfn | +0.3 | **−0.6** |
+| lf_dnn | +0.5 | +0.2 |
+| lmf | +0.1 | +1.6 |
+| mfn | +1.3 | +0.3 |
+| tfn | +0.5 | +1.0 |
+
+**11/12 项偏差。** 若差距纯属复现噪声、方向应各半，出现 11/12 或更极端的概率约 **3×10⁻³**（符号检验）。
+
+**问题在判据本身**：每个模型各差 0.5–1.5 SE，逐个都落在"通过"或"通过但标记"区间，聚合起来却是一个 p≈0.003 的系统性信号。**逐模型的验收判据在结构上无法看见它。**
+
+候选成因（均未证实，不得当结论引用）：
+
+1. MMSA 按测试集挑超参（见 `#mmsa-test-selection`）——会在所有模型上产生一致的乐观偏差，与观察到的形态吻合
+2. 选模型的 Loss 口径：MMSA 按 batch 平均（末批不满被过度加权），我们按样本加权
+3. MMSA 表未声明 seed 集合（其默认为 1111-1115），我们用 42-51
+
+**可做的检验**：`tfn_mosi_mmsaseeds`（seeds 1111-1115）已有数据，可先算 seed 集合的贡献。
+
+**待办**：给验收补一个跨模型的聚合统计量。单模型判据看不见的东西，需要一个总体检验来兜底。改判据前按 `docs/decisions.md` 的模板记决策，**且不得在已有结果之后调整以迎合结果**。
+
+---
+
+## <a id="reproduce-all-prefix"></a>reproduce_all.sh 的组名按前缀匹配，会连带跑起没点名的组（2026-07-27）
+
+`bash scripts/reproduce_all.sh graph_mfn_mosi` 预期只跑该组，实际把 `graph_mfn_mosi_ablation_frozen` 也跑了（组名以参数为前缀）。该消融跑到 seed48 时进程死亡，留下 7/10 的残缺目录。
+
+**后果**：以为在跑一件事，实际在跑两件；GPU 被占用的时间是预期的两倍，且残缺组会被误当成完整结果。
+
+**规避**：点名单组时用精确匹配。在此之前，跑完要核对 `outputs/` 下新增了哪些目录，别只看点名的那个。
 
 ---
 
@@ -191,13 +367,24 @@ for r in declare-lab/MISA thuiar/Self-MM yaohungt/Multimodal-Transformer \
 done
 ```
 
-`A2Zadeh/TensorFusionNetwork` 已失效（克隆报 404）。
+**取不到原始出处的**（2026-07-27 复核）：
 
-**已核对并记录的配置分歧**（原作者 vs MMSA，均以 MMSA 为准，因为验收对标的是 MMSA 的表）：
+| 模型 | 情况 |
+|---|---|
+| TFN | `A2Zadeh/TensorFusionNetwork` 克隆报 404。`Justin1904/TensorFusionNetworks` 可克隆，但作者是 LMF 的一作、**属二次实现**，证据等级与 MMSA 相同，不能当原始出处用 |
+| Graph-MFN | 出处在 `A2Zadeh/CMU-MultimodalSDK`，克隆要求认证，未取到 |
+| EF-LSTM / LF-DNN | **本就没有原始出处**——它们是 MMSA 自定义的基线，不对应任何论文。这两个模型的"原论文核对"不适用，不是遗漏 |
 
-| 模型 | 原作者 | MMSA |
-|---|---|---|
-| Self-MM (MOSI) | bs 32、audio lr 1e-3、video lr 1e-4、LSTM 32/64 | bs 16、均 5e-3、LSTM 16/32 |
-| MISA | diff_weight 0.3、sim_weight 1.0 | 0.1、0.3 |
+**已核对并记录的分歧**（原作者 vs MMSA，验收一律以 MMSA 为准，因为对标的是 MMSA 的表）：
 
-MISA 的结构与原实现逐项一致（融合层顺序、transformer `nhead=2 / num_layers=1`、`sp_weight` 默认 0 即该损失确实未启用）。
+| 模型 | 原作者 | MMSA | 性质 |
+|---|---|---|---|
+| Self-MM (MOSI) | bs 32、audio lr 1e-3、video lr 1e-4、LSTM 32/64 | bs 16、均 5e-3、LSTM 16/32 | 超参分歧 |
+| MISA | diff_weight 0.3、sim_weight 1.0 | 0.1、0.3 | 超参分歧 |
+| **MulT** | 位置编码**始终启用** | 默认关闭且从未开启 | **结构性偏离**，见 `#mult-position` |
+| **LMF** | `[:3]`/`[3:]` 连续切片，全覆盖 | `[:3]`/`[5:]`，两个参数从不训练 | **MMSA 引入的 bug**，见 `#lmf-optimizer-correction` |
+| LMF | post_fusion_dropout 声明后不调用 | 同样不调用 | 从原作者**继承**的 bug |
+
+逐项核对已完成的：MISA（结构与原实现一致：融合层顺序、transformer `nhead=2 / num_layers=1`）、Self-MM、LMF、MulT。
+
+**尚未核对**：MFN（`pliang279/MFN` 已克隆，未比对）。
