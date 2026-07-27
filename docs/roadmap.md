@@ -133,30 +133,31 @@ python scripts/check_acceptance.py --all         # 全部有参照的组
 
 ### 第 1 阶段（复现）进度
 
-全部 11 个模型已实现并注册（`python scripts/train.py --list-models`）。验收状态：
+**复现范围（2026-07-27 定）：11 个模型**——即 MMSA 的 MOSI 表能提供参照值的全部范围，到 CENET (2022) / TETFN (2023) 为止。再往后需自行跑 MMSA 生成参照值，是另一个量级的承诺，暂不纳入。
 
-| 模型 | 状态 | 10 seed 结果 / 备注 |
+**当前：6 通过 / 3 未复现 / 2 待移植。** 全部数字与逐节解读见 `docs/storyline.md` 的进度总表。
+
+| 模型 | 状态 | 备注 |
 |---|---|---|
-| EF-LSTM | ✅ 通过（有保留） | MAE 1.0717±0.210；**2/10 seed 崩溃**，宽方差让判据变松，见 investigations |
-| LF-DNN | ✅ 通过 | MAE 0.9600 (+0.5 SE)、Acc-2 0.7858 (+0.2 SE) |
-| TFN | ✅ 通过 | MAE 0.9511 (+0.5 SE)、Acc-7 优于 MMSA |
-| LMF | ✅ 通过 | MAE 0.9513 (+0.1 SE)；0.505M 参数 vs TFN 9.50M |
-| MFN | ✅ 通过 | Acc-2 0.7870 (+0.3 SE)；消融发现喂真实序列反而更差 |
-| Graph-MFN | ⏳ 运行中 8/10 | — |
-| MulT | ⏳ 待重跑 | 需带 `--accumulate-steps 8` 重跑 |
-| MISA | ⏳ 待重跑 | 旧结果 Acc-2 +2.7 SE；需带 `--accumulate-steps 2 --epochs 200` 重跑 |
-| Self-MM | ⏳ 待重跑 | 旧结果全指标 +5.5 SE；**已修正特征空间 bug**，单 seed 5 epoch 即达 MAE 0.753 |
-| 纯文本 BERT（对照） | ✅ 完成 | MAE 0.8018±0.020、Acc-2 0.8258、Acc-7 0.4105 |
+| EF-LSTM / LF-DNN | ✅ 通过 | EF-LSTM 有保留：2/10 seed 崩溃，宽方差让判据变松 |
+| TFN / LMF / MFN | ✅ 通过 | — |
+| Graph-MFN | ✅ 通过 | 七项指标全过，是唯一无标记项的模型 |
+| MulT | ❌ **未复现** | MAE +10.3 SE，缺口最大。已排除超参与梯度累积语义 |
+| MISA | ❌ 未复现 | 仅 Acc-2 落后；MAE/Acc-7/Acc-5 反而优于 MMSA |
+| Self-MM | ❌ 未复现 | 绝对差仅 0.006 MAE，因自身方差极小而判失败 |
+| 纯文本 BERT（对照） | ✅ 完成 | **超过 MulT 的全部三个指标**，见 storyline 第 7 节 |
+| CENET / TETFN | ⬜ 待移植 | 参照值已在 `mmsa_reference_mosi.json` |
 | LF-LSTM（自建基线） | ✅ 完成 | 非复现目标 |
 
 ### 下一步（按顺序）
 
-1. **等后台批次跑完**（`scripts/reproduce_all.sh` 依次跑 graph_mfn → misa → self_mm → mult → graph_mfn 冻结消融）。日志在 `/tmp/.../scratchpad/final_*.log`，会话结束后可能丢失；直接看 `outputs/<组>/summary.json` 的 seed 数判断进度。
-2. **用 `scripts/verify_runs.py` 检查 provenance**：本次保存时后台仍在跑，那期间产生的运行可能带 `dirty=true`，**必须重跑**。
-3. **`python scripts/check_acceptance.py --all`** 拿到全部判定。
-4. **未达标的模型逐项对照原论文源码**（获取方式见 `docs/investigations.md` 末尾），不要只对照 MMSA。
-5. **出总表**：`python scripts/summary_table.py`，填进 `docs/storyline.md`。
-6. **补齐 storyline 的 8 个章节**（目前 0-3 节已写，4-7 节是待复现时写的占位）。
+1. **查 MulT 的缺口**——最大且最可能是实现问题。逐行比对跨模态注意力块与 `padding=0` 的时间卷积。注意：位置编码缺失是"偏离论文"，**不解释这个"偏离 MMSA"的缺口**，两者分开查。
+2. **查 MISA 的 Acc-2 缺口**——形态明确（幅度准、符号不准），集中在零点附近样本。
+3. **修 provenance 采集时机**（`investigations.md#provenance-timing`）——`result.json` 目前可能记录从未执行过的 commit。
+4. **补完 MFN 对原作者实现的核对**（`pliang279/MFN` 已知可克隆，尚未比对）。
+5. **移植 CENET 与 TETFN**，按 storyline 的七步流程走。
+6. **实现配对 bootstrap 显著性检验**——纯文本对照组的比较目前只是均值比大小。
+7. **给验收补跨模型聚合统计量**——逐模型判据看不见系统性偏置（16/18 项偏低，p≈6.6e-4）。
 
 ### 阻塞项与待决
 

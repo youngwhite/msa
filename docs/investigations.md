@@ -346,13 +346,37 @@ self.shared_or_private_s = self.sp_discriminator((utt_shared_t + utt_shared_v + 
 
 ---
 
-## <a id="reproduce-all-prefix"></a>reproduce_all.sh 的组名按前缀匹配，会连带跑起没点名的组（2026-07-27）
+## <a id="reading-live-outputs"></a>在后台批次仍在写入时读 `outputs/`，会据此下错结论（2026-07-27）
 
-`bash scripts/reproduce_all.sh graph_mfn_mosi` 预期只跑该组，实际把 `graph_mfn_mosi_ablation_frozen` 也跑了（组名以参数为前缀）。该消融跑到 seed48 时进程死亡，留下 7/10 的残缺目录。
+### 我踩的过程
 
-**后果**：以为在跑一件事，实际在跑两件；GPU 被占用的时间是预期的两倍，且残缺组会被误当成完整结果。
+会话开始时读 `outputs/misa_mosi` 等三组，看到 `epochs=30`、无 `accumulate_steps`、commit 横跨四个版本，据此判定"**三组整组作废，必须重跑**"，并围绕这个判定安排了后续计划。
 
-**规避**：点名单组时用精确匹配。在此之前，跑完要核对 `outputs/` 下新增了哪些目录，别只看点名的那个。
+**这个判定是错的。** 后台批次当时正**依次重跑**这三组。数小时后再看，同样的目录已是：commit 全部 `5c299a0`、`dirty=false`、`accumulate_steps` 分别 2/4/8、`epochs=200`——正确配置，10 seed 齐全。我读到的是被覆盖前的旧内容。
+
+### 为什么没能及时发现
+
+`pgrep -af "train.py|reproduce_all"` 只显示**当时正在执行的那一条命令**。上一轮会话启动的是一个逐组调用的循环，外层循环不出现在 `pgrep` 结果里，所以看到的是"只在跑 graph_mfn"，实际排队等着的还有四组。
+
+### 曾经的误判（已推翻）
+
+一度记为"`reproduce_all.sh` 按前缀匹配组名，连带跑了没点名的组"。**这是错的**：其组选择是精确匹配
+
+```bash
+if [ -n "$WANTED" ] && [ "$WANTED" != "$group" ]; then continue; fi
+```
+
+多出来的那些组来自外层循环，不是脚本的匹配行为。链条实际顺序 graph_mfn → misa → self_mm → mult → graph_mfn 冻结消融，与 `docs/roadmap.md` 当时的记载完全一致——**我如果先信任交接文档，就不会误判**。
+
+### 规避
+
+1. 依据 `outputs/` 下的内容下任何结论前，先确认**没有进程正在写它**——查目录 mtime 是否还在推进，别只看 `pgrep`
+2. `pgrep` 看不到外层循环。要确认"还有什么排着队"，读交接文档里记的批次计划
+3. 交接文档写了的东西，与现场观察冲突时，**先怀疑观察的时机**，而不是先怀疑文档
+
+### 附带事实
+
+`graph_mfn_mosi_ablation_frozen` 确实只有 7/10 个 seed 且无 `summary.json`——该组在 22:28 后被中断，原因未知。它是消融不是验收目标，需要时重跑即可。
 
 ---
 
