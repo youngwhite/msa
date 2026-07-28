@@ -154,14 +154,17 @@ LF-LSTM，aligned，3 seed。这是选定研究方向的主要依据（见 `docs
 
 ## 待办
 
-- **查 MulT 的 +10.3 SE 缺口**——已排除超参与梯度累积语义，下一步逐行比对跨模态注意力块与时间卷积
-- **查 MISA 的 Acc-2 缺口**——形态是"幅度更准、符号更不准"，问题集中在零点附近样本
+- **量化 MMSA 按测试集选超参的乐观偏差**（`scripts/selection_bias.py`，协议已登记）——系统性偏置唯一还没验证的候选
+- **MulT 残差 MAE +4.0 SE / Corr +2.7 SE**。已修两处真差异（配置里从未生效的 weight decay、out_proj 初始化）。模型、编码器、trainer 语义、超参、数据端均已逐行核对无差异；位置编码消融为零结果。**目前没有更多已知的实现嫌疑**
+- **MISA 的 Acc-2 缺口**（4 个测试样本）——十余项逐项核对无差异，见 [`investigations.md`](investigations.md#misa-audited)。**不写入 `gap_explained`：查不到不等于有证据**
 - **移植 CENET (2022) 与 TETFN (2023)**——复现范围的最后两个，参照值已在 `mmsa_reference_mosi.json`
 - **配对 bootstrap 显著性检验**（第 1 阶段协议要求）。纯文本 BERT 与各模型的比较目前只是均值比大小，还不是统计检验
 - **给验收补跨模型的聚合统计量**——逐模型判据看不见系统性偏置，改判据前按 `decisions.md` 模板记决策
-- 修 provenance 采集时机（见 [`investigations.md`](investigations.md#provenance-timing)）
-- MulT 补位置编码的"忠实论文"组（单列，不与 MMSA 比）
+- 补齐 `paper_reference_mosi.json` 的其余模型，**每条标注谁跑的/什么特征/转引自哪里**；来源冲突时两条都记（文献里 TFN 的 MOSI MAE 跨度 0.901–0.970，LMF 的 Acc-2 跨度 76.4–82.5）
 - 补跑 `graph_mfn_mosi_ablation_frozen`（中断在 7/10）
+- 在 Apple Silicon 上确认 MPS 的确定性
+
+**已完成**（2026-07-27/28）：修 provenance 的采集时机与自我写脏、MulT 的两处实现修正、位置编码消融、全部可获取原作者实现的逐行核对（LMF/MFN/MulT/MISA/Self-MM）。
 - 在 Apple Silicon 上确认 MPS 的确定性（`torch.gather` 反向在 MPS 上是否有确定性实现待验）
 
 ## MulT 的位置编码消融（`mult_mosi_posenc`，10 seed）
