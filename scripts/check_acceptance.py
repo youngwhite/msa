@@ -13,7 +13,20 @@ The rule (docs/roadmap.md, fixed 2026-07-26 and not adjusted per result):
     honest yardstick available: MMSA reports single values with no variance.
 
 MAE is lower-is-better, every other metric is higher-is-better. The primary
-metrics are MAE and Acc-2(non0); the rest are reported for context.
+metrics are **MAE and Corr**; everything else is reported for context but does
+not decide a verdict.
+
+Acc-2 was primary until 2026-07-28 and is not any more. It is quantised by the
+sample count — one test sample is 0.152 points on the non-zero split (656
+samples), 0.146 on the full one — while the differences under test are 0.6 to
+1.3 points, i.e. four to eight samples. It also throws away magnitude entirely,
+and the sign of a sample with |label| < 0.5 is close to arbitrary (62% error
+across every model we have). Acc-5 and Acc-7 are quantised the same way.
+
+MAE and Corr are the only two continuous metrics, and they fail differently:
+MAE catches calibration, Corr catches ranking. Corr alone would not do — it is
+invariant to scale and shift, so a model predicting ten times the right answer
+scores the same. Read them together. See docs/decisions.md, 2026-07-28.
 
 The reference is MMSA's table, not the original papers: those used CMU-SDK GloVe
 text features and in several cases different splits, so their numbers describe a
@@ -41,7 +54,7 @@ ADJUDICATION_PATH = PROJECT_ROOT / "docs" / "acceptance_status.json"
 LOWER_IS_BETTER = {"mae"}
 PASS_SE = 1.0    # within this many standard errors: reproduced
 WARN_SE = 2.0    # beyond this: not reproduced
-PRIMARY = ("mae", "acc2_non0")
+PRIMARY = ("mae", "corr")   # see docs/decisions.md 2026-07-28: Acc-2 is quantised at 1/656
 #: Below this, a run has not learned anything: MOSI's majority class is ~58% of
 #: the non-zero test samples, so an Acc-2 near that is a collapsed run.
 COLLAPSE_ACC2 = 0.60
