@@ -59,16 +59,25 @@ def seed_worker(worker_id: int) -> None:
     random.seed(worker_seed)
 
 
-def git_revision() -> dict[str, object]:
-    """Which commit produced a number, and whether the tree was dirty at the time.
+#: Captured once, at import — see `git_revision`.
+_GIT_AT_START: dict[str, object] | None = None
 
-    A result recorded without this is unauditable: the code it came from cannot
-    be recovered. Returns None values outside a git checkout rather than failing.
 
-    `dirty` counts *tracked* modifications only. Untracked files — scratch notes,
-    editor state, an ignored dataset directory — do not change what the committed
-    code does, and counting them would flag every run in a normal working
-    directory, turning the flag into an alarm nobody reads.
+def read_git_revision() -> dict[str, object]:
+    """Read the repository state *now*.
+
+    `dirty` reflects the **source** only. Two categories are deliberately
+    excluded:
+
+    * Untracked files — scratch notes, editor state, the ignored dataset
+      directory. They do not change what the committed code does.
+    * Anything under `outputs/`. Results are committed in this repo, so a run
+      that rewrites its own group's `result.json` makes the tree dirty *by
+      running*. Counting that would mark every rerun after its first seed as
+      unauditable, which is both false and self-inflicted: the code was clean,
+      only the run's own products changed.
+
+    Returns None values outside a git checkout rather than failing.
     """
     repo = Path(__file__).resolve().parents[2]
 
@@ -86,10 +95,44 @@ def git_revision() -> dict[str, object]:
     if head is None:
         return {"commit": None, "dirty": None}
     status = git("status", "--porcelain", "--untracked-files=no")
-    return {
-        "commit": head.strip(),
-        "dirty": bool(status.strip()) if status is not None else None,
-    }
+    if status is None:
+        return {"commit": head.strip(), "dirty": None}
+    # Porcelain lines are "XY path"; the path starts at column 3.
+    changed = [line[3:] for line in status.splitlines() if line.strip()]
+    source_changed = [p for p in changed if not p.lstrip('"').startswith("outputs/")]
+    return {"commit": head.strip(), "dirty": bool(source_changed)}
+
+
+def snapshot_git_revision() -> dict[str, object]:
+    """The repository state as of process start — the code that actually ran.
+
+    Python imports its modules once, at startup; everything after that executes
+    from memory. So a commit made *during* a long run does not change what is
+    running, and stamping results with the HEAD at save time attributes them to
+    code that never executed. This has already happened here: one Graph-MFN
+    sweep recorded three different commits across ten seeds and ran one of them.
+
+    Cached on first call and pinned by `msa/__init__.py` at import.
+    """
+    global _GIT_AT_START
+    if _GIT_AT_START is None:
+        _GIT_AT_START = read_git_revision()
+    return _GIT_AT_START
+
+
+def git_revision() -> dict[str, object]:
+    """Provenance for a stored result.
+
+    `commit`/`dirty` describe the code that ran. If the repository moved while
+    the run was in flight, `at_save` records where it ended up — the results
+    stay valid (they came from the start state), but someone was editing during
+    a run, which `scripts/verify_runs.py` reports.
+    """
+    start = dict(snapshot_git_revision())
+    end = read_git_revision()
+    if end != start:
+        start["at_save"] = end
+    return start
 
 
 def collect_env(device: torch.device | None = None) -> dict[str, object]:

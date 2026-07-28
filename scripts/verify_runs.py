@@ -72,6 +72,18 @@ def verify_run(run_dir: Path, labels_cache: dict, warnings: list[str]) -> list[s
                         "code cannot be recovered from its commit")
     elif not git.get("commit"):
         warnings.append(f"{run_dir}: no git commit recorded")
+    # `commit`/`dirty` describe process start, which is the code that ran. An
+    # `at_save` entry means the repository moved mid-run: the numbers stand, but
+    # somebody was editing while experiments were in flight, and the next run
+    # from that tree will not match this one.
+    at_save = git.get("at_save") or {}
+    if at_save.get("commit") and at_save["commit"] != git.get("commit"):
+        warnings.append(f"{run_dir}: the repository moved during this run "
+                        f"({str(git.get('commit'))[:8]} -> {at_save['commit'][:8]}); "
+                        "the run itself used the first of those")
+    elif at_save.get("dirty"):
+        warnings.append(f"{run_dir}: source was edited while this run was in flight; "
+                        "it used the clean state, but the tree no longer matches it")
     return problems
 
 
