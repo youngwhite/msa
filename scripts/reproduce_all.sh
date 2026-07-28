@@ -2,9 +2,16 @@
 # Regenerate every number in docs/experiments.md, then check the predictions
 # against the ones committed to git.
 #
-#   bash scripts/reproduce_all.sh                  # everything, ~25 min on an RTX 5070 Ti
+#   bash scripts/reproduce_all.sh                  # everything, serially
 #   bash scripts/reproduce_all.sh tfn_mosi_masked  # one group
 #   bash scripts/reproduce_all.sh --list           # what the groups are
+#   JOBS=auto bash scripts/reproduce_all.sh        # seeds in parallel, per-group limit
+#   JOBS=3 bash scripts/reproduce_all.sh lmf_mosi  # explicit degree
+#
+# JOBS>1 runs a group's seeds as concurrent processes and rebuilds summary.json
+# afterwards. The subprocesses are the same `train.py` invocations, so results
+# are unchanged — verified bit-identical on lmf_mosi. Roughly 2.9x on three
+# seeds; the card sits near a third utilisation with one.
 #
 # This file is the link between the tables in docs/experiments.md and the code:
 # every documented number comes from exactly one entry below. Add one when an
@@ -131,7 +138,20 @@ args_for() {
     esac
 }
 
+# How many seeds of a group may share the GPU. Bounded by memory, not by cores:
+# a single seed leaves the card at roughly a third utilisation, but exceeding
+# memory does not degrade, it raises out-of-memory partway through. Measured on
+# a 16.3 GB card; lower these if yours is smaller.
+jobs_for() {
+    case "$1" in
+    mult_mosi|mult_mosi_posenc) echo 2 ;;      # ~5.6 GB each
+    misa_mosi|self_mm_mosi|text_bert_mosi) echo 2 ;;   # fine-tuned BERT
+    *) echo 4 ;;                                # the frozen-feature models are small
+    esac
+}
+
 WANTED=${1:-}
+JOBS=${JOBS:-1}   # JOBS=n runs n seeds concurrently; JOBS=auto uses jobs_for()
 
 if [ "$WANTED" = "--list" ]; then
     printf '%s\n' "${RUN_GROUPS[@]}"
@@ -160,9 +180,24 @@ for group in "${RUN_GROUPS[@]}"; do
         continue
     fi
     printf '\n\033[1m=== %s ===\033[0m\n' "$group"
-    # shellcheck disable=SC2046,SC2086
-    if ! $PY scripts/train.py $(args_for "$group") --quiet --run-group "$group"; then
-        FAILED+=("$group")
+    if [ "$JOBS" = "auto" ]; then
+        group_jobs=$(jobs_for "$group")
+    else
+        group_jobs=$JOBS
+    fi
+    if [ "$group_jobs" -gt 1 ]; then
+        # Same subprocesses, run concurrently; summary.json is rebuilt after.
+        # Verified bit-identical to the serial path on lmf_mosi (2026-07-28).
+        # shellcheck disable=SC2046,SC2086
+        if ! $PY scripts/train_parallel.py --jobs "$group_jobs" --run-group "$group" \
+                 $(args_for "$group"); then
+            FAILED+=("$group")
+        fi
+    else
+        # shellcheck disable=SC2046,SC2086
+        if ! $PY scripts/train.py $(args_for "$group") --quiet --run-group "$group"; then
+            FAILED+=("$group")
+        fi
     fi
 done
 
