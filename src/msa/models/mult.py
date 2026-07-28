@@ -17,8 +17,12 @@ comparing the two:
 * The temporal Conv1d uses `padding=0`, so it shortens each sequence by
   `kernel_size - 1` (50 -> 46 for text, 375 -> 371 audio, 500 -> 496 vision).
   That is the reference's behaviour, kept.
-* MMSA constructs its encoders without positional embeddings, so MulT here has
-  none either. See `msa/models/transformers.py`.
+* MMSA constructs its encoders without positional embeddings, so the default
+  here has none either — `position_embedding=False` reproduces MMSA, which is
+  what the acceptance group must compare against. The original always builds
+  one, so `--model-arg position_embedding=True` is the faithful-to-paper
+  variant; it is a different model and must not be compared with MMSA's table.
+  See `msa/models/transformers.py` and `docs/investigations.md#mult-position`.
 * MulT is the first model in the storyline that clips gradients (by *value*, at
   0.6) and decays its learning rate on plateau — both supplied by TrainConfig
   rather than by a model-specific trainer.
@@ -56,6 +60,7 @@ class MultimodalTransformer(MSAModel):
         text_dropout: float = 0.5,
         output_dropout: float = 0.5,
         attn_mask: bool = True,
+        position_embedding: bool = False,
     ) -> None:
         super().__init__()
         self.text_dropout = text_dropout
@@ -71,7 +76,8 @@ class MultimodalTransformer(MSAModel):
         def cross(dropout: float) -> TransformerEncoder:
             return TransformerEncoder(d, num_heads, layers, attn_dropout=dropout,
                                       relu_dropout=relu_dropout, res_dropout=res_dropout,
-                                      embed_dropout=embed_dropout, attn_mask=attn_mask)
+                                      embed_dropout=embed_dropout, attn_mask=attn_mask,
+                                      position_embedding=position_embedding)
 
         # Six directed pairs: the target modality attends to the source.
         self.t_with_a, self.t_with_v = cross(attn_dropout_audio), cross(attn_dropout_vision)
@@ -82,7 +88,8 @@ class MultimodalTransformer(MSAModel):
             return TransformerEncoder(2 * d, num_heads, max(layers, self_attention_layers),
                                       attn_dropout=attn_dropout, relu_dropout=relu_dropout,
                                       res_dropout=res_dropout, embed_dropout=embed_dropout,
-                                      attn_mask=attn_mask)
+                                      attn_mask=attn_mask,
+                                      position_embedding=position_embedding)
 
         self.mem_t, self.mem_a, self.mem_v = memory(), memory(), memory()
 

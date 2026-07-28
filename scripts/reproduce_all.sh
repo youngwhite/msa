@@ -31,6 +31,7 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     mfn_mosi
     graph_mfn_mosi
     mult_mosi
+    mult_mosi_posenc
     text_bert_mosi
     misa_mosi
     self_mm_mosi
@@ -82,6 +83,13 @@ args_for() {
     # reaches the optimiser. We match the behaviour, not the config file.
     mult_mosi)
         echo "--model mult --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 2e-3 --weight-decay 0 --batch-size 16 --grad-clip 0.6 --clip-mode value --lr-schedule plateau --lr-schedule-patience 5 --patience 8 --epochs 200 --accumulate-steps 8" ;;
+    # Ablation, NOT an acceptance group. Identical to mult_mosi except for the
+    # positional encoding the paper always builds and MMSA never switches on.
+    # One variable, so the difference is attributable. It must not be compared
+    # with MMSA's table (different model) nor with the paper's (different
+    # features on all three modalities) — only with mult_mosi.
+    mult_mosi_posenc)
+        echo "--model mult --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 2e-3 --weight-decay 0 --batch-size 16 --grad-clip 0.6 --clip-mode value --lr-schedule plateau --lr-schedule-patience 5 --patience 8 --epochs 200 --accumulate-steps 8 --model-arg position_embedding=True" ;;
     # Text-only fine-tuned BERT: our control group, not a reproduction target —
     # MMSA has no text-only entry. Standard BERT fine-tuning settings (lr 2e-5,
     # head at 10x, bs 16); it converges in a few epochs.

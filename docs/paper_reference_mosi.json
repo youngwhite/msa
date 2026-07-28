@@ -1,0 +1,40 @@
+{
+  "purpose": "Numbers as published by the original authors, recorded as BACKGROUND ONLY. These are NOT acceptance targets and check_acceptance.py does not read this file. See docs/roadmap.md for why: the papers use different features (and sometimes different splits), so a gap against them confounds implementation fidelity with feature choice. The acceptance reference is docs/mmsa_reference_mosi.json.",
+  "how_to_read": "Our runs use MMSA's preprocessed features: text BERT-768, audio 5-dim, vision 20-dim. Where a paper used something else, the 'features' field says so, and a direct number comparison is invalid in both directions — being ahead is no more meaningful than being behind.",
+  "models": {
+    "mult": {
+      "paper": "Tsai et al., Multimodal Transformer for Unaligned Multimodal Language Sequences, ACL 2019",
+      "source": "arXiv:1906.00295v1, Table 1 (verified from the PDF, 2026-07-28)",
+      "features": {
+        "text": "GloVe 840B 300d",
+        "vision": "Facet, 35 facial action units",
+        "audio": "COVAREP (12 MFCC, pitch tracking, voiced/unvoiced, glottal source)"
+      },
+      "note": "All three modalities differ from ours. Aligned uses P2FA word-level alignment with averaging inside each word span.",
+      "unaligned": {"acc7": 0.391, "acc2": 0.811, "f1": 0.810, "mae": 0.889, "corr": 0.686},
+      "aligned": {"acc7": 0.400, "acc2": 0.830, "f1": 0.828, "mae": 0.871, "corr": 0.698},
+      "hyperparameters_mosi": {
+        "source": "arXiv:1906.00295v1, Table 5",
+        "batch_size": 128,
+        "learning_rate": 0.001,
+        "optimizer": "Adam",
+        "hidden_size": 40,
+        "crossmodal_blocks": 4,
+        "crossmodal_heads": 10,
+        "conv1d_kernel_l_v_a": "(1 or 3)/3/3",
+        "text_embedding_dropout": 0.2,
+        "crossmodal_attention_dropout": 0.2,
+        "output_dropout": 0.1,
+        "grad_clip": 0.8,
+        "epochs": 100,
+        "positional_encoding": "always on (modules/transformer.py builds it unconditionally)"
+      },
+      "divergences_from_mmsa": "MMSA uses batch 16, lr 2e-3, hidden 50, conv kernel 5/5/5, text dropout 0.5, attn dropout 0.3, output dropout 0.5, clip 0.6, and no positional encoding. Only the block count (4) and head count (10) agree."
+    }
+  },
+  "pending": {
+    "note": "Not yet extracted. Each needs its own paper checked the same way — from the published tables, not from memory or from a secondary source.",
+    "models": ["tfn", "lmf", "mfn", "graph_mfn", "misa", "self_mm", "cenet", "tetfn"],
+    "unavailable": "ef_lstm and lf_dnn have no originating paper; they are MMSA's own baselines."
+  }
+}
