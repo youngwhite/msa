@@ -32,6 +32,7 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     mod_av
     mod_tav
     ef_lstm_mosi
+    ef_lstm_mosi_collapse_rate
     lf_dnn_mosi
     tfn_mosi
     lmf_mosi
@@ -115,6 +116,10 @@ args_for() {
     # pools each modality first.
     ef_lstm_mosi)
         echo "--model ef_lstm --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 0.005 --batch-size 32 --grad-clip 0 --epochs 200" ;;
+    # 20 extra seeds (52-71) purely to measure how often this configuration fails
+    # to train at all. NOT an acceptance group: the registered set stays 42-51.
+    ef_lstm_mosi_collapse_rate)
+        echo "--model ef_lstm --seeds 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 --device cuda --lr 1e-3 --weight-decay 0.005 --batch-size 32 --grad-clip 0 --epochs 200" ;;
     lf_dnn_mosi)
         echo "--model lf_dnn --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 0.01 --batch-size 128 --grad-clip 0 --epochs 200 --model-arg use_lengths=False --model-arg mask_pooling=False" ;;
     # Graph-MFN: aligned, and unlike MFN its config leaves need_normalized False,
