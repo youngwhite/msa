@@ -2,6 +2,7 @@
 
 from .base import MSAModel
 from .bert import TextOnlyBert
+from .cenet import CENet
 from .graph_mfn import GraphMemoryFusionNetwork
 from .lf_lstm import LateFusionLSTM
 from .lmf import LowRankFusion
@@ -14,6 +15,7 @@ from .tfn import TensorFusionNetwork
 
 __all__ = [
     "MSAModel",
+    "CENet",
     "MISA",
     "EarlyFusionLSTM",
     "GraphMemoryFusionNetwork",

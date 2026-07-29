@@ -832,3 +832,43 @@ done
 1. **等待信号必须是只有父进程会产生的东西**——`train_parallel.py` 的 `rebuilt ...` 那行，或进程本身退出
 2. **不要用 `pgrep`/`pkill -f` 等自己或杀自己**。要按模式杀时，先 `pgrep` 列出 PID、逐个核对 `ps -o cmd=` 再 `kill <pid>`
 3. **超过约 90 秒的命令一律后台**。工具层有 2 分钟上限，`timeout 900` 不解决问题——它只会让父进程被杀而子进程变孤儿（第 4 次就是这么来的）
+
+---
+
+## <a id="cenet-vs-paper"></a>CENET：MMSA 的版本与论文的是两个不同的模型（2026-07-29）
+
+移植 CENET（Wang et al., TMM 2022）时逐行对照原作者发布（`Say2L/CENet`）与 MMSA。**核心机制不同，不是细节差异。**
+
+| | 原作者 | MMSA |
+|---|---|---|
+| 主干 | **SentiLARE**（RoBERTa 系，带词性/情感知识的预训练） | `bert-base-uncased` |
+| CE 模块的输入 | **把模态量化成 16 个离散标签**，`nn.Embedding` 查表 | 原始连续特征过 MLP（`Linear→ReLU→Linear`） |
+| MOSI 特征维度 | audio 74 / vision 27 | audio 5 / vision 20 |
+| 注入层 | 编码器第 1 层之前（`ROBERTA_INJECTION_INDEX = 1`） | 同 ✓ |
+| SelfAttention | `softmax(scores * 8)` | **逐字节相同** ✓ |
+
+原作者的 CE `forward` 接收 `visual`/`acoustic` 两个参数却**从不使用**，只用 `visual_ids`/`acoustic_ids`：
+
+```python
+def forward(self, text_embedding, visual=None, acoustic=None, visual_ids=None, acoustic_ids=None):
+    visual_ = self.visual_embedding(visual_ids)      # 只有 ids 被用到
+    acoustic_ = self.acoustic_embedding(acoustic_ids)
+```
+
+MMSA 反过来：用连续特征，忽略 ids。**论文的机制建立在"模态被量化成 16 类语义标签"上，MMSA 的建立在"原始连续特征"上——这是把机制换掉了，不是把它实现得略有不同。**
+
+这是 `#mult-position` 的放大版：MulT 丢的是一个结构件，CENET 换的是跨模态增强的输入表示。
+
+**处理**：验收组忠实移植 MMSA（同协议才可比，其表报的就是这个版本）。storyline 的 CENET 一节**不得写成"我们复现了论文的 CENET"**。忠实论文版需要复原原作者的量化步骤（怎么把特征分成 16 类），未确认可行，暂不做。
+
+### `softmax(scores * 8)` 是继承的
+
+标准缩放点积注意力除以 `sqrt(d_k) ≈ 27.7`，这里是**乘以 8**，相差约 222 倍。原作者的 `CEmodule.py` 与 MMSA 的该类**逐字节相同**，所以按清单第 9 条判定为**继承**，予以复现。（原作者还有一个带 `* math.sqrt(text_dim)` 的 `Attention` 类，CE 里没用到，是死代码。）
+
+### 实现上没有重抄 487 行 BERT
+
+MMSA 为了在层间插入 CE，重实现了 `BertLayer`/`BertEncoder`/`BertOutput`/`BertIntermediate` 共 487 行，且仍依赖已废弃的 `pytorch_transformers`。我们改为迭代 HuggingFace `bert.encoder.layer`，约 30 行。
+
+**等价性已实测**：手动迭代 12 层与原生 `BertModel.forward` 的输出**最大差异 0.0**。
+
+**移植中踩到的坑**：`transformers >= 5` 的 `BertLayer.forward` **直接返回 Tensor**，不再返回 tuple。照 MMSA 的老写法取 `[0]` 不会报错，而是**静默取到第一个样本**，形状 (B,L,H) 变成 (L,H)，错误在几帧之外才以 batch 维不匹配的形式暴露。已加 `torch.is_tensor` 判断并注释。
