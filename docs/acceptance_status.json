@@ -1,6 +1,17 @@
 {
   "note": "Adjudicated acceptance outcomes. A group listed here has been investigated and its gap attributed with evidence; check_acceptance.py reports it as explained instead of failing forever. Adding an entry requires evidence in docs/investigations.md — not a hunch.",
-  "groups": {},
+  "groups": {
+    "tfn_mosi": {
+      "status": "gap_explained",
+      "metric": "corr",
+      "date": "2026-07-30",
+      "attribution": "MMSA's own code does not reach MMSA's own published Corr. Run on identical data, seeds 42-46 and device, it scores 0.6456 +- 0.0136 against the table's 0.6733 — short by 0.0277, twice our 0.0138, with none of its five seeds reaching the target. Ours scores 0.6595 on the same footing: better than the reference implementation. Device is not the explanation — our code moves 0.0007 between CUDA and CPU.",
+      "evidence": "docs/investigations.md#tfn-corr-resolved",
+      "do_not_retry": "Re-auditing the port. Nine hypotheses were ruled out and three implementations agree line by line; the shortfall is in the target, not the code. If it is revisited, the open questions are the device (MMSA's table was most likely CUDA, this comparison is CPU) and its unstated seed set, not our implementation.",
+      "caveats": "Five seeds rather than ten; CPU. The claim is that the published Corr is not reachable from MMSA's code under conditions we can control, NOT that it is wrong.",
+      "does_not_generalise": "Established for TFN only. Any similar attribution for another group requires running MMSA for that group first."
+    }
+  },
   "retracted": {
     "tfn_mosi (2026-07-26)": {
       "was": "Acc-2/Corr gap attributed to MMSA selecting hyper-parameters on the test set.",
