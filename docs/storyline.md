@@ -37,7 +37,11 @@
 
 这条协议是被 LMF 逼出来的：原先验收组带着我们的改动，导致"复现是否到位"与"我们的改动是否有益"混为一谈，TFN 和 LMF 都因此被误判为未复现。详见 [investigations.md](investigations.md#protocol-faithful)——**这是本项目到目前为止最重要的方法论教训**。
 
-另一件事实记录在案但**不要用来解释复现差距**：MMSA 的超参是按测试集挑的（`run.py` 中用验证集的那行被注释掉）。TFN 与 LMF 在忠实移植下均复现成功，说明该偏差在这两个模型上实际影响不大。见 [investigations.md](investigations.md#mmsa-test-selection)。
+**一个必须知道的前提**：本文所有"落后 MMSA 若干 SE"的表述，比较的都是 MMSA **表格里的数字**。2026-07-30 把 MMSA 自己的代码跑遍十一个模型后发现——**其中九个，它的代码达不到它自己发表的 Corr**（差 0.003–0.033），只有 LF-DNN 与 LMF 例外。
+
+同设备同 seed 的实现对实现比较：**我们更优 6、它更优 2、混合 3**，多数不显著。CENET 上我们领先它的代码 t=+2.28，且比它自己的代码更接近它自己的表。
+
+所以**"我们的复现比 MMSA 差"这个前提不成立**。完整对照表、全部让步与限定见 [investigations.md](investigations.md#mmsa-all-eleven)。
 
 ---
 
