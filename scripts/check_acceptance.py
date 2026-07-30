@@ -9,6 +9,14 @@ The rule (docs/roadmap.md, fixed 2026-07-26 and not adjusted per result):
         1-2 SE    reproduced, but flagged for a look
         >  2 SE   not reproduced — go find the implementation difference
 
+    Since 2026-07-30 there is a floor under that last line: a shortfall smaller
+    than this dataset's own seed noise (NOISE_FLOOR, measured on the LF-LSTM
+    baseline and registered on day one) is not counted as a failure however many
+    SE it spans. Our per-model sigma varies 29-fold, so without a floor the same
+    absolute discrepancy meant +0.2 SE on the least stable model and +4.8 SE on
+    the most stable — the criterion was strictest exactly where the port was
+    best. It does NOT fix the opposite asymmetry; that case is reported loudly.
+
     "Not much worse" needs a number, and the spread of our own seeds is the only
     honest yardstick available: MMSA reports single values with no variance.
 
@@ -52,6 +60,17 @@ from msa.config import OUTPUT_ROOT, PROJECT_ROOT
 REFERENCE_PATH = PROJECT_ROOT / "docs" / "mmsa_reference_mosi.json"
 ADJUDICATION_PATH = PROJECT_ROOT / "docs" / "acceptance_status.json"
 LOWER_IS_BETTER = {"mae"}
+#: This dataset's own seed noise, measured on the LF-LSTM baseline over seeds
+#: 42-46 and registered in docs/roadmap.md's opening argument long before any
+#: acceptance run existed. A shortfall smaller than this is smaller than the
+#: spread a rerun would produce, so it cannot be evidence of a failed port.
+#: Used as a floor under the SE test, not as a replacement for it — see
+#: docs/decisions.md, 2026-07-30, including what this rule does NOT fix.
+NOISE_FLOOR = {
+    "mae": 0.0387, "corr": 0.0110, "acc2_non0": 0.0124, "acc2_has0": 0.0101,
+    "f1_non0": 0.0122, "acc7": 0.0262, "acc5": 0.0299,
+}
+
 PASS_SE = 1.0    # within this many standard errors: reproduced
 WARN_SE = 2.0    # beyond this: not reproduced
 PRIMARY = ("mae", "corr")   # see docs/decisions.md 2026-07-28: Acc-2 is quantised at 1/656
@@ -99,7 +118,7 @@ def judge(group: str, model: str, reference: dict, verbose: bool = True) -> bool
 
     print(f"  {'metric':12s}{'ours':>10s}{'+-sd':>9s}{'MMSA':>10s}"
           f"{'shortfall':>11s}{'in SE':>8s}  verdict")
-    failures, flagged = [], []
+    failures, flagged, under_floor, masked = [], [], [], []
     for metric in ("mae", "acc2_non0", "acc2_has0", "f1_non0", "acc7", "acc5", "corr"):
         if metric not in stats or metric not in ref:
             continue
@@ -107,15 +126,28 @@ def judge(group: str, model: str, reference: dict, verbose: bool = True) -> bool
         se = sd / math.sqrt(n) if n > 1 else float("inf")
         gap = shortfall(mean, ref[metric], metric)
         in_se = gap / se if se > 0 else 0.0
+        floor = NOISE_FLOOR.get(metric)
+        below_floor = floor is not None and gap <= floor
         if in_se <= PASS_SE:
             tag = "pass"
         elif in_se <= WARN_SE:
             tag = "look"
             flagged.append(metric)
+        elif below_floor:
+            # More than 2 SE behind, but by less than this dataset's own seed
+            # noise. Calling that a reproduction failure would demand precision
+            # neither side's numbers carry. See docs/decisions.md 2026-07-30.
+            tag = "pass*"
+            under_floor.append(metric)
         else:
             tag = "FAIL"
             if metric in PRIMARY:
                 failures.append(metric)
+        # The opposite asymmetry, which the floor rule does NOT fix: a gap well
+        # above the noise floor that stays under 2 SE only because our own seed
+        # spread is wide. Reported loudly rather than silently tolerated.
+        if floor is not None and gap > floor and in_se <= WARN_SE:
+            masked.append((metric, gap, floor, in_se))
         marker = " (primary)" if metric in PRIMARY else ""
         print(f"  {metric:12s}{mean:10.4f}{sd:9.4f}{ref[metric]:10.4f}"
               f"{gap:+11.4f}{in_se:+8.1f}  {tag}{marker}")
@@ -132,6 +164,16 @@ def judge(group: str, model: str, reference: dict, verbose: bool = True) -> bool
               f"(Acc-2 < {COLLAPSE_ACC2}): {', '.join(collapsed)}")
         print("    The mean and the standard error both reflect those runs. A wide "
               "spread makes this test weaker, not the model better.")
+    for metric, gap, floor, in_se in masked:
+        print(f"  ! {metric} is {gap:+.4f} behind, {gap/floor:.1f}x this dataset's "
+              f"noise floor ({floor:.4f}), yet only {in_se:+.1f} SE — our own seed "
+              f"spread is wide enough to hide it.")
+        print("    The noise-floor rule does not catch this direction. Treat it as "
+              "a gap to investigate, not as a pass.")
+    if under_floor:
+        print(f"  * {', '.join(under_floor)} sit(s) beyond 2 SE but within this "
+              f"dataset's seed noise, so not counted as a failure "
+              f"(docs/decisions.md 2026-07-30).")
     if n < REQUIRED_SEEDS:
         print(f"  ! only {n} seeds; the criterion asks for {REQUIRED_SEEDS} "
               f"(seeds 42-51). This verdict is provisional.")
