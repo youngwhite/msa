@@ -44,6 +44,7 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     misa_mosi
     self_mm_mosi
     cenet_mosi
+    tetfn_mosi
     tfn_mosi_ablation_masked
     lmf_mosi_ablation_masked
     mfn_mosi_ablation_realseq
@@ -118,6 +119,11 @@ args_for() {
     # what the CE module consumes — see docs/investigations.md#cenet-vs-paper.
     cenet_mosi)
         echo "--model cenet --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-5 --weight-decay 1e-4 --batch-size 64 --grad-clip 2.0 --epochs 200 --patience 8" ;;
+    # TETFN: MMSA hyper-parameters. ALIGNED data. Its four learning rates and
+    # four weight decays are expressed relative to the CLI pair by the model's
+    # param_groups, so --lr 3e-4 --weight-decay 0.01 reproduces all of them.
+    tetfn_mosi)
+        echo "--model tetfn --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 3e-4 --weight-decay 0.01 --batch-size 64 --grad-clip 0 --epochs 200 --patience 8 --accumulate-steps 4" ;;
     # EF-LSTM / LF-DNN: the two pre-TFN baselines. EF-LSTM needs aligned data
     # (a per-step concatenation requires a shared clock); LF-DNN is unaligned and
     # pools each modality first.
@@ -157,7 +163,7 @@ args_for() {
 jobs_for() {
     case "$1" in
     mult_mosi|mult_mosi_posenc) echo 2 ;;      # ~5.6 GB each
-    misa_mosi|self_mm_mosi|text_bert_mosi|cenet_mosi) echo 2 ;;   # fine-tuned BERT
+    misa_mosi|self_mm_mosi|text_bert_mosi|cenet_mosi|tetfn_mosi) echo 2 ;;   # fine-tuned BERT
     *) echo 4 ;;                                # the frozen-feature models are small
     esac
 }

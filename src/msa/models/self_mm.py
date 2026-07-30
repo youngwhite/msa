@@ -32,9 +32,9 @@ from ..config import DatasetSpec
 from ..registry import register_model
 from .base import MSAModel
 from .bert import BertTextEncoder
+from .pseudo_labels import MODES, PseudoLabelMixin
 from .functional import last_valid_state
 
-MODES = ("fusion", "text", "audio", "vision")
 
 
 class _AudioVisualSubNet(nn.Module):
@@ -75,7 +75,7 @@ class _Branch(nn.Module):
 
 
 @register_model("self_mm")
-class SelfMM(MSAModel):
+class SelfMM(PseudoLabelMixin, MSAModel):
     @classmethod
     def build(cls, spec: DatasetSpec, **kwargs) -> MSAModel:
         # Needs the training-set size up front: the pseudo-labels are per sample.
@@ -134,17 +134,7 @@ class SelfMM(MSAModel):
             "fusion": fusion_dim, "text": post_text_dim,
             "audio": post_audio_dim, "vision": post_vision_dim,
         }
-        # Per-sample pseudo-labels and the representation each was derived from.
-        # Buffers, so they move with the model and land in the checkpoint.
-        for mode in MODES:
-            self.register_buffer(f"label_{mode}", torch.zeros(train_size))
-            self.register_buffer(f"feature_{mode}", torch.zeros(train_size, widths[mode]))
-            self.register_buffer(f"center_pos_{mode}", torch.zeros(widths[mode]))
-            self.register_buffer(f"center_neg_{mode}", torch.zeros(widths[mode]))
-        # Per sample, not global: a sample's pseudo-labels start at the true
-        # label the first time it is seen. A single global flag would leave every
-        # sample after the first batch initialised to zero.
-        self.register_buffer("label_seen", torch.zeros(train_size, dtype=torch.bool))
+        self._register_pseudo_label_buffers(train_size, widths)
 
     def param_groups(self, lr: float, weight_decay: float) -> list[dict]:
         """Four rates, as MMSA uses: BERT 5e-5, audio/vision 5e-3, the rest 1e-3.
@@ -189,64 +179,9 @@ class SelfMM(MSAModel):
     def compute_loss(
         self, outputs: dict[str, torch.Tensor], batch: dict[str, torch.Tensor]
     ) -> torch.Tensor:
-        index, label = batch["index"], batch["label"]
-        fresh = ~self.label_seen[index]
-        if fresh.any():
-            for mode in MODES:
-                getattr(self, f"label_{mode}")[index[fresh]] = label[fresh]
-        # A unimodal branch is trusted in proportion to how far its pseudo-label
-        # has drifted from the fused one — samples where the modality says
-        # something different are the ones worth learning from.
-        loss = torch.abs(outputs["M"] - self.label_fusion[index]).mean()
-        for key, mode in (("T", "text"), ("A", "audio"), ("V", "vision")):
-            target = getattr(self, f"label_{mode}")[index]
-            weight = torch.tanh(torch.abs(target - self.label_fusion[index]))
-            loss = loss + (weight * torch.abs(outputs[key] - target)).mean()
-        return loss
+        return self.pseudo_label_loss(outputs, batch)
 
-    @torch.no_grad()
     def on_train_batch_end(
         self, outputs: dict[str, torch.Tensor], batch: dict[str, torch.Tensor], epoch: int
     ) -> None:
-        index = batch["index"]
-        if epoch > 1 and bool(self.label_seen.all()):
-            self._update_labels(outputs, index, epoch)
-        for mode in MODES:
-            getattr(self, f"feature_{mode}")[index] = outputs[f"feature_{mode}"].detach()
-        self._update_centers()
-        self.label_seen[index] = True
-
-    def _update_centers(self) -> None:
-        for mode in MODES:
-            labels = getattr(self, f"label_{mode}")
-            features = getattr(self, f"feature_{mode}")
-            positive = labels > 0 if self.exclude_zero else labels >= 0
-            negative = labels < 0
-            if positive.any():
-                getattr(self, f"center_pos_{mode}").copy_(features[positive].mean(0))
-            if negative.any():
-                getattr(self, f"center_neg_{mode}").copy_(features[negative].mean(0))
-
-    def _relative_distance(self, features: torch.Tensor, mode: str) -> torch.Tensor:
-        """(distance to the negative centre - to the positive one), scaled.
-
-        Large and positive when the sample looks clearly positive.
-        """
-        to_pos = torch.norm(features - getattr(self, f"center_pos_{mode}"), dim=-1)
-        to_neg = torch.norm(features - getattr(self, f"center_neg_{mode}"), dim=-1)
-        return (to_neg - to_pos) / (to_pos + 1e-8)
-
-    def _update_labels(
-        self, outputs: dict[str, torch.Tensor], index: torch.Tensor, epoch: int
-    ) -> None:
-        fused = self.label_fusion[index]
-        delta_fusion = self._relative_distance(outputs["feature_fusion"].detach(), "fusion")
-        for mode in ("text", "audio", "vision"):
-            delta = self._relative_distance(outputs[f"feature_{mode}"].detach(), mode)
-            alpha = delta / (delta_fusion + 1e-8)
-            proposed = 0.5 * alpha * fused + 0.5 * (fused + delta - delta_fusion)
-            proposed = torch.clamp(proposed, -self.label_bound, self.label_bound)
-            # Momentum: later epochs move the label less.
-            buffer = getattr(self, f"label_{mode}")
-            buffer[index] = ((epoch - 1) / (epoch + 1) * buffer[index]
-                             + 2 / (epoch + 1) * proposed)
+        self.pseudo_label_step(outputs, batch, epoch)

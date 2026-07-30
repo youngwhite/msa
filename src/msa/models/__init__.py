@@ -10,6 +10,7 @@ from .mfn import MemoryFusionNetwork
 from .misa import MISA
 from .mult import MultimodalTransformer
 from .self_mm import SelfMM
+from .tetfn import TETFN
 from .simple import EarlyFusionLSTM, LateFusionDNN
 from .tfn import TensorFusionNetwork
 
@@ -25,6 +26,7 @@ __all__ = [
     "MemoryFusionNetwork",
     "MultimodalTransformer",
     "SelfMM",
+    "TETFN",
     "TensorFusionNetwork",
     "TextOnlyBert",
 ]
