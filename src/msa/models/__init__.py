@@ -10,8 +10,8 @@ from .mfn import MemoryFusionNetwork
 from .misa import MISA
 from .mult import MultimodalTransformer
 from .self_mm import SelfMM
-from .tetfn import TETFN
 from .simple import EarlyFusionLSTM, LateFusionDNN
+from .tetfn import TETFN
 from .tfn import TensorFusionNetwork
 
 __all__ = [

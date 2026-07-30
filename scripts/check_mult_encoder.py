@@ -41,7 +41,7 @@ theirs = their_mod.TransformerEncoder(
     res_dropout=0.0, embed_dropout=0.0, attn_mask=True).eval()
 
 # Copy ours -> theirs so both hold identical weights.
-for a, b in zip(ours.layers, theirs.layers):
+for a, b in zip(ours.layers, theirs.layers, strict=True):
     b.self_attn.in_proj_weight.data.copy_(a.attention.in_proj_weight.data)
     b.self_attn.in_proj_bias.data.copy_(a.attention.in_proj_bias.data)
     b.self_attn.out_proj.weight.data.copy_(a.attention.out_proj.weight.data)

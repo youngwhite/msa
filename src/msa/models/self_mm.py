@@ -32,9 +32,8 @@ from ..config import DatasetSpec
 from ..registry import register_model
 from .base import MSAModel
 from .bert import BertTextEncoder
-from .pseudo_labels import MODES, PseudoLabelMixin
 from .functional import last_valid_state
-
+from .pseudo_labels import PseudoLabelMixin
 
 
 class _AudioVisualSubNet(nn.Module):

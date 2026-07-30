@@ -28,14 +28,12 @@ Sampling uses a fixed seed so the configuration set is itself reproducible.
 from __future__ import annotations
 
 import argparse
-import itertools
 import json
 import random
 from pathlib import Path
 
 import numpy as np
 
-from msa.config import DATASETS
 from msa.data import build_dataloaders
 from msa.device import resolve_device
 from msa.registry import build_model
