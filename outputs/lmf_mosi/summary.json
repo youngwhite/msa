@@ -20,22 +20,19 @@
     "dataset": "mosi",
     "unaligned": true,
     "seeds": [
-      42,
-      43,
-      44,
-      45,
-      46,
-      47,
-      48,
-      49,
-      50,
-      51
+      42
     ],
     "epochs": 200,
     "batch_size": 64,
     "lr": 0.001,
     "weight_decay": 0.005,
     "grad_clip": 0.0,
+    "clip_mode": "norm",
+    "optimizer": "adam",
+    "lr_schedule": "none",
+    "lr_schedule_factor": 0.1,
+    "lr_schedule_patience": 5,
+    "accumulate_steps": 1,
     "patience": 8,
     "select_on": "mae",
     "model_arg": [
@@ -60,6 +57,12 @@
     "lr": 0.001,
     "weight_decay": 0.005,
     "grad_clip": 0.0,
+    "clip_mode": "norm",
+    "optimizer": "adam",
+    "lr_schedule": "none",
+    "lr_schedule_factor": 0.1,
+    "lr_schedule_patience": 5,
+    "accumulate_steps": 1,
     "patience": 8,
     "select_on": "mae",
     "seed": 42,
@@ -80,7 +83,7 @@
     "cublas_workspace_config": ":4096:8",
     "deterministic_algorithms": true,
     "git": {
-      "commit": "50d545d289566cd9f6eb80bb29d4ae2622d807b4",
+      "commit": "cdc6246cce979d0a48a4d9e7e12d96226804a365",
       "dirty": false
     },
     "device": "cuda",
@@ -104,6 +107,25 @@
         "49": 0.9560371101575933,
         "50": 1.0081510789503694,
         "51": 0.9317407067905862
+      }
+    },
+    "mse": {
+      "mean": 1.561700318803513,
+      "std": 0.11169556301917871,
+      "min": 1.3838489304476451,
+      "max": 1.7280571967787723,
+      "n": 10,
+      "per_seed": {
+        "42": 1.7280571967787723,
+        "43": 1.4273624199123693,
+        "44": 1.6240946154009896,
+        "45": 1.4892763423548419,
+        "46": 1.6016859569771618,
+        "47": 1.5595098771070974,
+        "48": 1.3838489304476451,
+        "49": 1.5560131030424298,
+        "50": 1.7144037923761264,
+        "51": 1.5327509536376958
       }
     },
     "corr": {
