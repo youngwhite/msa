@@ -123,10 +123,17 @@ def judge(group: str, model: str, reference: dict, verbose: bool = True) -> bool
         if metric not in stats or metric not in ref:
             continue
         mean, sd = stats[metric]["mean"], stats[metric]["std"]
-        se = sd / math.sqrt(n) if n > 1 else float("inf")
+        floor = NOISE_FLOOR.get(metric)
+        # A model's own spread may make this test stricter, never looser than
+        # the dataset's baseline noise. Without the cap, an unstable
+        # implementation buys tolerance by being unstable: EF-LSTM's two
+        # collapsed seeds pushed sigma to 0.2095 and turned a shortfall of 3.2
+        # noise floors into +1.9 SE. See docs/decisions.md, 2026-07-31.
+        effective_sd = min(sd, floor) if floor is not None else sd
+        se = effective_sd / math.sqrt(n) if n > 1 else float("inf")
         gap = shortfall(mean, ref[metric], metric)
         in_se = gap / se if se > 0 else 0.0
-        floor = NOISE_FLOOR.get(metric)
+        capped = floor is not None and sd > floor
         below_floor = floor is not None and gap <= floor
         if in_se <= PASS_SE:
             tag = "pass"
@@ -143,14 +150,15 @@ def judge(group: str, model: str, reference: dict, verbose: bool = True) -> bool
             tag = "FAIL"
             if metric in PRIMARY:
                 failures.append(metric)
-        # The opposite asymmetry, which the floor rule does NOT fix: a gap well
-        # above the noise floor that stays under 2 SE only because our own seed
-        # spread is wide. Reported loudly rather than silently tolerated.
+        # Since the cap, this should be unreachable — a gap above the floor can
+        # no longer hide under a wide spread. Kept as a tripwire: if it ever
+        # fires again, the cap has a hole.
         if floor is not None and gap > floor and in_se <= WARN_SE:
             masked.append((metric, gap, floor, in_se))
         marker = " (primary)" if metric in PRIMARY else ""
+        note = " [sd capped]" if capped else ""
         print(f"  {metric:12s}{mean:10.4f}{sd:9.4f}{ref[metric]:10.4f}"
-              f"{gap:+11.4f}{in_se:+8.1f}  {tag}{marker}")
+              f"{gap:+11.4f}{in_se:+8.1f}  {tag}{marker}{note}")
 
     # A collapsed seed inflates the spread, which inflates SE, which *widens* the
     # tolerance — so instability can buy a pass. Report it; never drop the seed,

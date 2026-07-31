@@ -76,7 +76,7 @@
 
 但崩溃本身仍是这一节真正的内容——它 10 个 seed 里有 **2 个完全崩溃**（seed 46、48：MAE 1.46 ≈ 恒定预测，Acc-2 0.42 = 多数类比例）。崩溃把标准差从约 0.03 抬到 0.21，SE 随之放大约 7 倍，而判据度量的是"落后多少个 SE"——**于是不稳定反而让它更容易通过**。
 
-这是判据的一个真实缺陷，已记录在案：`check_acceptance.py` 现在会点名崩溃的 seed 并写明"宽的离散度让这个检验更弱，而不是让模型更好"，但**只报告不剔除**——剔除 seed 是判据明令禁止的。补一个稳健性维度是待办，且不得在已有结果之后调整以迎合结果。见 [investigations.md](investigations.md#ef-lstm-collapse)。
+这是判据的一个真实缺陷，**2026-07-31 已修**：SE 的分母改用 `min(σ_模型, 数据集基线 σ)`——**离散度可让检验更严，不可更松**。EF-LSTM 的 MAE 因此从"标记 +1.9 SE"变为"未达标 +10.0 SE"。崩溃的 seed 仍然**只报告不剔除**（剔除是明令禁止的），但它们不再换来豁免。见 [decisions.md](decisions.md) 2026-07-31。见 [investigations.md](investigations.md#ef-lstm-collapse)。
 
 **运行**：`bash scripts/reproduce_all.sh ef_lstm_mosi` / `lf_dnn_mosi`
 

@@ -13,13 +13,15 @@
     },
     "ef_lstm_mosi": {
       "status": "gap_explained",
-      "metric": "corr",
+      "metric": "corr, mae",
       "date": "2026-07-30",
-      "attribution": "MMSA's own EF-LSTM collapses too — 1 seed in 10 against our 2, the same distribution at a ~20% rate — so the instability belongs to the configuration, not the port. And its code never reaches its own published Corr of 0.6690: highest seed 0.6558, mean 0.6358, short by 0.0332 against our 0.0409. On non-collapsed seeds only, ours scores 0.6485 against its 0.6424. Its published MAE of 0.9488 would require no collapses at all; its own code averages 1.0236.",
+      "attribution": "MMSA's own EF-LSTM collapses too — 1 seed in 10 against our 2, the same distribution at the ~23% rate measured over 30 seeds — so the instability belongs to the configuration, not the port. Neither implementation reaches the published figures: against Corr 0.6690 its code averages 0.6358 (highest seed 0.6558) and ours 0.6215 on seeds 42-46; against MAE 0.9488 its code averages 1.0236 and ours 1.0712. On non-collapsed seeds only, ours scores Corr 0.6485 against its 0.6424. **Ours is worse than its code on this subset** (MAE 1.0712 vs 1.0236, Corr 0.6215 vs 0.6358) and that is entirely the collapse count: we collapsed on seeds 46 and 48, it collapsed on 45. One collapse dominates a five-seed mean. The published MAE of 0.9488 would require no collapses at all.",
       "evidence": "docs/investigations.md#ef-lstm-corr-resolved",
       "do_not_retry": "Auditing the port for the collapse. It is a property of four LSTM layers with 0.5 inter-layer dropout on 1284 training samples, present in both implementations, measured at 23% over 30 seeds. What remains open is the criterion's blindness to a large absolute gap hidden by wide spread — a robustness dimension, not an implementation fix.",
       "caveats": "CPU while MMSA's table was most likely CUDA; its table's seed set is unstated. The claim is that the published numbers are not reachable from MMSA's code under conditions we can control, NOT that they are wrong.",
-      "does_not_generalise": "Established for EF-LSTM and TFN only. The other nine groups each need their own MMSA run before any similar attribution."
+      "does_not_generalise": "Established for EF-LSTM and TFN only. The other nine groups each need their own MMSA run before any similar attribution.",
+      "updated": "2026-07-31",
+      "note_2026_07_31": "MAE joined corr as a failure when the sigma cap landed: the criterion no longer lets two collapsed seeds inflate sigma to 0.2095 and turn a 3.2-noise-floor shortfall into +1.9 SE. That is the cap doing its job. The attribution is unchanged — the gap is the collapse rate, which both implementations share."
     }
   },
   "retracted": {
