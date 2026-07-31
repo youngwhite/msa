@@ -719,9 +719,28 @@ done
 | **LMF** | `[:3]`/`[3:]` 连续切片，全覆盖 | `[:3]`/`[5:]`，两个参数从不训练 | **MMSA 引入的 bug**，见 `#lmf-optimizer-correction` |
 | LMF | post_fusion_dropout 声明后不调用 | 同样不调用 | 从原作者**继承**的 bug |
 
-逐项核对已完成的：MISA（结构与原实现一致：融合层顺序、transformer `nhead=2 / num_layers=1`）、Self-MM、LMF、MulT。
+逐项核对已完成的：MISA（结构与原实现一致：融合层顺序、transformer `nhead=2 / num_layers=1`）、Self-MM、LMF、MulT、**MFN（2026-07-31，见下）**。
 
-**尚未核对**：MFN（`pliang279/MFN` 已克隆，未比对）。
+### MFN 对原作者实现的核对：无发现（2026-07-31）
+
+`pliang279/MFN` 的 `test_mosi.py`，逐行比对我们的 `src/msa/models/mfn.py`：
+
+| 环节 | 原作 | 我们 | |
+|---|---|---|---|
+| 注意力窗口 | `cStar = cat[prev_cs, new_cs]`（更新前后的 c 拼接） | 同 | ✓ |
+| 注意力 | `softmax(att1_fc2(drop(relu(att1_fc1(cStar)))), dim=1) * cStar` | 同 | ✓ |
+| 提案 | `tanh(att2_fc2(drop(relu(att2_fc1(attended)))))`，输入是 **attended** 而非 cStar | 同 | ✓ |
+| 门控输入 | `cat[attended, mem]` | 同 | ✓ |
+| 记忆更新 | `mem = γ₁·mem + γ₂·cHat`，两个 γ 各自 sigmoid | 同 | ✓ |
+| 输出 | `cat[last_h_l, last_h_a, last_h_v, last_mem]` → fc1 → relu → dropout → fc2 | 同 | ✓ |
+| 损失 | `nn.L1Loss()` | 同（MMSA 也是） | ✓ |
+| 模型选择 | **验证集 loss**（`if valid_loss <= best_valid: torch.save`） | 验证集 MAE | ✓ |
+
+**三方（原作 / MMSA / 我们）在结构与损失上完全一致。** 差异只有两处，都不构成实现分歧：原作跑满 `num_epochs` 无早停（MMSA 与我们 patience=8），原作的 `ReduceLROnPlateau(patience=100)` 在其轮数下不可能触发。超参不可比——原作是在 CMU-SDK 的 GloVe 特征上做随机搜索得到的。
+
+**结论：MFN 对表的缺口（MAE +1.4 SE / Corr +2.3 SE）不来自结构或协议差异。** 这条核对的价值是排除，不是发现。
+
+**顺带值得记一笔**：MFN 原作**用验证集选模型**，与 `#originals-select-on-test` 记的 MMIM / ALMT / BERT-MAG 三个原作相反。所以"原作用测试集选"不是这条线的普遍规律，而是分模型的事实，每个都得自己去看。
 
 ---
 
