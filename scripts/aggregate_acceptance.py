@@ -53,10 +53,13 @@ import sys
 from msa.config import OUTPUT_ROOT
 
 from check_acceptance import (  # noqa: E402  (same directory, run as a script)
+    CODE_REFERENCE_PATH,
     PRIMARY,
+    REFERENCE_PATH,
     load_reference,
     shortfall,
     standard_error,
+    summarise,
 )
 
 ALPHA = 0.05
@@ -64,6 +67,30 @@ ALPHA = 0.05
 #: entry before the first run of this script. Its collapsed seeds inflate both
 #: the shortfall and the spread, and it would otherwise dominate Z.
 SENSITIVITY_DROP = "ef_lstm"
+
+
+def pick_reference(which: str) -> dict:
+    """Which reference the aggregate is taken against.
+
+    The two answer different questions and must not be pooled silently:
+
+      table  MMSA's published numbers — the claim under test, but a claim
+             #mmsa-all-eleven found MMSA's own code does not meet on 9 of 11
+             models. Being behind here is not evidence of a defect on our side.
+      code   MMSA's implementation, run by us on the same seeds and pickles.
+             This one *is* implementation against implementation, and it is the
+             comparison that can say whether our ports are faithful.
+      auto   what check_acceptance uses: the table where it exists, our runs
+             where it does not. Correct per model, incoherent in aggregate,
+             which is why the first measurement of this script mixed eleven of
+             one with three of the other.
+    """
+    if which == "auto":
+        return load_reference()
+    if which == "table":
+        return json.loads(REFERENCE_PATH.read_text())["models"]
+    return {model: {"_source": "mmsa_code"} | summarise(entry)
+            for model, entry in json.loads(CODE_REFERENCE_PATH.read_text())["models"].items()}
 
 
 def binomial_two_sided(worse: int, k: int) -> float:
@@ -81,18 +108,51 @@ def normal_two_sided(z: float) -> float:
     return math.erfc(abs(z) / math.sqrt(2))
 
 
-def collect(reference: dict, metrics: tuple[str, ...]) -> dict[str, list[dict]]:
-    """One row per (metric, model): the shortfall and the SE it is measured in."""
-    rows: dict[str, list[dict]] = {metric: [] for metric in metrics}
+def our_runs() -> dict[str, dict]:
+    """Our acceptance groups, keyed by model.
+
+    Same rule as check_acceptance --all: only groups named <model>_<dataset>,
+    never the ablations, which deviate from the reference on purpose.
+    """
+    runs = {}
     for summary_path in sorted(OUTPUT_ROOT.glob("*/summary.json")):
         payload = json.loads(summary_path.read_text())
         model, group = payload.get("model", ""), summary_path.parent.name
         dataset = payload.get("dataset", "").lower().replace("cmu-", "")
-        # Same rule as check_acceptance --all: only the acceptance groups, never
-        # the ablations, which deviate from the reference on purpose.
-        if model not in reference or group != f"{model}_{dataset}":
+        if group == f"{model}_{dataset}":
+            runs[model] = payload["summary"]
+    return runs
+
+
+def mmsa_runs() -> dict[str, dict]:
+    """MMSA's own code as the subject under test, in the same shape as ours.
+
+    This is the control that decides how the table comparison may be read. If
+    MMSA's implementation falls short of MMSA's published table by as much as we
+    do, then the shortfall is a property of the target, not of our ports — and
+    #mmsa-all-eleven already found that to be true model by model at n=5. Here it
+    is put through the identical aggregate test rather than eyeballed.
+    """
+    subject = {}
+    for model, entry in json.loads(CODE_REFERENCE_PATH.read_text())["models"].items():
+        stats = summarise(entry)
+        subject[model] = {
+            metric: {"mean": stats[metric], "std": stats.get(f"{metric}_sd", 0.0),
+                     "n": stats["n"]}
+            for metric in stats if isinstance(stats[metric], float)
+            and not metric.endswith("_sd")
+        }
+    return subject
+
+
+def collect(reference: dict, metrics: tuple[str, ...],
+            subject: dict[str, dict]) -> dict[str, list[dict]]:
+    """One row per (metric, model): the shortfall and the SE it is measured in."""
+    rows: dict[str, list[dict]] = {metric: [] for metric in metrics}
+    for model, stats in sorted(subject.items()):
+        if model not in reference:
             continue
-        stats, ref = payload["summary"], reference[model]
+        ref = reference[model]
         for metric in metrics:
             if metric not in stats or metric not in ref:
                 continue
@@ -100,7 +160,7 @@ def collect(reference: dict, metrics: tuple[str, ...]) -> dict[str, list[dict]]:
             se, paired = standard_error(sd, n, ref, metric)
             gap = shortfall(mean, ref[metric], metric)
             rows[metric].append({
-                "model": model, "group": group, "ours": mean, "ref": ref[metric],
+                "model": model, "ours": mean, "ref": ref[metric], "n": n,
                 "gap": gap, "se": se, "z": gap / se if se > 0 else 0.0,
                 "source": "mmsa_code" if paired else "mmsa_table",
             })
@@ -126,18 +186,18 @@ def verdict_of(sign_p: float, z_p: float, Z: float) -> str:
     return "LEVEL"
 
 
-def report(metric: str, rows: list[dict]) -> str:
+def report(metric: str, rows: list[dict], subject_name: str) -> str:
     print(f"\n=== {metric} ===")
-    print(f"  {'model':12s}{'ours':>10s}{'ref':>10s}{'gap':>11s}{'SE':>9s}"
-          f"{'z':>7s}  reference")
+    print(f"  {'model':12s}{subject_name:>10s}{'ref':>10s}{'gap':>11s}{'SE':>9s}"
+          f"{'z':>7s}{'n':>4s}  reference")
     for r in sorted(rows, key=lambda r: -r["z"]):
         print(f"  {r['model']:12s}{r['ours']:10.4f}{r['ref']:10.4f}{r['gap']:+11.4f}"
-              f"{r['se']:9.4f}{r['z']:+7.2f}  {r['source']}")
+              f"{r['se']:9.4f}{r['z']:+7.2f}{r['n']:4d}  {r['source']}")
     t = test(rows)
     verdict = verdict_of(t["sign_p"], t["z_p"], t["Z"])
     print(f"\n  sign test : worse on {t['worse']}/{t['k']} models, p = {t['sign_p']:.4f}")
     print(f"  Stouffer  : Z = {t['Z']:+.2f}, p = {t['z_p']:.2e}"
-          f"   (positive Z = we are behind)")
+          f"   (positive Z = the subject is behind)")
     print(f"  VERDICT   : {verdict}")
 
     kept = [r for r in rows if r["model"] != SENSITIVITY_DROP]
@@ -153,16 +213,36 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--metrics", nargs="+", default=list(PRIMARY),
                     help=f"default: the primary metrics {list(PRIMARY)}")
+    ap.add_argument("--reference", choices=("auto", "table", "code"), default="auto",
+                    help="auto: table where published, our MMSA runs elsewhere "
+                         "(check_acceptance's rule). table/code: one source only, "
+                         "which is what makes the aggregate interpretable")
+    ap.add_argument("--subject", choices=("ours", "mmsa_code"), default="ours",
+                    help="whose numbers are under test. mmsa_code puts MMSA's own "
+                         "implementation through the identical test against the "
+                         "table it published — the control for reading our own "
+                         "shortfall against that table")
     args = ap.parse_args()
 
-    reference = load_reference()
-    rows = collect(reference, tuple(args.metrics))
+    reference = pick_reference(args.reference)
+    sources = {"auto": "MMSA's table where published, our runs of its code elsewhere",
+               "table": "MMSA's published table only",
+               "code": "our own runs of MMSA's code only"}
+    subject = our_runs() if args.subject == "ours" else mmsa_runs()
+    if args.subject == "mmsa_code" and args.reference != "table":
+        ap.error("--subject mmsa_code only makes sense against --reference table; "
+                 "anything else compares MMSA's runs with themselves")
+    print(f"subject  : {'our implementation' if args.subject == 'ours' else
+                        'MMSA implementation, run by us'}")
+    print(f"reference: {sources[args.reference]}")
+    rows = collect(reference, tuple(args.metrics), subject)
     verdicts = {}
+    label = "ours" if args.subject == "ours" else "MMSA"
     for metric in args.metrics:
         if not rows[metric]:
             print(f"\n=== {metric} ===\n  no group has a reference for this metric")
             continue
-        verdicts[metric] = report(metric, rows[metric])
+        verdicts[metric] = report(metric, rows[metric], label)
 
     primary = [v for m, v in verdicts.items() if m in PRIMARY]
     print("\n" + "=" * 60)
