@@ -17,7 +17,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-from msa.config import get_dataset_spec
+from msa.config import PROJECT_ROOT, get_dataset_spec
 from msa.data import SPLITS, MMSADataset, check_matches_spec, load_pickle
 from msa.metrics import METRIC_KEYS, eval_sentiment
 from msa.models.functional import masked_mean
@@ -207,6 +207,43 @@ def check_summary_convention() -> None:
           summarize(runs[:1])["mae"]["std"] == 0.0)
 
 
+def check_aggregate_statistics() -> None:
+    """The two statistics the aggregate verdict rests on.
+
+    A bug here would not look like a bug: it would look like a conclusion about
+    whether this project is level with its reference. Both are checked against
+    values that can be worked out by hand.
+    """
+    print("\n== aggregate acceptance statistics ==")
+    sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
+    from aggregate_acceptance import binomial_two_sided, normal_two_sided, test
+
+    # Five coin flips: P(0 or 5 worse) = 2/32.
+    check("sign test, most extreme case", abs(binomial_two_sided(5, 5) - 2 / 32) < 1e-12,
+          f"{binomial_two_sided(5, 5):.6f}")
+    # 4 of 5 is P(>=4 worse) + P(<=1 worse) = (5+1)*2/32.
+    check("sign test, one off the extreme",
+          abs(binomial_two_sided(4, 5) - 12 / 32) < 1e-12,
+          f"{binomial_two_sided(4, 5):.6f}")
+    check("sign test is symmetric",
+          all(abs(binomial_two_sided(i, 7) - binomial_two_sided(7 - i, 7)) < 1e-12
+              for i in range(8)))
+    check("sign test at an even split is 1.0", binomial_two_sided(3, 6) == 1.0)
+    check("two-sided normal p at z=1.96 is 0.05",
+          abs(normal_two_sided(1.96) - 0.05) < 5e-4, f"{normal_two_sided(1.96):.6f}")
+
+    # Stouffer combines k identical z's into z*sqrt(k) — the whole point of the
+    # statistic, and the thing that makes a consistent small bias visible.
+    rows = [{"gap": 1.0, "z": 1.0} for _ in range(9)]
+    combined = test(rows)
+    check("Stouffer combines nine z=1 into Z=3", abs(combined["Z"] - 3.0) < 1e-12,
+          f"Z={combined['Z']:.4f}")
+    check("opposing z's cancel",
+          abs(test([{"gap": 1.0, "z": 2.0}, {"gap": -1.0, "z": -2.0}])["Z"]) < 1e-12)
+    check("worse-count follows the gap's sign, not z's magnitude",
+          test([{"gap": 1e-9, "z": 0.001}, {"gap": -5.0, "z": -9.0}])["worse"] == 1)
+
+
 def check_loader_order(spec) -> None:
     print("\n== evaluation ordering ==")
     test = MMSADataset(spec, "test")
@@ -255,6 +292,7 @@ def main() -> None:
     check_pooling()
     check_metrics()
     check_summary_convention()
+    check_aggregate_statistics()
     check_loader_order(spec)
     check_pickle_cache(spec)
     check_beats_trivial(spec)
