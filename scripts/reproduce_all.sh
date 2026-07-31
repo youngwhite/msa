@@ -52,6 +52,8 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     lmf_mosi_ablation_masked
     mfn_mosi_ablation_realseq
     graph_mfn_mosi_ablation_frozen
+    tfn_mosi_ablation_mmsaselect
+    mfn_mosi_ablation_mmsaselect
     tfn_mosi_mmsaseeds
 )
 
@@ -168,6 +170,15 @@ args_for() {
         echo "--model tfn --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 0 --grad-clip 0 --epochs 200" ;;
     lmf_mosi_ablation_masked)
         echo "--model lmf --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 0.005 --batch-size 64 --grad-clip 0 --epochs 200" ;;
+    # Same faithful config as the acceptance runs, but picking the epoch on
+    # MMSA's own reduction of the validation loss (mean of per-batch means,
+    # rounded to 1e-4) instead of ours (over samples, unrounded). The one
+    # protocol difference that applies to every model, never quantified until
+    # now — see docs/investigations.md#mmim and #select-reduction.
+    tfn_mosi_ablation_mmsaselect)
+        echo "--model tfn --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 0 --grad-clip 0 --epochs 200 --model-arg use_lengths=False --model-arg mask_pooling=False --select-reduction mmsa" ;;
+    mfn_mosi_ablation_mmsaselect)
+        echo "--model mfn --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 2e-3 --weight-decay 0 --batch-size 128 --grad-clip 0 --epochs 200 --select-reduction mmsa" ;;
     # Same faithful config as the acceptance run, but on MMSA's own default
     # seeds — a check on how much of any residual gap is just the seed draw.
     tfn_mosi_mmsaseeds)
