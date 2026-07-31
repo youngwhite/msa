@@ -9,6 +9,7 @@ from .lf_lstm import LateFusionLSTM
 from .lmf import LowRankFusion
 from .mfn import MemoryFusionNetwork
 from .misa import MISA
+from .mmim import MMIM
 from .mult import MultimodalTransformer
 from .self_mm import SelfMM
 from .simple import EarlyFusionLSTM, LateFusionDNN
@@ -28,6 +29,7 @@ __all__ = [
     "MemoryFusionNetwork",
     "MultimodalTransformer",
     "SelfMM",
+    "MMIM",
     "TETFN",
     "TensorFusionNetwork",
     "TextOnlyBert",

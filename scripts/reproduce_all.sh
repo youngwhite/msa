@@ -46,6 +46,7 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     cenet_mosi
     tetfn_mosi
     bert_mag_mosi
+    mmim_mosi
     tfn_mosi_ablation_masked
     lmf_mosi_ablation_masked
     mfn_mosi_ablation_realseq
@@ -120,6 +121,11 @@ args_for() {
     # what the CE module consumes — see docs/investigations.md#cenet-vs-paper.
     cenet_mosi)
         echo "--model cenet --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-5 --weight-decay 1e-4 --batch-size 64 --grad-clip 2.0 --epochs 200 --patience 8" ;;
+    # MMIM: MMSA hyper-parameters. UNALIGNED — each stream keeps its own clock,
+    # and the LSTM encoders read every stream at its true final step. lr is the
+    # main rate; BERT runs at a twentieth of it (see MMIM.param_groups).
+    mmim_mosi)
+        echo "--model mmim --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 1e-4 --batch-size 32 --grad-clip 1.0 --epochs 200 --patience 8" ;;
     # BERT-MAG: MMSA hyper-parameters (lr 2e-5, bs 32, no weight decay, no
     # clipping). ALIGNED — the gate displaces token embeddings position by
     # position, so audio and vision must share the text's clock.
@@ -169,7 +175,7 @@ args_for() {
 jobs_for() {
     case "$1" in
     mult_mosi|mult_mosi_posenc) echo 2 ;;      # ~5.6 GB each
-    misa_mosi|self_mm_mosi|text_bert_mosi|cenet_mosi|tetfn_mosi|bert_mag_mosi) echo 2 ;;   # fine-tuned BERT
+    misa_mosi|self_mm_mosi|text_bert_mosi|cenet_mosi|tetfn_mosi|bert_mag_mosi|mmim_mosi) echo 2 ;;   # fine-tuned BERT
     *) echo 4 ;;                                # the frozen-feature models are small
     esac
 }

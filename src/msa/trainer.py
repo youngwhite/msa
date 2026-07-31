@@ -137,6 +137,8 @@ class Trainer:
         # Only CUDA has pinned host memory, so only there is an async copy real.
         self.non_blocking = supports_pin_memory(device)
         self.optimizer = torch.optim.Adam(model.param_groups(cfg.lr, cfg.weight_decay))
+        # None for every model but MMIM; see MSAModel.auxiliary_optimizer.
+        self.aux_optimizer = model.auxiliary_optimizer(cfg.lr, cfg.weight_decay)
         self.scheduler = None
         if cfg.lr_schedule == "plateau":
             direction = "min" if cfg.select_on in LOWER_IS_BETTER else "max"
@@ -167,26 +169,58 @@ class Trainer:
         preds, trues = np.concatenate(preds), np.concatenate(trues)
         return eval_sentiment(preds, trues), preds
 
+    def _clip(self) -> None:
+        if not self.cfg.grad_clip:
+            return
+        if self.cfg.clip_mode == "value":
+            nn.utils.clip_grad_value_(self.model.parameters(), self.cfg.grad_clip)
+        else:
+            nn.utils.clip_grad_norm_(self.model.parameters(), self.cfg.grad_clip)
+
+    def auxiliary_epoch(self) -> float:
+        """A full pass fitting the auxiliary objective, before the main epoch.
+
+        Grads are zeroed on the whole model rather than on the optimiser: both
+        passes clip over `model.parameters()`, so gradients belonging to
+        parameters the stepping optimiser does not own still enter the norm.
+        Leaving them to accumulate would quietly change the clipping factor.
+        """
+        total, seen = 0.0, 0
+        for batch in self.loaders["train"]:
+            batch = self._to_device(batch)
+            self.model.zero_grad(set_to_none=True)
+            loss = self.model.auxiliary_loss(batch)
+            loss.backward()
+            self._clip()
+            self.aux_optimizer.step()
+            n = batch["label"].numel()
+            total += loss.item() * n
+            seen += n
+        return total / seen
+
     def train_one_epoch(self, epoch: int = 1) -> float:
         """One pass over the training split; returns the sample-weighted mean loss."""
         self.model.train()
         self.model.on_train_epoch_start(epoch)
+        if self.aux_optimizer is not None:
+            self.auxiliary_epoch()
         accumulate = self.cfg.accumulate_steps
         total, seen = 0.0, 0
         for step, batch in enumerate(self.loaders["train"]):
             batch = self._to_device(batch)
             if step % accumulate == 0:
-                self.optimizer.zero_grad(set_to_none=True)
+                # Same reason as in auxiliary_epoch: with a second optimiser in
+                # play, clipping sees parameters this one does not own.
+                if self.aux_optimizer is not None:
+                    self.model.zero_grad(set_to_none=True)
+                else:
+                    self.optimizer.zero_grad(set_to_none=True)
             outputs = self.model(batch)
             loss = self.model.compute_loss(outputs, batch)
             # Gradients are summed, not averaged, over the window — what MMSA
             # does; averaging would change the effective step size.
             loss.backward()
-            if self.cfg.grad_clip:
-                if self.cfg.clip_mode == "value":
-                    nn.utils.clip_grad_value_(self.model.parameters(), self.cfg.grad_clip)
-                else:
-                    nn.utils.clip_grad_norm_(self.model.parameters(), self.cfg.grad_clip)
+            self._clip()
             if (step + 1) % accumulate == 0:
                 self.optimizer.step()
             self.model.on_train_batch_end(outputs, batch, epoch)

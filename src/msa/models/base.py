@@ -62,3 +62,30 @@ class MSAModel(nn.Module):
 
     def on_train_epoch_start(self, epoch: int) -> None:
         """Called before each training epoch."""
+
+    def auxiliary_optimizer(
+        self, lr: float, weight_decay: float
+    ) -> torch.optim.Optimizer | None:
+        """A second objective, optimised in its own pass over the training data.
+
+        Returning an optimiser makes the trainer run a full extra epoch over the
+        training split *before* each main epoch, stepping only this optimiser on
+        the loss from `auxiliary_loss`. Returning None — the default — leaves the
+        loop exactly as it was for every other model.
+
+        MMIM needs this: its mutual-information bound is fitted in a separate
+        stage each epoch, and folding that into the main batch loop would change
+        the algorithm rather than reorganise it. The hook is deliberately not
+        MMIM-shaped, so the next model with an auxiliary objective needs no
+        further change here.
+        """
+        return None
+
+    def auxiliary_loss(self, batch: dict[str, torch.Tensor]) -> torch.Tensor:
+        """The auxiliary objective for one batch, including its own forward.
+
+        The model runs the forward itself because an auxiliary pass usually wants
+        different inputs than the main one — MMIM withholds the labels and the
+        memory bank here, so it cannot reuse the main forward's output.
+        """
+        raise NotImplementedError
