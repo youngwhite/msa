@@ -362,3 +362,27 @@ MMSA 的结果表写于 2021-05-06，其后 TFN 的 MOSI 超参被改过（text_
 | 崩溃 seed（Acc-2 < 0.60） | 2/10 | **0/10** | — |
 
 **崩溃是四层堆叠引入的**，两层配置十个 seed 无一崩溃。验收判定不变（复现的是参照今天的配置），改变的是归因——见 [`investigations.md#table-predates-config`](investigations.md#table-predates-config)。
+
+## 跨模型聚合判定（2026-07-31）
+
+判据定义见 [decisions.md](decisions.md) 2026-07-31（**写在看任何数字之前**），实现是 `scripts/aggregate_acceptance.py`，统计量本身有闸门（`check_invariants.py`）。三个视角全部 **n=10**、同一套 SE 口径，故 Z 可直接横比：
+
+| 被检验方 | 参照 | MAE Z | p | Corr Z | p | 判定 |
+|---|---|---|---|---|---|---|
+| **我们** | **MMSA 的代码**（14 模型） | **−2.21** | 0.027 | **−3.17** | 0.0015 | **超过** |
+| 我们 | MMSA 公开表（11 模型） | +7.52 | 5.3e-14 | +6.96 | 3.4e-12 | 系统性落后 |
+| MMSA 的代码 | MMSA 公开表（11 模型） | +8.54 | 1.4e-17 | +11.28 | 1.6e-29 | 系统性落后（更多） |
+
+符号检验（更稳健、只看方向）：对它的代码，两个指标都是 **14 个模型中 3 个我们更差，双侧 p=0.057**。
+
+**读法**：对**能复现的**基准（MMSA 的实现，同数据同 seed），我们至少打平、方向一致地偏向我们，判据判为超过。对**不能复现的**那张公开表，两份实现都落后，且我们比参照实现更接近它。完整限定（模型间不独立会放大 |Z|；参照继承 MMSA 对原论文的偏离）见 [`investigations.md#aggregate-verdict`](investigations.md#aggregate-verdict)。
+
+复现命令：
+
+```bash
+python scripts/aggregate_acceptance.py --reference code            # 我们 vs 它的代码
+python scripts/aggregate_acceptance.py --reference table           # 我们 vs 它的表
+python scripts/aggregate_acceptance.py --reference table --subject mmsa_code
+```
+
+参照本身的生成：`python scripts/mmsa_reference.py run <模型> 42 43 44 45 46 47 48 49 50 51`，再 `collect`。需要 transformers 4.x 树与几个小包（见该脚本 docstring），本机在 `/workspace/mmsa_env/`。
