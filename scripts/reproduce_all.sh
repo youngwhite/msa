@@ -55,6 +55,7 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     tfn_mosi_ablation_mmsaselect
     mfn_mosi_ablation_mmsaselect
     tfn_mosi_2021config
+    ef_lstm_mosi_2021config
     tfn_mosi_mmsaseeds
 )
 
@@ -186,6 +187,12 @@ args_for() {
     # regenerated. See docs/investigations.md#table-predates-config.
     tfn_mosi_2021config)
         echo "--model tfn --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 5e-4 --weight-decay 0 --batch-size 32 --grad-clip 0 --epochs 200 --model-arg use_lengths=False --model-arg mask_pooling=False --model-arg text_hidden=128 --model-arg audio_hidden=16 --model-arg vision_hidden=128 --model-arg text_out=128 --model-arg post_fusion_dim=32 --model-arg text_dropout=0.2 --model-arg audio_dropout=0.2 --model-arg vision_dropout=0.2 --model-arg post_fusion_dropout=0.2" ;;
+    # EF-LSTM under the 2021 config too, for a different question than TFN's:
+    # today's config stacks 4 LSTM layers where 2021's stacked 2, and the 23%
+    # collapse rate in #ef-lstm-collapse is a property of the 4-layer stack. Does
+    # the configuration the table was written under collapse at all?
+    ef_lstm_mosi_2021config)
+        echo "--model ef_lstm --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 1e-4 --batch-size 128 --grad-clip 0 --epochs 200 --model-arg hidden_size=256 --model-arg num_layers=2 --model-arg dropout=0.3" ;;
     # Same faithful config as the acceptance run, but on MMSA's own default
     # seeds — a check on how much of any residual gap is just the seed draw.
     tfn_mosi_mmsaseeds)
