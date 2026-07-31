@@ -355,11 +355,19 @@ def summarize(
     sqrt((n-1)/n) — 11% at n=5 — which matters here, because the whole argument
     in docs/roadmap.md is a comparison between that spread and published gaps.
     A single run has no spread to estimate, so its std is reported as 0.
+
+    A metric missing from *any* run is dropped rather than raising: a group can
+    outlive the metric set it was produced under, and rebuilding a summary over
+    a group where one seed was re-run after `mse` was added should not fail. It
+    is dropped rather than averaged over the subset, because a mean taken over
+    a different number of seeds than its neighbours is a trap.
     """
     if not results:
         raise ValueError("nothing to summarize")
     summary = {}
     for key in keys:
+        if not all(key in r.test for r in results):
+            continue
         values = np.array([r.test[key] for r in results], dtype=np.float64)
         summary[key] = {
             "mean": float(values.mean()),
