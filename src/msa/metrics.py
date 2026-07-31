@@ -77,6 +77,9 @@ def eval_sentiment(y_pred: np.ndarray, y_true: np.ndarray) -> dict[str, float]:
 
     return {
         "mae": mae,
+        # ALMT's reference trains on MSE and selects on it too, so it has to be
+        # available as a selection metric. Nothing else here reads it.
+        "mse": float(np.mean((y_pred - y_true) ** 2)),
         "corr": corr,
         "acc7": _multiclass_acc(y_pred, y_true, bound=3.0),
         "acc5": _multiclass_acc(y_pred, y_true, bound=2.0),
@@ -88,11 +91,11 @@ def eval_sentiment(y_pred: np.ndarray, y_true: np.ndarray) -> dict[str, float]:
 
 
 #: Metrics where a smaller value is better. Everything else is "higher is better".
-LOWER_IS_BETTER = frozenset({"mae"})
+LOWER_IS_BETTER = frozenset({"mae", "mse"})
 
 #: The keys `eval_sentiment` returns, for validating --select-on and friends.
 METRIC_KEYS = (
-    "mae", "corr", "acc7", "acc5", "acc2_has0", "f1_has0", "acc2_non0", "f1_non0",
+    "mae", "mse", "corr", "acc7", "acc5", "acc2_has0", "f1_has0", "acc2_non0", "f1_non0",
 )
 
 

@@ -47,6 +47,7 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     tetfn_mosi
     bert_mag_mosi
     mmim_mosi
+    almt_mosi
     tfn_mosi_ablation_masked
     lmf_mosi_ablation_masked
     mfn_mosi_ablation_realseq
@@ -121,6 +122,13 @@ args_for() {
     # what the CE module consumes — see docs/investigations.md#cenet-vs-paper.
     cenet_mosi)
         echo "--model cenet --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-5 --weight-decay 1e-4 --batch-size 64 --grad-clip 2.0 --epochs 200 --patience 8" ;;
+    # ALMT: MMSA hyper-parameters, which match the authors' mosi.yaml. UNALIGNED.
+    # AdamW rather than Adam, MSE rather than L1 (the model supplies the loss),
+    # selection on validation MSE because that is what the reference's KeyEval
+    # measures here, and NO clipping: max_grad_norm sits in the config and
+    # neither implementation ever applies it.
+    almt_mosi)
+        echo "--model almt --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --optimizer adamw --lr 1e-4 --weight-decay 1e-4 --batch-size 64 --grad-clip 0 --lr-schedule warmup_cosine --epochs 200 --patience 32 --select-on mse" ;;
     # MMIM: MMSA hyper-parameters. UNALIGNED — each stream keeps its own clock,
     # and the LSTM encoders read every stream at its true final step. lr is the
     # main rate; BERT runs at a twentieth of it (see MMIM.param_groups).
@@ -175,7 +183,7 @@ args_for() {
 jobs_for() {
     case "$1" in
     mult_mosi|mult_mosi_posenc) echo 2 ;;      # ~5.6 GB each
-    misa_mosi|self_mm_mosi|text_bert_mosi|cenet_mosi|tetfn_mosi|bert_mag_mosi|mmim_mosi) echo 2 ;;   # fine-tuned BERT
+    misa_mosi|self_mm_mosi|text_bert_mosi|cenet_mosi|tetfn_mosi|bert_mag_mosi|mmim_mosi|almt_mosi) echo 2 ;;   # fine-tuned BERT
     *) echo 4 ;;                                # the frozen-feature models are small
     esac
 }

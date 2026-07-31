@@ -1,5 +1,6 @@
 """Importing this package registers every model with `msa.registry`."""
 
+from .almt import ALMT
 from .base import MSAModel
 from .bert import TextOnlyBert
 from .bert_mag import BertMAG
@@ -19,6 +20,7 @@ from .tfn import TensorFusionNetwork
 __all__ = [
     "MSAModel",
     "BertMAG",
+    "ALMT",
     "CENet",
     "MISA",
     "EarlyFusionLSTM",

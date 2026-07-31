@@ -68,7 +68,10 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--grad-clip", type=float, default=1.0)
     ap.add_argument("--clip-mode", default="norm", choices=("norm", "value"),
                     help="clip gradients by norm or by value; MulT and MISA clip by value")
-    ap.add_argument("--lr-schedule", default="none", choices=("none", "plateau"),
+    ap.add_argument("--optimizer", default="adam", choices=("adam", "adamw"),
+                    help="AdamW decouples weight decay; ALMT's reference uses it")
+    ap.add_argument("--lr-schedule", default="none",
+                    choices=("none", "plateau", "warmup_cosine"),
                     help="ReduceLROnPlateau on the validation selection metric")
     ap.add_argument("--lr-schedule-factor", type=float, default=0.1)
     ap.add_argument("--lr-schedule-patience", type=int, default=5)
@@ -144,6 +147,7 @@ def main() -> None:
             weight_decay=args.weight_decay,
             grad_clip=args.grad_clip,
             clip_mode=args.clip_mode,
+            optimizer=args.optimizer,
             lr_schedule=args.lr_schedule,
             lr_schedule_factor=args.lr_schedule_factor,
             lr_schedule_patience=args.lr_schedule_patience,

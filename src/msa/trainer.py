@@ -40,9 +40,14 @@ class TrainConfig:
     #: How grad_clip is applied. MMSA's TFN/LMF/MFN do not clip at all, MulT and
     #: MISA clip by *value*, MMIM clips by norm — so this has to be selectable.
     clip_mode: str = "norm"          # "norm" | "value"
+    #: Optimiser. Adam everywhere except ALMT, whose reference and whose authors
+    #: both use AdamW — decoupled weight decay, which at decay 1e-4 is not the
+    #: same update as Adam's L2 term.
+    optimizer: str = "adam"          # "adam" | "adamw"
     #: Optional ReduceLROnPlateau on the validation selection metric, as MulT and
-    #: MMIM use. "none" leaves the learning rate alone.
-    lr_schedule: str = "none"        # "none" | "plateau"
+    #: MMIM use, or ALMT's linear warmup into cosine annealing. "none" leaves the
+    #: learning rate alone.
+    lr_schedule: str = "none"        # "none" | "plateau" | "warmup_cosine"
     lr_schedule_factor: float = 0.1
     lr_schedule_patience: int = 5
     #: Optimiser steps once per this many batches. MMSA calls it `update_epochs`
@@ -63,8 +68,11 @@ class TrainConfig:
     def __post_init__(self) -> None:
         if self.clip_mode not in ("norm", "value"):
             raise ValueError(f"clip_mode must be 'norm' or 'value', got {self.clip_mode!r}")
-        if self.lr_schedule not in ("none", "plateau"):
-            raise ValueError(f"lr_schedule must be 'none' or 'plateau', got {self.lr_schedule!r}")
+        if self.lr_schedule not in ("none", "plateau", "warmup_cosine"):
+            raise ValueError("lr_schedule must be 'none', 'plateau' or 'warmup_cosine', "
+                             f"got {self.lr_schedule!r}")
+        if self.optimizer not in ("adam", "adamw"):
+            raise ValueError(f"optimizer must be 'adam' or 'adamw', got {self.optimizer!r}")
         if self.select_on not in METRIC_KEYS:
             raise ValueError(
                 f"select_on={self.select_on!r} is not a metric; "
@@ -136,7 +144,8 @@ class Trainer:
         self.dataset = dataset
         # Only CUDA has pinned host memory, so only there is an async copy real.
         self.non_blocking = supports_pin_memory(device)
-        self.optimizer = torch.optim.Adam(model.param_groups(cfg.lr, cfg.weight_decay))
+        build = torch.optim.AdamW if cfg.optimizer == "adamw" else torch.optim.Adam
+        self.optimizer = build(model.param_groups(cfg.lr, cfg.weight_decay))
         # None for every model but MMIM; see MSAModel.auxiliary_optimizer.
         self.aux_optimizer = model.auxiliary_optimizer(cfg.lr, cfg.weight_decay)
         self.scheduler = None
@@ -145,6 +154,31 @@ class Trainer:
             self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
                 self.optimizer, mode=direction,
                 factor=cfg.lr_schedule_factor, patience=cfg.lr_schedule_patience,
+            )
+        elif cfg.lr_schedule == "warmup_cosine":
+            # ALMT: the rate climbs linearly over the first tenth of the epoch
+            # budget, then anneals by cosine over the remaining nine tenths. Both
+            # the reference and the authors compute the two spans from the
+            # configured epoch cap, not from the epochs actually run — early
+            # stopping shortens the run without rescaling the schedule.
+            warmup = max(1, int(0.1 * cfg.epochs))
+            # The factor is `epoch / warmup` counting from zero, so the FIRST
+            # epoch runs at a learning rate of exactly 0 and trains nothing. That
+            # is what the authors' GradualWarmupScheduler does — verified against
+            # their scheduler.py epoch by epoch — and MMSA copied the class
+            # unchanged. Reproduced rather than corrected; see
+            # docs/investigations.md#almt-warmup.
+            self.scheduler = torch.optim.lr_scheduler.SequentialLR(
+                self.optimizer,
+                schedulers=[
+                    torch.optim.lr_scheduler.LambdaLR(
+                        self.optimizer, lr_lambda=lambda e, w=warmup: e / w
+                    ),
+                    torch.optim.lr_scheduler.CosineAnnealingLR(
+                        self.optimizer, T_max=0.9 * cfg.epochs
+                    ),
+                ],
+                milestones=[warmup + 1],
             )
 
     def _to_device(self, batch: dict) -> dict:
@@ -260,8 +294,11 @@ class Trainer:
                       f"valid_corr={valid_metrics['corr']:.4f}  "
                       f"valid_acc2={valid_metrics['acc2_non0']:.4f}"
                       f"{' *' if improved else ''}")
-            if self.scheduler is not None:
+            if isinstance(self.scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
                 self.scheduler.step(score)
+            elif self.scheduler is not None:
+                # Epoch-driven schedules take no metric.
+                self.scheduler.step()
             if epoch - best_epoch >= cfg.patience:
                 if verbose:
                     print(f"early stop: no valid improvement for {cfg.patience} epochs")
