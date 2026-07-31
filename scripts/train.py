@@ -80,6 +80,12 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--patience", type=int, default=8)
     ap.add_argument("--select-on", default="mae", choices=METRIC_KEYS,
                     help="validation metric used to pick the reported epoch")
+    ap.add_argument("--select-reduction", default="sample", choices=("sample", "mmsa"),
+                    help="how that metric is reduced: 'sample' over the split "
+                         "(default), or 'mmsa' as the mean of per-batch means "
+                         "rounded to 1e-4. The second is a diagnostic for what "
+                         "the reference's protocol is worth, not a mode to "
+                         "reproduce in — see TrainConfig")
     ap.add_argument("--model-arg", action="append", default=[], metavar="KEY=VALUE",
                     help="model constructor argument; repeatable")
     ap.add_argument("--num-workers", type=int, default=0)
@@ -154,6 +160,7 @@ def main() -> None:
             accumulate_steps=args.accumulate_steps,
             patience=args.patience,
             select_on=args.select_on,
+            select_reduction=args.select_reduction,
             seed=seed,
             keep_checkpoint=args.keep_checkpoint,
         )

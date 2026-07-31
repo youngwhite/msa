@@ -58,6 +58,21 @@ class TrainConfig:
     #: Validation metric used to pick the reported epoch. `mae` reproduces MMSA's
     #: "KeyEval: Loss" for regression, since its criterion is L1.
     select_on: str = "mae"
+    #: How that metric is reduced before it is compared.
+    #:
+    #:   "sample"  over the whole split, every sample weighted equally. Default,
+    #:             and the correct quantity.
+    #:   "mmsa"    MMSA's `eval_loss / len(dataloader)` then `round(., 4)`: the
+    #:             mean of per-batch means, so a short final batch is weighted
+    #:             like a full one (6.4x on MOSI's 229-sample validation split at
+    #:             batch 32), and improvements below 1e-4 are invisible.
+    #:
+    #: The second exists only to measure what that protocol difference is worth —
+    #: it is a known deviation of the reference we have never quantified
+    #: (docs/investigations.md#mmim). It is not a mode to reproduce in: the
+    #: shortfall it might explain is smaller than this dataset's noise floor, and
+    #: adopting a worse quantity to close a gap is tuning toward the target.
+    select_reduction: str = "sample"
     seed: int = 42
     #: Keep `best.pt` after the run. Off by default: a checkpoint is ~13MB for
     #: LF-LSTM and 38MB for TFN, the run is bit-for-bit reproducible from the
@@ -78,6 +93,13 @@ class TrainConfig:
                 f"select_on={self.select_on!r} is not a metric; "
                 f"choose from {list(METRIC_KEYS)}"
             )
+        if self.select_reduction not in ("sample", "mmsa"):
+            raise ValueError("select_reduction must be 'sample' or 'mmsa', got "
+                             f"{self.select_reduction!r}")
+        if self.select_reduction == "mmsa" and self.select_on != "mae":
+            raise ValueError("select_reduction='mmsa' reproduces MMSA's L1 "
+                             "validation loss, which only corresponds to "
+                             f"select_on='mae', not {self.select_on!r}")
         if self.epochs < 1:
             raise ValueError(f"epochs must be >= 1, got {self.epochs}")
         if self.accumulate_steps < 1:
@@ -195,12 +217,18 @@ class Trainer:
         so row i of the returned array belongs to sample i of that split.
         """
         self.model.eval()
-        preds, trues = [], []
+        preds, trues, batch_maes = [], [], []
         for batch in self.loaders[split]:
             batch = self._to_device(batch)
-            preds.append(self.model(batch)["M"].float().cpu().numpy())
-            trues.append(batch["label"].float().cpu().numpy())
+            pred = self.model(batch)["M"].float().cpu().numpy()
+            true = batch["label"].float().cpu().numpy()
+            preds.append(pred)
+            trues.append(true)
+            batch_maes.append(float(np.abs(pred - true).mean()))
         preds, trues = np.concatenate(preds), np.concatenate(trues)
+        # Kept beside the real metrics rather than folded into them: this is the
+        # reference's reduction, used only when select_reduction says so.
+        self._batch_mean_mae = round(sum(batch_maes) / len(batch_maes), 4)
         return eval_sentiment(preds, trues), preds
 
     def _clip(self) -> None:
@@ -278,7 +306,8 @@ class Trainer:
         for epoch in range(1, cfg.epochs + 1):
             train_loss = self.train_one_epoch(epoch)
             valid_metrics, _ = self.evaluate("valid")
-            score = valid_metrics[cfg.select_on]
+            score = (self._batch_mean_mae if cfg.select_reduction == "mmsa"
+                     else valid_metrics[cfg.select_on])
             history.append(
                 {"epoch": epoch, "train_loss": train_loss,
                  **{f"valid_{k}": v for k, v in valid_metrics.items()}}
