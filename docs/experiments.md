@@ -322,3 +322,30 @@ LF-LSTM，aligned，3 seed。这是选定研究方向的主要依据（见 `docs
 **不是移植错误**：与 MMSA 逐行核对无差异（BatchNorm 加在时间轴、`h[-1]` 读取、4 层 LSTM 层间 dropout 0.5、trainer 同样不裁剪梯度、超参一致）。这是该架构+配置本身的性质。
 
 **为什么这条值得单列**：MMSA 的表是单值无方差，**结构上无法显示"这个基线有约四分之一的概率训不出来"**。能给出这个数，是因为协议要求多 seed。它也让 EF-LSTM 的验收判定显得脆弱——判定实质上取决于抽到几个崩溃 seed。详见 [`investigations.md`](investigations.md#corr-gaps)。
+
+## 协议与配置的两个诊断组（2026-07-31）
+
+两组都**不是验收组**，也不与 MMSA 的表比较——各自只与对应的验收组比，因为每组只动了一个变量。
+
+### 一、验证选择口径（`*_ablation_mmsaselect`，各 10 seed）
+
+除"用 MMSA 的方式归约验证损失"（逐 batch 平均 + `round(·,4)`）外，与验收组完全相同。配对检验（同实现、同 seed）：
+
+| 组 | MAE 平均差 | t (df=9) | 逐 seed 变化 | Corr 平均差 | t |
+|---|---|---|---|---|---|
+| `tfn_mosi_ablation_mmsaselect` | **−0.0161（更好）** | **−2.53** | 7 负 / 1 正 / 2 零 | +0.0014 | +0.52 |
+| `mfn_mosi_ablation_mmsaselect` | +0.0037 | +1.00 | 1 正 / **9 零** | −0.0015 | −1.00 |
+
+效应大小随末批超权倍数走（TFN bs 32 → 5.7×，MFN bs 128 → 1.13×），机制与逐 epoch 选择结果一致。**不采用**——理由与完整分析见 [`investigations.md#select-reduction`](investigations.md#select-reduction)。
+
+### 二、2021 年的超参（`tfn_mosi_2021config`，10 seed）
+
+MMSA 的结果表写于 2021-05-06，其后 TFN 的 MOSI 超参被改过（text_out 128→32、post_fusion_dim 32→64、lr 5e-4→1e-3 等）。检验"表对应旧超参"这一假说：
+
+| | 当前配置（验收组） | 2021 配置 | MMSA 表 |
+|---|---|---|---|
+| MAE ↓ | 0.9511 ± 0.0249 | 0.9588 ± 0.0349 | 0.9473 |
+| Corr ↑ | 0.6602 ± 0.0095 | 0.6578 ± 0.0163 | 0.6733 |
+| Acc-2 (non0) | 0.7855 ± 0.0165 | 0.7816 ± 0.0191 | 0.7908 |
+
+**假说被证伪**：两个主指标都更远离表值。见 [`investigations.md#table-predates-config`](investigations.md#table-predates-config)。
