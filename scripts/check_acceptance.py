@@ -58,6 +58,10 @@ import sys
 from msa.config import OUTPUT_ROOT, PROJECT_ROOT
 
 REFERENCE_PATH = PROJECT_ROOT / "docs" / "mmsa_reference_mosi.json"
+#: Models MMSA never published a number for. The reference there is our own run
+#: of MMSA's code over the same ten seeds, which unlike the table carries
+#: variance — see load_reference and docs/decisions.md, 2026-07-31.
+CODE_REFERENCE_PATH = PROJECT_ROOT / "docs" / "mmsa_code_reference_mosi.json"
 ADJUDICATION_PATH = PROJECT_ROOT / "docs" / "acceptance_status.json"
 LOWER_IS_BETTER = {"mae"}
 #: This dataset's own seed noise, measured on the LF-LSTM baseline over seeds
@@ -81,7 +85,17 @@ REQUIRED_SEEDS = 10
 
 
 def load_reference() -> dict:
-    return json.loads(REFERENCE_PATH.read_text())["models"]
+    """MMSA's published table, plus our own MMSA runs for what it never published.
+
+    The table wins on overlap: where MMSA states a number, that number is the
+    claim under test. The code-run entries carry `<metric>_sd` from ten seeds,
+    which `judge` uses to widen the comparison — see `standard_error`.
+    """
+    reference = json.loads(REFERENCE_PATH.read_text())["models"]
+    if CODE_REFERENCE_PATH.exists():
+        for model, entry in json.loads(CODE_REFERENCE_PATH.read_text())["models"].items():
+            reference.setdefault(model, {"_source": "mmsa_code"} | entry)
+    return reference
 
 
 def load_adjudications() -> dict:
@@ -96,6 +110,33 @@ def shortfall(mean: float, reference: float, metric: str) -> float:
     return mean - reference if metric in LOWER_IS_BETTER else reference - mean
 
 
+def standard_error(sd: float, n: int, ref: dict, metric: str) -> tuple[float, bool]:
+    """SE of the difference between our mean and the reference.
+
+    Both spreads are capped at the noise floor first, for the reason in `judge`:
+    an unstable implementation must not buy tolerance by being unstable, and that
+    holds for the reference as much as for us.
+
+    Against MMSA's published table there is only one spread to use — the table
+    states single values, so it is treated as exact and this reduces to the
+    original sigma/sqrt(n). Against a reference we ran ourselves, the reference
+    mean is an estimate from ten seeds like ours, and pretending otherwise claims
+    a precision neither side has. Combining the two is the correct test, and it
+    is a *looser* one, so it is fixed here before any of the three models it
+    applies to has been run. See docs/decisions.md, 2026-07-31.
+    """
+    floor = NOISE_FLOOR.get(metric)
+    cap = (lambda x: min(x, floor)) if floor is not None else (lambda x: x)
+    if n <= 1:
+        return float("inf"), False
+    variance = cap(sd) ** 2 / n
+    ref_sd, ref_n = ref.get(f"{metric}_sd"), ref.get("n")
+    paired = ref_sd is not None and ref_n
+    if paired:
+        variance += cap(ref_sd) ** 2 / ref_n
+    return math.sqrt(variance), paired
+
+
 def judge(group: str, model: str, reference: dict, verbose: bool = True) -> bool:
     summary_path = OUTPUT_ROOT / group / "summary.json"
     if not summary_path.exists():
@@ -108,6 +149,9 @@ def judge(group: str, model: str, reference: dict, verbose: bool = True) -> bool
               f"known: {sorted(reference)}")
         return False
     ref = reference[model]
+    if ref.get("_source") == "mmsa_code":
+        print(f"\n  reference for {model} is our own 10-seed run of MMSA's code, not "
+              f"MMSA's table — it publishes no number for this model.")
 
     n = stats["mae"]["n"]
     setting = "unaligned" if not summary.get("aligned", True) else "aligned"
@@ -129,8 +173,7 @@ def judge(group: str, model: str, reference: dict, verbose: bool = True) -> bool
         # implementation buys tolerance by being unstable: EF-LSTM's two
         # collapsed seeds pushed sigma to 0.2095 and turned a shortfall of 3.2
         # noise floors into +1.9 SE. See docs/decisions.md, 2026-07-31.
-        effective_sd = min(sd, floor) if floor is not None else sd
-        se = effective_sd / math.sqrt(n) if n > 1 else float("inf")
+        se, paired = standard_error(sd, n, ref, metric)
         gap = shortfall(mean, ref[metric], metric)
         in_se = gap / se if se > 0 else 0.0
         capped = floor is not None and sd > floor
@@ -157,6 +200,8 @@ def judge(group: str, model: str, reference: dict, verbose: bool = True) -> bool
             masked.append((metric, gap, floor, in_se))
         marker = " (primary)" if metric in PRIMARY else ""
         note = " [sd capped]" if capped else ""
+        if paired:
+            note += " [vs ref sd]"
         print(f"  {metric:12s}{mean:10.4f}{sd:9.4f}{ref[metric]:10.4f}"
               f"{gap:+11.4f}{in_se:+8.1f}  {tag}{marker}{note}")
 
