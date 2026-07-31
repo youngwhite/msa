@@ -1096,3 +1096,91 @@ seed 42-46，CPU，同一份 pkl：
 ### 方法论：这条应当排在核对清单第一位
 
 **参照实现可运行时，先跑它，再读它。** 读代码能证明两份实现一致，**不能证明一个数字可达**。TFN 上九轮排查、三方逐行核对、耗时数天无果；跑一遍十几分钟就清楚了，而且顺带解决了其余十个模型的同类疑问。
+
+## <a id="originals-select-on-test"></a>两个原作实现都用测试集选模型（2026-07-31）
+
+移植 BERT-MAG 与 MMIM 时按第 5 条回原作核对，**两个都在测试集上做模型选择**。这不是推测，是代码。
+
+### MAG-BERT（Rahman et al., ACL 2020，`WasifurRahman/BERT_multimodal_transformer`）
+
+`multimodal_driver.py` 的训练循环里**没有 `torch.save`**——它从不保存检查点。每个 epoch：
+
+```python
+valid_loss = eval_epoch(...)                         # 497 行前
+test_acc, test_mae, test_corr, test_f = test_score_model(model, test_data_loader)
+...
+"best_valid_loss": min(valid_losses),                # 只打印，不用于任何选择
+"best_test_acc":  max(test_accuracies),              # ← 报告值
+```
+
+**报告的是逐 epoch 测试集准确率的最大值。** 验证损失算了、记了，然后被丢掉。
+
+### MMIM（Han et al., EMNLP 2021，`declare-lab/Multimodal-Infomax`）
+
+`solver.py` 存检查点的条件是嵌套的：
+
+```python
+if val_loss < best_valid:                # 外层：验证集
+    ...
+    elif test_loss < best_mae:           # 内层：测试集 ← 真正的门
+        best_epoch = epoch
+        best_results = results           # results 来自 evaluate(test=True)
+        save_model(...)
+```
+
+外层看验证集，但**内层用测试损失决定存不存**，且报告的 `best_results` 取自测试集评测。
+
+### 为什么这条重要
+
+我们此前实测过这种乐观偏差的量级（`#selection-bias-measured`）：3 seed 下 **0.026 MAE / 2.3 点 Acc-2**，1 seed 下 0.074 / 4.9。**这与文献里大多数"改进"的幅度同量级。**
+
+直接后果：
+
+1. **这两篇论文的表格数字不能与验证集选择的复现结果比。** 差距不代表复现失败，代表协议不同。凡把原文数字当复现目标的，都在追一个用不同规则得到的数。
+2. **MMSA 在这一点上比原作严格。** 它的 `KeyEval` 走 `dataloader['valid']`，没有任何测试集参与选择。这与 `#systematic-bias` 里"MMSA 的表偏乐观"的旧猜想方向相反——那个猜想已被 `#mmsa-all-eleven` 推翻，这里再添一条反证。
+3. **我们的第 2 条约定（模型选择只看验证集）不是保守，是这个领域里的少数派。**
+
+### 未做的事
+
+没有量化"若改用测试集选择，我们的数字会涨多少"。可以做（跑一遍 `--select-on` 走测试集），但**那会产出一个我们不该报告的数字**，且乐观偏差的量级已经单独测过。留作说明，不留作实验。
+
+## <a id="bert-mag"></a>BERT-MAG 移植：一次通过，以及参照从哪里来（2026-07-31）
+
+### MMSA 的公开表没有这个模型
+
+`results/result-stat.md` 里查不到 MAG-BERT、MMIM、ALMT 中的任何一个。**不是遗漏，是它从未登记。** 所以"对齐 MMSA 公开指标"这条路对这三个不存在。
+
+替代方案：跑 MMSA 自己的代码取参照，seeds 42-51，同一份 MOSI pickle、同一个 CUDA torch、它自己的默认超参。结果与出处记在 `docs/mmsa_code_reference_mosi.json`。
+
+**这比公开表更强**：表是无方差单值，自跑值带 σ，比较从"点 vs 分布"变成"分布 vs 分布"。判据相应改为两样本 SE，见 `docs/decisions.md` 2026-07-31——**规则在这三个模型一次都没跑之前定死**。
+
+### 实现：重写而非转抄
+
+MMSA 那份 `BERT_MAG.py` 在 transformers 5 下**根本 import 不了**——它继承的 `BertPreTrainedModel` 契约已不存在。所以计算逻辑照它逐行读（读得了，只是跑不了），管道用现代写法。
+
+事后与原作者 `modeling.py` 的 `class MAG` 对照，**逐行一致**：
+
+```
+W_hv/W_ha  -> gate_v/gate_a          W_v/W_a -> project_v/project_a
+eps=1e-6,  where(hm_norm==0, 1, ·),  alpha=min(em_norm/(hm_norm+eps)*beta_shift, 1)
+return dropout(LayerNorm(alpha * h_m + text_embedding))
+```
+
+注入点也一致：嵌入层之后、编码器之前，只此一次。
+
+### 唯一需要判断的地方
+
+transformers 5 里 `BertLayer.forward` 返回**裸张量**而非元组。照旧写法取 `[0]` 会**静默取到第一个样本**——形状仍然合法，结果全错。已在 `#cenet-vs-paper` 记过一次，这里用 `torch.is_tensor` 守卫再次绕开。这个坑不报错，只出坏数字。
+
+### 结果（seeds 42-51）
+
+| 指标 | 我们 | MMSA 自跑 | 差 | SE |
+|---|---|---|---|---|
+| MAE | 0.7368 ± 0.0182 | 0.7380 ± 0.0226 | **-0.0012** | -0.1 |
+| Corr | 0.7885 ± 0.0066 | 0.7891 ± 0.0065 | +0.0006 | +0.2 |
+| Acc-2 (non0) | 0.8410 ± 0.0088 | 0.8428 | +0.0018 | +0.5 |
+| Acc-7 | 0.4436 ± 0.0186 | 0.4430 | **-0.0006** | -0.1 |
+
+七项指标全部通过，**一次通过，无需排查**。这是移植的第十二个模型，也是第一个不用回头找差异的。
+
+原因不难说清：MAG 只有 35 行、没有训练循环上的花样（无梯度累积、无多优化器、无伪标签），且 MMSA 对它的移植本身就忠实。**复现难度与模型的训练协议复杂度相关，与模型的结构复杂度关系不大**——BERT-MAG 有 1.1 亿参数却一次过，TFN 只有几百万却查了九轮。
