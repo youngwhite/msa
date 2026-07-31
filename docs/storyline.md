@@ -32,6 +32,18 @@
 
 †**这三行的 MMSA 列出处不同**：它的公开表没有登记这三个模型，该列是**我们自己跑 MMSA 代码**的 10-seed 均值（seeds 42-51，逐 seed 值存于 `docs/mmsa_code_runs_mosi.json`）。它带方差，判据相应用两样本 SE。其余各行取自 `result-stat.md`，是无方差单值。
 
+### 整体是否打平：是，而且超过（2026-07-31）
+
+逐模型全过不等于整体打平——逐模型判据看不见跨模型的系统性偏置。跨模型聚合判据（判据**先立后测**，见 [decisions](decisions.md)）给出：
+
+| 被检验方 | 参照 | MAE Z | Corr Z | |
+|---|---|---|---|---|
+| **我们** | **MMSA 的代码**（14 模型 × 10 seed） | **−2.21**（p=0.027） | **−3.17**（p=0.0015） | **超过** |
+| 我们 | MMSA 公开表 | +7.52 | +6.96 | 落后 |
+| MMSA 的代码 | MMSA 公开表 | +8.54 | +11.28 | 落后**更多** |
+
+**对能复现的基准，我们超过它；对那张不能复现的表，两份实现都落后，而我们更接近。** 更稳健的符号检验是 3/14 更差、p=0.057，所以严格表述为"至少打平，方向一致偏向我们"。全部限定见 [`investigations.md#aggregate-verdict`](investigations.md#aggregate-verdict)。
+
 **复现范围已完整：14 个模型全部通过**（其中 TFN 与 EF-LSTM 的 Corr 缺口经跑 MMSA 自己的代码裁定，见 [decisions](decisions.md) 与 `acceptance_status.json`）。**主指标为 MAE↓ 与 Corr↑**，且 SE 判据之下加了**噪声地板**——小于重跑波动的差距不计为失败（2026-07-28 与 07-30 两次变更，理由与全部判定影响见 [decisions.md](decisions.md)；**两次都是放松，必须连同那里的记录一起读**）。 全部数字出自 `outputs/<组>/summary.json`，可用 `scripts/verify_runs.py` 从落盘预测重算核对。
 
 ---
