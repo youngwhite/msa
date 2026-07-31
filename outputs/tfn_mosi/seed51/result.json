@@ -303,7 +303,7 @@
       "valid_f1_non0": 0.7806221563420007
     }
   ],
-  "elapsed_sec": 24.005147765390575,
+  "elapsed_sec": 23.59871457144618,
   "env": {
     "python": "3.12.3",
     "platform": "Linux-6.8.0-90-generic-x86_64-with-glibc2.39",
@@ -319,7 +319,7 @@
     "cublas_workspace_config": ":4096:8",
     "deterministic_algorithms": true,
     "git": {
-      "commit": "642a85dd7e7b970671a2077f8c35f2120336edbc",
+      "commit": "2053fa57b1aba3e61fd58fa313cdb09380ce3807",
       "dirty": false
     },
     "device": "cuda",
@@ -373,7 +373,7 @@
     "deterministic_warn_only": false,
     "keep_checkpoint": false,
     "run_group": "tfn_mosi",
-    "quiet": false
+    "quiet": true
   },
   "model_kwargs": {
     "use_lengths": false,
