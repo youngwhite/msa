@@ -349,3 +349,16 @@ MMSA 的结果表写于 2021-05-06，其后 TFN 的 MOSI 超参被改过（text_
 | Acc-2 (non0) | 0.7855 ± 0.0165 | 0.7816 ± 0.0191 | 0.7908 |
 
 **假说被证伪**：两个主指标都更远离表值。见 [`investigations.md#table-predates-config`](investigations.md#table-predates-config)。
+
+### 三、EF-LSTM 的 2021 超参（`ef_lstm_mosi_2021config`，10 seed）
+
+2021 配置是 2 层 LSTM，今天是 4 层。这一组同时回答两个问题：缺口能否用配置代际解释，以及 23% 的崩溃率从哪来。
+
+| | 当前（4 层，验收组） | 2021（2 层） | MMSA 表 |
+|---|---|---|---|
+| MAE ↓ | 1.0717 ± 0.2095 | **0.9658 ± 0.0371** | 0.9488 |
+| Corr ↑ | 0.6281 ± 0.0459 | **0.6510 ± 0.0180** | 0.6690 |
+| Acc-2 (non0) | 0.7102 ± 0.1521 | **0.7800 ± 0.0126** | 0.7848 |
+| 崩溃 seed（Acc-2 < 0.60） | 2/10 | **0/10** | — |
+
+**崩溃是四层堆叠引入的**，两层配置十个 seed 无一崩溃。验收判定不变（复现的是参照今天的配置），改变的是归因——见 [`investigations.md#table-predates-config`](investigations.md#table-predates-config)。
