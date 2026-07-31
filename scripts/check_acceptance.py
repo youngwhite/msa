@@ -53,15 +53,18 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import statistics
 import sys
 
 from msa.config import OUTPUT_ROOT, PROJECT_ROOT
 
 REFERENCE_PATH = PROJECT_ROOT / "docs" / "mmsa_reference_mosi.json"
 #: Models MMSA never published a number for. The reference there is our own run
-#: of MMSA's code over the same ten seeds, which unlike the table carries
-#: variance — see load_reference and docs/decisions.md, 2026-07-31.
-CODE_REFERENCE_PATH = PROJECT_ROOT / "docs" / "mmsa_code_reference_mosi.json"
+#: of MMSA's code over the same seeds, which unlike the table carries variance —
+#: see load_reference and docs/decisions.md, 2026-07-31. Stored per seed, so the
+#: mean and spread are computed here with this project's ddof=1 rather than read
+#: off MMSA's CSV, which summarises with np.std (ddof=0).
+CODE_REFERENCE_PATH = PROJECT_ROOT / "docs" / "mmsa_code_runs_mosi.json"
 ADJUDICATION_PATH = PROJECT_ROOT / "docs" / "acceptance_status.json"
 LOWER_IS_BETTER = {"mae"}
 #: This dataset's own seed noise, measured on the LF-LSTM baseline over seeds
@@ -88,14 +91,36 @@ def load_reference() -> dict:
     """MMSA's published table, plus our own MMSA runs for what it never published.
 
     The table wins on overlap: where MMSA states a number, that number is the
-    claim under test. The code-run entries carry `<metric>_sd` from ten seeds,
-    which `judge` uses to widen the comparison — see `standard_error`.
+    claim under test. The code-run entries carry `<metric>_sd`, which `judge`
+    uses to widen the comparison — see `standard_error`.
+
+    Those spreads are computed here, from the per-seed values, with statistics'
+    ddof=1. MMSA's own CSV would have supplied them ready-made, but it summarises
+    with np.std (ddof=0) — 5% narrower at n=10 — and this project reports the
+    sample standard deviation everywhere else. Adding one convention's variance
+    to the other's is wrong in the direction that makes the test stricter than it
+    should be.
     """
     reference = json.loads(REFERENCE_PATH.read_text())["models"]
     if CODE_REFERENCE_PATH.exists():
         for model, entry in json.loads(CODE_REFERENCE_PATH.read_text())["models"].items():
-            reference.setdefault(model, {"_source": "mmsa_code"} | entry)
+            reference.setdefault(model, {"_source": "mmsa_code"} | summarise(entry))
     return reference
+
+
+def summarise(entry: dict) -> dict:
+    """Per-seed reference runs -> the mean/sd/n shape the rest of this file wants."""
+    runs = list(entry["runs"].values())
+    stats = {"data_setting": entry["data_setting"], "n": len(runs),
+             "seeds": entry["seeds"]}
+    for metric in {key for run in runs for key in run}:
+        values = [run[metric] for run in runs if metric in run]
+        if len(values) != len(runs):   # a metric missing from some seeds would
+            continue                   # average over a different denominator
+        stats[metric] = statistics.fmean(values)
+        if len(values) > 1:
+            stats[f"{metric}_sd"] = statistics.stdev(values)
+    return stats
 
 
 def load_adjudications() -> dict:

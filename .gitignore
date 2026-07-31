@@ -11,3 +11,5 @@ checkpoints/
 *.egg-info/
 .claude/settings.local.json
 .claude/*.tmp.*
+
+mmsa_runs/

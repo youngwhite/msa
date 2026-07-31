@@ -1151,7 +1151,7 @@ if val_loss < best_valid:                # 外层：验证集
 
 `results/result-stat.md` 里查不到 MAG-BERT、MMIM、ALMT 中的任何一个。**不是遗漏，是它从未登记。** 所以"对齐 MMSA 公开指标"这条路对这三个不存在。
 
-替代方案：跑 MMSA 自己的代码取参照，seeds 42-51，同一份 MOSI pickle、同一个 CUDA torch、它自己的默认超参。结果与出处记在 `docs/mmsa_code_reference_mosi.json`。
+替代方案：跑 MMSA 自己的代码取参照，seeds 42-51，同一份 MOSI pickle、同一个 CUDA torch、它自己的默认超参。结果与出处记在 `docs/mmsa_code_runs_mosi.json`。
 
 **这比公开表更强**：表是无方差单值，自跑值带 σ，比较从"点 vs 分布"变成"分布 vs 分布"。判据相应改为两样本 SE，见 `docs/decisions.md` 2026-07-31——**规则在这三个模型一次都没跑之前定死**。
 
