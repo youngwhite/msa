@@ -188,6 +188,51 @@ class _TokenTransformer(nn.Module):
         return self.encoder(x)[:, : self.token_len]
 
 
+class _PositionalEncoder(nn.Module):
+    """Learned positions over an already-short sequence, then self-attention.
+
+    The reference builds this from the same `Transformer` class as
+    `_TokenTransformer`, with `token_len=None` — which still creates a positional
+    embedding. Easy to miss when reading, and it costs the text stream its only
+    notion of order before the AHL layers query it.
+    """
+
+    def __init__(self, num_frames: int, dim: int, depth: int, heads: int,
+                 dim_head: int, mlp_dim: float, dropout: float = 0.0) -> None:
+        super().__init__()
+        self.position = nn.Parameter(torch.randn(1, num_frames, dim))
+        self.encoder = _Encoder(dim, depth, heads, dim_head, mlp_dim, dropout)
+
+    def forward(self, x: torch.Tensor, save_hidden: bool = False):
+        return self.encoder(x + self.position[:, : x.size(1)], save_hidden)
+
+
+class _CrossTransformer(nn.Module):
+    """Positions plus a shared CLS token, then cross-attention.
+
+    The same CLS parameter is prepended to *both* streams, and it is the token
+    the model reads out at the end — `[:, 0]` is this, not the first content
+    token. Dropping it silently changes what the regression head sees.
+    """
+
+    def __init__(self, source_len: int, target_len: int, dim: int, depth: int,
+                 heads: int, dim_head: int, mlp_dim: float,
+                 dropout: float = 0.0) -> None:
+        super().__init__()
+        self.position_source = nn.Parameter(torch.randn(1, source_len + 1, dim))
+        self.position_target = nn.Parameter(torch.randn(1, target_len + 1, dim))
+        self.cls_token = nn.Parameter(torch.zeros(1, 1, dim))
+        self.encoder = _CrossEncoder(dim, depth, heads, dim_head, mlp_dim, dropout)
+
+    def forward(self, source: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        cls = self.cls_token.expand(source.size(0), -1, -1)
+        source = torch.cat((cls, source), dim=1)
+        source = source + self.position_source[:, : source.size(1)]
+        target = torch.cat((cls, target), dim=1)
+        target = target + self.position_target[:, : target.size(1)]
+        return self.encoder(source, target)
+
+
 class _HyperLayer(nn.Module):
     """One refinement of the hyper-modality: text asks, audio and vision answer.
 
@@ -199,6 +244,11 @@ class _HyperLayer(nn.Module):
         super().__init__()
         inner = dim_head * heads
         self.heads, self.scale = heads, dim_head ** -0.5
+        # All four inputs are normalised, the hyper-modality included — so the
+        # residual below accumulates onto the normalised copy, not the raw one.
+        self.norm_text, self.norm_audio, self.norm_vision, self.norm_hyper = (
+            nn.LayerNorm(dim) for _ in range(4)
+        )
         self.to_q = nn.Linear(dim, inner, bias=False)
         self.to_k_a = nn.Linear(dim, inner, bias=False)
         self.to_k_v = nn.Linear(dim, inner, bias=False)
@@ -208,6 +258,8 @@ class _HyperLayer(nn.Module):
 
     def forward(self, text: torch.Tensor, audio: torch.Tensor, vision: torch.Tensor,
                 hyper: torch.Tensor) -> torch.Tensor:
+        text, hyper = self.norm_text(text), self.norm_hyper(hyper)
+        audio, vision = self.norm_audio(audio), self.norm_vision(vision)
         q = _split_heads(self.to_q(text), self.heads)
         contributions = []
         for to_k, to_v, source in ((self.to_k_a, self.to_v_a, audio),
@@ -220,24 +272,18 @@ class _HyperLayer(nn.Module):
 
 
 class _HyperEncoder(nn.Module):
-    """One `_HyperLayer` per text level, each pre-norming its four inputs."""
+    """One `_HyperLayer` per text level; level i reads text hidden state i."""
 
     def __init__(self, dim: int, depth: int, heads: int, dim_head: int,
                  dropout: float = 0.0) -> None:
         super().__init__()
         self.layers = nn.ModuleList(_HyperLayer(dim, heads, dim_head, dropout)
                                     for _ in range(depth))
-        self.norms = nn.ModuleList(
-            nn.ModuleList(nn.LayerNorm(dim) for _ in range(4)) for _ in range(depth)
-        )
 
     def forward(self, text_levels: list[torch.Tensor], audio: torch.Tensor,
                 vision: torch.Tensor, hyper: torch.Tensor) -> torch.Tensor:
-        for level, (layer, norms) in enumerate(zip(self.layers, self.norms, strict=True)):
-            # The residual is added to the *normalised* hyper-modality, not the
-            # raw one, matching the reference's PreNormAHL.
-            hyper = layer(norms[0](text_levels[level]), norms[1](audio),
-                          norms[2](vision), norms[3](hyper))
+        for level, layer in enumerate(self.layers):
+            hyper = layer(text_levels[level], audio, vision, hyper)
         return hyper
 
 
@@ -295,12 +341,14 @@ class ALMT(MSAModel):
 
         # depth - 1 layers, because save_hidden also returns the input: the three
         # AHL layers read levels 0, 1 and 2 of a two-layer stack.
-        self.text_encoder = _Encoder(dim, ahl_depth - 1, text_encoder_heads,
-                                     dim_head=64, mlp_dim=dim)
+        self.text_encoder = _PositionalEncoder(token_len, dim, ahl_depth - 1,
+                                               text_encoder_heads, dim_head=64,
+                                               mlp_dim=dim)
         self.hyper_encoder = _HyperEncoder(dim, ahl_depth, ahl_heads,
                                            dim_head=dim // ahl_heads)
-        self.fusion = _CrossEncoder(dim, fusion_depth, fusion_heads,
-                                    dim_head=64, mlp_dim=fusion_mlp_dim)
+        self.fusion = _CrossTransformer(token_len, token_len, dim, fusion_depth,
+                                        fusion_heads, dim_head=64,
+                                        mlp_dim=fusion_mlp_dim)
         self.head = nn.Linear(dim, 1)
 
     def compute_loss(
@@ -317,5 +365,6 @@ class ALMT(MSAModel):
         levels = self.text_encoder(text, save_hidden=True)
         hyper = self.hyper.expand(text.size(0), -1, -1)
         hyper = self.hyper_encoder(levels, audio, vision, hyper)
+        # Index 0 is the CLS token the fusion layer prepends, not a content token.
         fused = self.fusion(hyper, levels[-1])[:, 0]
         return {"M": self.head(fused).view(-1)}

@@ -26,6 +26,8 @@ run "lint"                 $PY -m ruff check src scripts --select E,F,W,B,SIM,I,
 run "data integrity"       $PY scripts/check_data.py
 run "invariants"           $PY scripts/check_invariants.py
 run "stored results"       $PY scripts/verify_runs.py --quiet
+# Skips itself when MMSA is not checked out, so a fresh clone still goes green.
+run "almt equivalence"     $PY scripts/check_almt_equivalence.py
 if [ "$FAST" != "--fast" ]; then
     run "reproducibility (lf_lstm)" $PY scripts/check_repro.py --epochs 1
     run "reproducibility (tfn)"     $PY scripts/check_repro.py --model tfn --epochs 1
