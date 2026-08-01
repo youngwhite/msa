@@ -1533,3 +1533,97 @@ MAE 上我们更差的只有 3 个：EF-LSTM（+2.78，见下）、MMIM（+1.09�
 ### 这条待办可以关掉了
 
 `#systematic-bias` 记的现象（"11/12 项偏差，逐模型判据看不见"）是真的，成因不是我们的实现：**换一个能复现的参照，同一批模型的偏差方向就整体反了过来。**
+
+---
+
+## <a id="cross-machine-hash"></a>换机器后 LF-LSTM 的锚点哈希对不上：是机器，不是代码（2026-08-01）
+
+迁到新实例后（GPU 从 RTX 5070 Ti 换成 RTX 5080，CPU 是 AMD Ryzen 7 7700），约定 6 的锚点哈希 `172967c7dced83b2` 对不上。这条记录把原因钉死，**并且给出以后再遇到同类情况的判定方法**。
+
+### 现象
+
+默认路径 `--model lf_lstm --seeds 42 --device cuda`（即 `reproduce_all.sh` 里 `lf_lstm_mosi_cuda` 那条）在本机得 `199f629bfb036c93`。CPU 路径同样对不上：得 `969d5a4579736f8f`，记录值是 `0201e2133a68f4e9`。
+
+### 两个候选解释
+
+1. **机器变了**——GPU 型号不同，归约顺序/kernel 选择随之不同
+2. **代码变了**——committed 的两次运行都产于 commit `8ea438f1`，而 HEAD 是 `24c8004`。这中间 `src/msa/` 有 26 个 commit，其中 `repro.py`（含 `set_seed`）和 `trainer.py` 都有实质改动
+
+单看哈希无法区分。**"换了机器所以对不上"是个太容易接受的解释，必须先把代码这条排掉**——约定 6 的全部价值就在于它能抓出无意的数值改动，而换机器恰好提供了一个把它糊弄过去的借口。
+
+### 判定方法：2×2 交叉
+
+用 `git worktree` 把 `8ea438f1` 签出到工作区外，用 `PYTHONPATH` 覆盖 editable 安装（`pip install -e .` 指向 `/workspace/msa/src`，不覆盖会跑到 HEAD 的代码），在**同一台机器**上跑新旧两份代码 × CUDA/CPU 两个设备：
+
+```bash
+git worktree add --detach /tmp/msa-8ea438f 8ea438f1
+ln -s /workspace/msa/datasets /tmp/msa-8ea438f/datasets     # 数据集按 PROJECT_ROOT 相对定位
+cd /tmp/msa-8ea438f && PYTHONPATH=/tmp/msa-8ea438f/src /workspace/msa/.venv/bin/python \
+    scripts/train.py --model lf_lstm --seeds 42 --device cuda --run-group old_code_cuda
+# 验证确实跑的是旧代码：python -c "import msa; print(msa.__file__)"
+```
+
+| 代码 | 设备 | 机器 | 预测哈希 | best_epoch | test MAE |
+|---|---|---|---|---|---|
+| HEAD `24c8004` | CUDA | 本机 5080 | `199f629bfb036c93` | 23 | 0.9318 |
+| **`8ea438f1`** | CUDA | 本机 5080 | **`199f629bfb036c93`** | 23 | 0.9318 |
+| HEAD `24c8004` | CPU (8 线程) | 本机 7700 | `969d5a4579736f8f` | 4 | 0.9967 |
+| **`8ea438f1`** | CPU (8 线程) | 本机 7700 | **`969d5a4579736f8f`** | 4 | 0.9967 |
+| `8ea438f1`（记录值） | CUDA | 旧机 5070 Ti | `172967c7dced83b2` | 13 | 0.9543 |
+| `8ea438f1`（记录值） | CPU (8 线程) | 旧机 | `0201e2133a68f4e9` | 11 | 0.9800 |
+
+### 结论
+
+**同机器上，HEAD 与 `8ea438f1` 在两个设备上都逐比特相同。约定 6 成立——`8ea438f1 → 24c8004` 之间数值行为未变。** 差异全部来自机器。
+
+两个设备各自独立给出同一结论，这一点重要：如果只在 CUDA 上做这个对照，仍无法排除"代码改动恰好只在 GPU 上显形"。
+
+（`investigations.md#612` 记过一次改 `repro.py` 后验哈希未变。这次的对照把那个结论从当时的那个 commit 一路延长到了 HEAD，中间的 25 个 commit 一并覆盖。）
+
+### 意外发现：CPU 也不跨机器复现
+
+`migration.md` 与 `README.md#复现性` 原先都称"CPU 钉住线程数即可跨机比对"。**实测不成立**：
+
+- 同代码（`8ea438f1`）、同 torch `2.11.0+cu128`、同 numpy `2.5.1`、同 `--num-threads 8`、同 `deterministic=True`
+- 两台机器的 CPU 哈希不同
+
+**最可能的解释是 CPU 指令集分派**——torch 的 CPU kernel 按运行时检测到的 ISA 选择向量化实现，本机是 Ryzen 7 7700（有 `avx512_vnni` / `avx512_bf16` / `avx512_vbmi2`）。**未进一步验证**：旧机器的 CPU 型号没有记录进 `result.json`（`env` 只存 `platform` 与 `cpu_threads`），无从对照。
+
+**留给下一个人的开口**：若要确证，可用 `torch.backends.cpu.get_cpu_capability()` 或 `ATEN_CPU_CAPABILITY=default` 强制降级到非向量化实现，看两机是否收敛到同一哈希。顺带值得做的是**把 CPU 型号加进 `env`**——现在这个字段缺失，直接导致这条假设无法在事后验证。
+
+### 差异的量级：early stopping 会放大它
+
+不是"末位几个 bit"级别的出入：
+
+| | 旧机 5070 Ti | 本机 5080 | 差 |
+|---|---|---|---|
+| best_epoch | 13 | 23 | 收敛轨迹完全不同 |
+| test MAE | 0.9543 | 0.9318 | 0.0225 |
+| test Corr | 0.6477 | 0.6541 | 0.0064 |
+
+机制是**微小数值差被模型选择放大**：逐 epoch 的 valid MAE 差在小数点后若干位，但一旦某一轮的排序被翻转，选出的就是另一个 checkpoint，测试集预测随之整体改变。
+
+0.0225 MAE 在 LF-LSTM 的 seed 间标准差（0.039）之内，所以**不构成结论层面的问题**；但它说明"换机器只会有细微出入"这个说法在单 seed 上是不成立的——这正是约定 1（不接受单 seed 数字）保护的东西。
+
+### 对约定 6 的影响
+
+**锚点哈希绑定机器。** `172967c7dced83b2` 在本机失效，且无法通过任何代码改动恢复。要继续把它当验收锚点用，得在本机重立基线并**在文档里标注它绑定哪台机器**。
+
+**不要**因为哈希对不上就去改代码——那是朝目标调参的一种形态。判定顺序永远是：先用 2×2 排除代码，再谈机器。
+
+### 已排除，不要再查
+
+- **代码变更**——2×2 交叉已排除，两设备独立同向
+- **库版本**——torch / numpy 两机完全相同（都在 `result.json` 的 `env` 里）
+- **线程数**——CPU 两边都是 8；CUDA 那次记录是 12 vs 本机默认 8，但 CUDA 的差异在 CPU 对照里独立复现了，与线程数无关
+- **非确定性**——本机 `check_repro.py` 在 lf_lstm 与 tfn 上连跑两次均逐比特一致，本机内部是确定的
+
+### 连带发现：几道闸门在新机器上没有真正生效
+
+排查过程中顺带确认的，与本条同源：
+
+1. **`check_all.sh` 不含 `check_reproduction.py`**。它跑的是 `check_repro.py --epochs 1`（同机连跑两次是否一致），不是"重训预测 vs git 里 committed 的"。所以**九道闸门全绿不代表旧数字在本机可重现**——它们读的是 committed 的 `result.json`，没有重新训练。这次的哈希失配正是全绿之后才发现的。
+2. **`check_reproduction.py` 本身也不重新训练**。它只比对工作树里现成的 `result.json` 与 git 版本；工作树干净时必然通过。真正会重训的是 `reproduce_all.sh`，它跑完才调用这个脚本。
+3. **`check_almt_equivalence.py` 在无 MMSA 检出时 SKIP 但记 PASS**（`check_all.sh` 里有注释说明是有意为之，为了让 fresh clone 走绿）。代价是**约定 5 里那道最关键的检查在新机器上静默失效**——它当初正是抓出"错误 ALMT 指标全面优于参照却验收通过"的那一道（`#almt-better-than-reference`）。新机器上要恢复它，必须先把 `/workspace/MMSA` 弄回来。
+
+前两条合起来的含义：**`reproduce_all.sh` 在本机会红**，`docs/experiments.md` 的数字不会逐位重现。按 `migration.md` 这是硬件事实不是回归，但在本机重跑之前，那些数字在本机是**未经重训验证**的状态。

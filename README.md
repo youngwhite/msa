@@ -93,7 +93,9 @@ bash scripts/reproduce_all.sh              # 也可只跑一组：reproduce_all.
 - 全部 RNG（random / numpy / torch / cuda / mps）统一播种；`num_workers>0` 时 worker 用 `worker_init_fn` 派生播种
 - 训练集打乱使用采样器**私有**的 generator，不用 DataLoader 自己的 generator——后者还要为 worker 抽种子，抽取次数随 `num_workers`、`persistent_workers` 变化，会连带改变打乱顺序
 
-**跨设备类型的数值不保证一致**（CUDA / MPS / CPU 的归约顺序不同），这是硬件事实，不是 bug；各设备各自内部可复现。**CPU 还须钉住线程数**：同一份代码在 1 / 4 / 12 线程下会得到三份不同结果，跨机器比对时请显式传 `--num-threads N`（该参数覆盖 `OMP_NUM_THREADS`，已实测）。
+**跨设备类型的数值不保证一致**（CUDA / MPS / CPU 的归约顺序不同），这是硬件事实，不是 bug；各设备各自内部可复现。**CPU 还须钉住线程数**：同一份代码在 1 / 4 / 12 线程下会得到三份不同结果，故务必显式传 `--num-threads N`（该参数覆盖 `OMP_NUM_THREADS`，已实测）。
+
+**逐比特一致只在同一台机器内成立，钉住线程数也不能把它扩展到跨机器。** 2026-08-01 实测：同代码、同 torch、同 numpy、同 `--num-threads 8`，换一台机器后 CPU 预测哈希就变了；换 GPU 型号同样会变。而且不是末位几个 bit——微小数值差会被 early stopping 的模型选择放大成不同的收敛轨迹（LF-LSTM seed 42：best_epoch 13→23，MAE 0.9543→0.9318）。所以**跨机器比对请用多 seed 的均值与标准差，不要比哈希、也不要比单 seed 数字**。详见 [`docs/investigations.md#cross-machine-hash`](docs/investigations.md#cross-machine-hash)。
 
 若某个算子在当前后端没有确定性实现（MPS 的算子覆盖比 CUDA 薄），用 `--deterministic-warn-only` 降级为告警，或 `--no-deterministic` 关掉——两种情况都会记录进 `result.json` 的 `env` 字段。
 

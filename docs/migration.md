@@ -72,9 +72,20 @@ bash scripts/setup.sh
 bash scripts/check_all.sh
 ```
 
-六道闸门全绿即代表新机器与旧机器状态一致。注意两点预期内的差异：
+闸门全绿说明**代码、数据、已存结果三者自洽**。注意它**没有**说明的那件事：
 
-- **跨设备类型的数字不会逐比特相同**（CUDA / MPS / CPU 归约顺序不同），各设备内部可复现。新机器若换了 GPU 型号，重跑的数字可能与 `docs/experiments.md` 有细微出入——这是硬件事实，不是回归。
+> **全绿 ≠ 旧数字在新机器上重现得出来。** `check_all.sh` 校验的是 committed 的 `result.json`（指标能否由 committed 的预测重算、验收判据是否成立），它**不重新训练**。真正重训并比对的是 `bash scripts/reproduce_all.sh`（约 25 分钟）。
+
+预期内的差异有三点，第三点是 2026-08-01 换机器时实测订正的：
+
+- **跨设备类型的数字不会逐比特相同**（CUDA / MPS / CPU 归约顺序不同），各设备内部可复现。
 - **CPU 上还须钉住线程数**（`--num-threads N`），否则线程数不同结果就不同。
+- **换机器后数字会变，即使设备类型相同、线程数钉住、库版本完全一致。** 换 GPU 型号会变；**换 CPU 型号同样会变**（很可能是 torch CPU kernel 按指令集分派所致）。而且**不是"细微出入"**：LF-LSTM seed 42 从 5070 Ti 换到 5080，best_epoch 从 13 变成 23、MAE 从 0.9543 变成 0.9318——微小数值差被 early stopping 的模型选择放大了。差值仍在该模型的 seed 间标准差（0.039）之内，所以不影响多 seed 结论，但单 seed 的哈希与数字都对不上。
+
+**因此换机器后哈希对不上时，不要直接归因于硬件。** 先用 2×2 交叉排除代码：把产生旧哈希的那个 commit 用 `git worktree` 签出，在**新机器上**同时跑新旧两份代码 × 两个设备。同机器上新旧代码逐比特相同，才能说差异来自机器。完整方法、命令与那次的实测数据见 [`investigations.md#cross-machine-hash`](investigations.md#cross-machine-hash)。
+
+同理，CLAUDE.md 约定 6 的 LF-LSTM 锚点哈希 `172967c7dced83b2` **绑定产生它的那台机器**，换机器后需要在新机器上重立基线，并标注它绑定哪台。
+
+还有一道闸门在新机器上会静默失效：`check_almt_equivalence.py` 在没有 MMSA 检出时 SKIP 但记 PASS（有意为之，让 fresh clone 走绿）。它是约定 5 里最关键的那道数值等价检查，要恢复得先把 `/workspace/MMSA` 弄回来。
 
 `best.pt` 默认训练结束即删除，也不入库。需要某个 checkpoint 时用 `--keep-checkpoint` 重跑——按 `result.json` 里记录的命令，结果逐比特一致。
