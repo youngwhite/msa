@@ -197,7 +197,7 @@ python scripts/check_acceptance.py --all         # 全部有参照的组
 
 - **待人拍板：本机要不要重立数值基线？** 涉及两件事——约定 6 的锚点哈希在本机重新生成（并标注绑定机器），以及 `reproduce_all.sh` 重跑一遍把 `docs/experiments.md` 换成本机数字。**代价是历史数字与新数字混在一起**，且旧机器已不可用、无法回头验证。另一条路是维持现状、承认那些数字属于旧机器，只在本机新增结果时另立一套。**这个决定应当先记进 `decisions.md` 再动手，不要默认执行。**
   - 2026-08-01 补：**参照侧（`docs/mmsa_code_runs_mosi.json`）与我们侧处境完全相同**，都是旧机器的数字。所以聚合判据现在是同机器配对、自洽的；**只重跑一侧会把两台机器混进同一个分布，比两侧都不重跑更糟**。要重立就两侧一起重立。
-- **已入库结果的 `transformers` 版本永久不可考。** `env` 从 2026-08-01 起才记这个字段，此前只有 python / torch / numpy。已入库的 8 个 BERT 模型结果只能确定是 5.x（代码里"transformers >= 5 返回张量、旧版返回元组"的兼容分支），具体版本随旧机器一起没了。**同类缺口还有一个：`env` 不记 CPU 型号**，`investigations.md#cross-machine-hash` 的 ISA 假设因此无法事后验证——建议一并补上。
+- **已入库结果的 `transformers` 版本与 CPU 型号永久不可考。** `env` 从 2026-08-01 起才记 `transformers` / `cpu` / `cpu_capability` 三个字段，此前只有 python / torch / numpy。已入库的 8 个 BERT 模型结果只能确定是 5.x（代码里"transformers >= 5 返回张量、旧版返回元组"的兼容分支）；旧机器的 CPU 型号与向量化分派档位则完全没有记录，`investigations.md#cross-machine-hash` 的 ISA 假设因此**永远不会被验证**。字段本身已补上，救的是下一次换机器。
 - **MOSEI 尚未下载**。路线图定的是主数据集用 MOSEI（MOSI 测试集仅 686 条，判别力不足）。
 - **`/workspace` 不是持久卷**（本实例 `workspace_is_volume: false`）。recycle 或 destroy 会抹掉整个目录，只有推到远端的东西存活。数据集（879MB）和 venv 届时都要重来。
 - **MPS 未在真机验证**。无 Apple Silicon 硬件。

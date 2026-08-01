@@ -145,6 +145,37 @@ def _installed_version(package: str) -> str | None:
         return None
 
 
+def _cpu_model() -> str | None:
+    """The CPU's marketing name, or None where this platform does not offer one.
+
+    Recorded because CPU *model* changes results even when device type, thread
+    count and library versions are all held fixed — see
+    docs/investigations.md#cross-machine-hash, where the leading explanation
+    (torch dispatching CPU kernels on the ISA it detects) could not be tested
+    against the old machine precisely because this field did not exist.
+
+    platform.processor() is the obvious call and is useless here: on Linux it
+    returns the architecture ("x86_64"), which platform.machine() already gives.
+    """
+    if sys.platform == "linux":
+        try:
+            for line in Path("/proc/cpuinfo").read_text().splitlines():
+                if line.startswith("model name"):
+                    return line.split(":", 1)[1].strip()
+        except OSError:
+            return None
+        return None
+    if sys.platform == "darwin":
+        try:
+            return subprocess.run(
+                ["sysctl", "-n", "machdep.cpu.brand_string"],
+                capture_output=True, text=True, timeout=5, check=True,
+            ).stdout.strip() or None
+        except (OSError, subprocess.SubprocessError):
+            return None
+    return platform.processor() or None
+
+
 def collect_env(device: torch.device | None = None) -> dict[str, object]:
     """Provenance to store next to results — what actually produced the numbers."""
     from .device import describe_device
@@ -166,6 +197,14 @@ def collect_env(device: torch.device | None = None) -> dict[str, object]:
         "mps_available": bool(
             getattr(torch.backends, "mps", None) and torch.backends.mps.is_available()
         ),
+        "cpu": _cpu_model(),
+        # Which vectorised kernel set torch actually dispatched to. This is the
+        # quantity the ISA hypothesis is about; the model name above only
+        # implies it. torch.backends.cpu appeared in 2.0 — guarded so an older
+        # build records null instead of raising.
+        "cpu_capability": getattr(
+            getattr(torch.backends, "cpu", None), "get_cpu_capability", lambda: None
+        )(),
         "cpu_threads": torch.get_num_threads(),
         "cudnn_version": torch.backends.cudnn.version(),
         "cudnn_deterministic": torch.backends.cudnn.deterministic,

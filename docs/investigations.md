@@ -1589,7 +1589,13 @@ cd /tmp/msa-8ea438f && PYTHONPATH=/tmp/msa-8ea438f/src /workspace/msa/.venv/bin/
 
 **最可能的解释是 CPU 指令集分派**——torch 的 CPU kernel 按运行时检测到的 ISA 选择向量化实现，本机是 Ryzen 7 7700（有 `avx512_vnni` / `avx512_bf16` / `avx512_vbmi2`）。**未进一步验证**：旧机器的 CPU 型号没有记录进 `result.json`（`env` 只存 `platform` 与 `cpu_threads`），无从对照。
 
-**留给下一个人的开口**：若要确证，可用 `torch.backends.cpu.get_cpu_capability()` 或 `ATEN_CPU_CAPABILITY=default` 强制降级到非向量化实现，看两机是否收敛到同一哈希。顺带值得做的是**把 CPU 型号加进 `env`**——现在这个字段缺失，直接导致这条假设无法在事后验证。
+**留给下一个人的开口**：若要确证，可用 `ATEN_CPU_CAPABILITY=default` 强制两边降级到非向量化实现，看是否收敛到同一哈希。
+
+> **2026-08-01 补：`env` 已经开始记了。** 新增两个字段：`cpu`（型号，Linux 读 `/proc/cpuinfo`、macOS 读 `sysctl`）与 `cpu_capability`（`torch.backends.cpu.get_cpu_capability()`，即 torch **实际**分派到的向量化 kernel 集合——型号只是间接暗示它，这个才是假设本身讲的东西）。本机记录为 `AMD Ryzen 7 7700 8-Core Processor` / `AVX512`。
+>
+> **这救不了这次的排查**：旧机器的两个值都没有记录，也已无法取得，所以上面那条假设**仍然是未验证状态，且永远不会被验证**。补这个字段是为了下一次换机器时不必再写这段话。
+
+**这是本条留下的通用教训**：`env` 少记一个决定结果的东西，代价要到想复查的那天才付，而那天往往已经晚了。transformers 版本是同一个教训的另一个实例（`decisions.md` 2026-08-01）。
 
 ### 差异的量级：early stopping 会放大它
 
