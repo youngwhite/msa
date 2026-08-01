@@ -9,7 +9,7 @@ Python ≥ 3.10。按平台装 PyTorch，其余依赖由 `pip install -e .` 带�
 ```bash
 python -m venv .venv
 
-# NVIDIA GPU（本机 RTX 5070 Ti 是 Blackwell sm_120，必须 cu128 及以上，PyPI 默认轮子不含 sm_120 kernel）
+# NVIDIA GPU（本机 RTX 5080 是 Blackwell sm_120，必须 cu128 及以上，PyPI 默认轮子不含 sm_120 kernel）
 .venv/bin/pip install torch --index-url https://download.pytorch.org/whl/cu128
 
 # macOS Apple Silicon（默认轮子即带 MPS）/ 纯 CPU

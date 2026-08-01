@@ -31,7 +31,9 @@
 
 ## 2026-07-25 基础环境
 
-**PyTorch 用 cu128 轮子。** GPU 是 RTX 5070 Ti（Blackwell, sm_120），PyPI 默认的 CUDA 版本没有 sm_120 kernel，会在第一次 CUDA 运算时报 "no kernel image is available"。改用 `--index-url https://download.pytorch.org/whl/cu128`，实测 torch 2.11.0+cu128 正常。
+**PyTorch 用 cu128 轮子。** 当时的 GPU 是 RTX 5070 Ti（Blackwell, sm_120），PyPI 默认的 CUDA 版本没有 sm_120 kernel，会在第一次 CUDA 运算时报 "no kernel image is available"。改用 `--index-url https://download.pytorch.org/whl/cu128`，实测 torch 2.11.0+cu128 正常。
+
+> 2026-08-01 补记：本机已换成 RTX 5080（见 `roadmap.md`「换机器」）。**同属 Blackwell sm_120，这条决定原样成立**，torch 2.11.0+cu128 在新机器上同样正常。
 
 **src layout + editable install。** `pip install -e .` 让 `scripts/` 直接 `import msa`，不用在每个脚本头部塞 `sys.path.insert`。
 
