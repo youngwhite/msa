@@ -1627,3 +1627,18 @@ cd /tmp/msa-8ea438f && PYTHONPATH=/tmp/msa-8ea438f/src /workspace/msa/.venv/bin/
 3. **`check_almt_equivalence.py` 在无 MMSA 检出时 SKIP 但记 PASS**（`check_all.sh` 里有注释说明是有意为之，为了让 fresh clone 走绿）。代价是**约定 5 里那道最关键的检查在新机器上静默失效**——它当初正是抓出"错误 ALMT 指标全面优于参照却验收通过"的那一道（`#almt-better-than-reference`）。新机器上要恢复它，必须先把 `/workspace/MMSA` 弄回来。
 
 前两条合起来的含义：**`reproduce_all.sh` 在本机会红**，`docs/experiments.md` 的数字不会逐位重现。按 `migration.md` 这是硬件事实不是回归，但在本机重跑之前，那些数字在本机是**未经重训验证**的状态。
+
+### 后续（2026-08-01）：第 3 条已修复，并且参照本身也绑定机器
+
+`/workspace/MMSA` 与 `/workspace/mmsa_env` 已重建，重建步骤固化为 `scripts/setup_mmsa_reference.sh`（幂等，以等价检查收尾且不看退出码看结论——SKIP 时退出码也是 0）。**`check_almt_equivalence.py` 现在真的在比对**：183 个参数张量逐一形状匹配并复制，两侧输出 max abs diff `0.000e+00`。
+
+重建时发现该脚本失效有**两个**原因，只修一个不够：除了 MMSA 检出不在，`SHIM` 还硬编码成某次会话的临时目录（`/tmp/claude-0/.../scratchpad/mmsa_shim`）。那个路径连在旧机器上都活不过会话结束，所以这道闸门**并不是从换机器才开始静默失效的**。现改为读 `MMSA_SHIM`，默认 `/workspace/mmsa_env/shim`，与 `mmsa_reference.py` 同一个约定。
+
+**顺带得到一个与本条直接相关的事实：MMSA 自己的代码同样不跨机器复现。** 用重建后的环境跑 `mmsa_reference.py run tfn 42`（同一份 pkl、同 seed、同为 CUDA）：
+
+| | 旧机 5070 Ti（`mmsa_code_runs_mosi.json` 记录值） | 本机 5080 | 差 |
+|---|---|---|---|
+| test MAE | 0.9305 | 0.9441 | 0.0136 |
+| test Corr | 0.6789 | 0.6576 | 0.0213 |
+
+量级与我们自己那次（0.0225 MAE）同级。**含义是：`docs/mmsa_code_runs_mosi.json` 与 `docs/experiments.md` 处在完全相同的处境**——都是旧机器的数字。因此聚合判据的两侧目前是**同机器配对**的，仍然自洽；但**只重跑其中一侧**（无论是我们的还是参照的）就会把两台机器混进同一个分布里，比两侧都不重跑更糟。这条应当与「本机要不要重立数值基线」那个待决项一起考虑：要重立就两侧一起重立。

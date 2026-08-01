@@ -25,9 +25,18 @@ in docs/investigations.md#mmsa-all-eleven.
 
 Environment: MMSA's model files cannot import under transformers 5, so `run`
 needs a transformers 4.x tree on sys.path ahead of ours, plus a handful of small
-packages MMSA imports (easydict, einops, and for CENET the real
-pytorch_transformers). Point MMSA_SHIM at a directory holding them. `collect`
-needs none of this — it only reads text.
+packages MMSA imports (easydict, einops, pynvml, and for CENET the real
+pytorch_transformers). `scripts/setup_mmsa_reference.sh` builds all of it and
+leaves the directory at /workspace/mmsa_env/shim, which is where MMSA_SHIM
+defaults to; point MMSA_SHIM elsewhere to override. `collect` needs none of this
+— it only reads text.
+
+`collect` also overwrites docs/mmsa_code_runs_mosi.json, and the numbers in
+there were produced on the RTX 5070 Ti machine. They do not reproduce on another
+one — MMSA's code is subject to the same machine dependence ours is
+(docs/investigations.md#cross-machine-hash), so rerunning part of the reference
+somewhere else and collecting it would silently mix two machines into one
+distribution.
 """
 
 from __future__ import annotations

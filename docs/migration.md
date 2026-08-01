@@ -86,6 +86,14 @@ bash scripts/check_all.sh
 
 同理，CLAUDE.md 约定 6 的 LF-LSTM 锚点哈希 `172967c7dced83b2` **绑定产生它的那台机器**，换机器后需要在新机器上重立基线，并标注它绑定哪台。
 
-还有一道闸门在新机器上会静默失效：`check_almt_equivalence.py` 在没有 MMSA 检出时 SKIP 但记 PASS（有意为之，让 fresh clone 走绿）。它是约定 5 里最关键的那道数值等价检查，要恢复得先把 `/workspace/MMSA` 弄回来。
+还有一道闸门在新机器上会静默失效：`check_almt_equivalence.py` 在没有 MMSA 检出时 SKIP 但记 PASS（有意为之，让 fresh clone 走绿）。它是约定 5 里最关键的那道数值等价检查。**换机器后跑一条命令把它接回来**：
+
+```bash
+bash scripts/setup_mmsa_reference.sh     # clone MMSA + 建 /workspace/mmsa_env + 建 shim + 验证
+```
+
+脚本自身以那道等价检查收尾，且**不看退出码看结论**（SKIP 时退出码也是 0），拿不到 `EQUIVALENT` 就报错退出。跑完 `check_all.sh` 里的 `almt equivalence` 才是真在检查，而不是在跳过。
+
+为什么要单独一个环境：MMSA 的模型在 transformers 5 下根本 import 不了，而本项目用的是 5.x，所以给它单独装一棵 transformers 4.44.2，只在跑 MMSA 代码的进程里插到 `sys.path` 前面。**torch 与 numpy 故意不在那棵树里**——两份实现必须跑在同一个张量库上，否则比较的就不只是实现。shim 因此是"挑出来的包的符号链接"，不是整个 site-packages。
 
 `best.pt` 默认训练结束即删除，也不入库。需要某个 checkpoint 时用 `--keep-checkpoint` 重跑——按 `result.json` 里记录的命令，结果逐比特一致。

@@ -26,6 +26,7 @@ Exit code 0 if the outputs match to 1e-6, non-zero otherwise.
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -33,11 +34,12 @@ import torch
 import torch.nn as nn
 
 MMSA_SRC = Path("/workspace/MMSA/src")
-#: einops and easydict live here, not in this project's venv — MMSA needs both
-#: and we deliberately do not depend on either.
-SHIM = Path(
-    "/tmp/claude-0/-workspace-msa/3af04fc1-6db3-4475-99a0-5ed563405551/scratchpad/mmsa_shim"
-)
+#: transformers 4.x, einops and easydict live here, not in this project's venv —
+#: MMSA needs all three and we deliberately do not depend on einops or easydict.
+#: Same directory and same environment variable as mmsa_reference.py; it was
+#: previously a hard-coded path under a scratch directory that did not survive
+#: the move to another machine, which is how this check went quietly to SKIP.
+SHIM = Path(os.environ.get("MMSA_SHIM", "/workspace/mmsa_env/shim"))
 
 BATCH, DIM, TOKENS = 4, 128, 8
 LEN_TEXT, LEN_AUDIO, LEN_VISION = 50, 375, 500
