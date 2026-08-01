@@ -386,3 +386,16 @@ python scripts/aggregate_acceptance.py --reference table --subject mmsa_code
 ```
 
 参照本身的生成：`python scripts/mmsa_reference.py run <模型> 42 43 44 45 46 47 48 49 50 51`，再 `collect`。需要 transformers 4.x 树与几个小包（见该脚本 docstring），本机在 `/workspace/mmsa_env/`。
+
+### 四、选择口径预测的验证（`misa/self_mm_mosi_ablation_mmsaselect`，各 10 seed）
+
+检验量在看结果前定死：**改变了所选 epoch 的 seed 比例**（机制只预测"选择会变"，不预测变好变坏）。
+
+| 模型 | batch | 末批超权 | epoch 变动 | MAE 平均差 | 配对 t |
+|---|---|---|---|---|---|
+| MFN | 128 | 1.13× | 1/10 | +0.0037 | +1.00 |
+| Self-MM | 16 | 3.05× | 2/10 | −0.0022 | −1.13 |
+| MISA | 16 | 3.05× | 4/10 | +0.0017 | +0.31 |
+| TFN | 32 | 5.73× | 8/10 | −0.0161 | −2.53 |
+
+**方向成立**（四点按超权单调），**但同超权的两个模型相差一倍，且 n=4 不足以做显著性声明**。完整解读见 [`investigations.md#select-reduction`](investigations.md#select-reduction)。
