@@ -13,6 +13,11 @@ dependencies = [
     "scikit-learn",
     "torch",
     "tqdm",
+    # Eight of the fourteen models fine-tune BERT. Undeclared until 2026-08-01,
+    # which meant setup.sh built an environment that could not train half the
+    # models — and no gate caught it, because the gates read stored results and
+    # never construct a model.
+    "transformers>=5,<6",
 ]
 
 [tool.setuptools.packages.find]

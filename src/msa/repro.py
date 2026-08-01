@@ -12,6 +12,8 @@ import platform
 import random
 import subprocess
 import sys
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as package_version
 from pathlib import Path
 
 import numpy as np
@@ -135,6 +137,14 @@ def git_revision() -> dict[str, object]:
     return start
 
 
+def _installed_version(package: str) -> str | None:
+    """Version of an installed distribution, or None when it is not installed."""
+    try:
+        return package_version(package)
+    except PackageNotFoundError:
+        return None
+
+
 def collect_env(device: torch.device | None = None) -> dict[str, object]:
     """Provenance to store next to results — what actually produced the numbers."""
     from .device import describe_device
@@ -145,6 +155,12 @@ def collect_env(device: torch.device | None = None) -> dict[str, object]:
         "machine": platform.machine(),
         "torch": torch.__version__,
         "numpy": np.__version__,
+        # Eight of the fourteen models fine-tune BERT, so this belongs next to
+        # torch and numpy. It was missing until 2026-08-01, which is why the
+        # version behind the committed BERT-model results cannot be recovered.
+        # Read from metadata rather than by importing: importing transformers
+        # costs seconds, and the six models that never touch it should not pay.
+        "transformers": _installed_version("transformers"),
         "cuda_version": torch.version.cuda,
         "cuda_available": torch.cuda.is_available(),
         "mps_available": bool(

@@ -344,3 +344,21 @@ SE = sqrt( cap(σ_ours)² / n_ours  +  cap(σ_ref)² / n_ref )
 **裁定：维持两样本（Welch 形式，方差相加），即 `standard_error` 现有的做法。** 逐 seed 数据的价值不在配对，而在于（a）能按 ddof=1 算出参照的方差，（b）能把参照的 n 从 5 提到 10 从而收紧 SE。
 
 **这条也是给下一个人的提醒**：把"应该用更好的方法 X"写进复查条件时，先确认 X 的前提在这份数据上成立。
+
+---
+
+## [2026-08-01] transformers 定为 5.14.1，并写进 `env` 指纹
+
+**背景**：主 venv 里没有 `transformers`。八个微调 BERT 的模型（misa / self_mm / cenet / tetfn / bert_mag / mmim / almt / text_bert）因此在本机**一个也训不了**，而 `reproduce_all.sh` 里有 34 处引用它们。`pyproject.toml` 与 `requirements-lock.txt` 都没登记这个依赖，所以 `scripts/setup.sh` 在**任何**新机器上装出来的都是这样一个环境。**没有闸门会因此变红**——闸门读的是已落盘的 `result.json` 与预测，从不构造模型（与 `#cross-machine-hash` 末尾那三条同类）。
+
+**选项**：A 装 4.x，与 MMSA 参照树同版本 / B 装 5.x 最新稳定版并钉死 / C 不钉版本，只在 `pyproject.toml` 写 `transformers`
+
+**裁定**：**B**。装 5.14.1；`pyproject.toml` 声明 `transformers>=5,<6`，`requirements-lock.txt` 钉死 `transformers==5.14.1`。同时 `collect_env()` 开始记录 transformers 版本。
+
+**依据**：代码本身指明了大版本——`cenet.py` 与 `bert.py` 里留着"transformers >= 5 直接返回张量、旧版返回元组"的兼容分支，说明已入库的结果就是在 5.x 下跑的。**但具体是哪个 5.x 已不可考**：`env` 当时不记这个字段，旧机器也已不可用。所以这不是"恢复原环境"，是**重新选一个并把它记下来**。验证不是"能 import"：八个模型逐个用 `reproduce_all.sh` 里各自的真实配置训了一个 epoch，全部通过。
+
+**已否决**：A —— 本项目的代码是按 5.x 的 API 写的，装 4.x 要改我们的代码去迁就参照，而参照需要 4.44.2 这件事已经由独立的 `/workspace/mmsa_env` 解决了，两棵树互不干扰才是正确形状。C —— 不钉版本正是这次事故的成因；transformers 的次版本改过输出类型（那两处兼容分支就是证据），浮动依赖等于让结果随安装日期漂移。
+
+**复查条件**：transformers 6.0 发布后，上限 `<6` 会挡住升级。届时**先跑八个模型的一个 epoch 冒烟**，再决定是否放宽——那两处兼容分支说明这个库在大版本上改过输出契约。
+
+**这一条改变的是今后的运行**：已入库的 140 组结果里没有这个字段，它们对应的版本永久不可考。`#cross-machine-hash` 里"CPU 型号没进 `env`，导致 ISA 假设事后无法验证"是同一个教训的另一个实例——**`env` 少记一个决定结果的东西，代价要到想复查的那天才付，而那天往往已经晚了。**

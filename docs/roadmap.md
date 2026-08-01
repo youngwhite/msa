@@ -182,19 +182,22 @@ python scripts/check_acceptance.py --all         # 全部有参照的组
 - 它失效有**两个**原因，此前只知道一个：除 MMSA 检出不在之外，脚本里的 shim 路径硬编码成某次会话的临时目录，**那个路径在旧机器上也活不过会话结束**——这道闸门不是从换机器才开始静默失效的。现读 `MMSA_SHIM`，默认 `/workspace/mmsa_env/shim`。
 - **顺带测出参照本身也绑定机器**：MMSA 自己的代码跑 tfn seed 42，旧机 MAE 0.9305 / Corr 0.6789，本机 0.9441 / 0.6576，量级与我们那次（0.0225 MAE）相同。含义写进了下面的待决项。
 
+### 环境缺口已补（2026-08-01）
+
+主 venv 里原本**没有 `transformers`**，8 个 BERT 系模型（misa / self_mm / cenet / tetfn / bert_mag / mmim / almt / text_bert）在本机一个也训不了，而 `reproduce_all.sh` 里有 34 处引用它们。`pyproject.toml` 与 `requirements-lock.txt` 都漏登记了这个依赖，所以 `setup.sh` 在**任何**新机器上装出来的都是个跑不了一半模型的环境，且**没有任何闸门会红**（闸门只读已存结果，从不构造模型）。
+
+已装 5.14.1 并钉进 lock，`collect_env()` 开始记录它的版本。**验证方式是八个模型各用自己的真实配置训一个 epoch，全部通过**，不是"能 import"。选版理由与已否决项见 [`decisions.md`](decisions.md)。
+
 ### 下一步（按顺序）
 
-1. **补齐 `transformers`**：主 venv 里没有它，8 个 BERT 系模型（misa / self_mm / cenet / tetfn / bert_mag / mmim / almt / text_bert）在本机**训不了**，`reproduce_all.sh` 里 34 处引用它们。`pyproject.toml` 与 `requirements-lock.txt` 都没登记这个依赖，所以 `setup.sh` 在新机器上装出来的是个跑不了一半模型的环境，而**没有任何闸门会红**（闸门只读已存结果，从不构造模型）。第 2 阶段的前提。
-2. **MOSEI**：主数据集。换数据集后 `NOISE_FLOOR` 必须重测，SE 封顶与地板都依赖它。
-3. **第 2 阶段**：编码器换代 vs 融合结构（见上）。第 1 阶段的全部基础设施可直接复用。
-
-排序理由：第 1 项是补一个连闸门都看不见的环境缺口，成本低且是后两项的前提；第 2、3 项顺序不变。
+1. **MOSEI**：主数据集。换数据集后 `NOISE_FLOOR` 必须重测，SE 封顶与地板都依赖它。
+2. **第 2 阶段**：编码器换代 vs 融合结构（见上）。第 1 阶段的全部基础设施可直接复用。
 
 ### 阻塞项与待决
 
 - **待人拍板：本机要不要重立数值基线？** 涉及两件事——约定 6 的锚点哈希在本机重新生成（并标注绑定机器），以及 `reproduce_all.sh` 重跑一遍把 `docs/experiments.md` 换成本机数字。**代价是历史数字与新数字混在一起**，且旧机器已不可用、无法回头验证。另一条路是维持现状、承认那些数字属于旧机器，只在本机新增结果时另立一套。**这个决定应当先记进 `decisions.md` 再动手，不要默认执行。**
   - 2026-08-01 补：**参照侧（`docs/mmsa_code_runs_mosi.json`）与我们侧处境完全相同**，都是旧机器的数字。所以聚合判据现在是同机器配对、自洽的；**只重跑一侧会把两台机器混进同一个分布，比两侧都不重跑更糟**。要重立就两侧一起重立。
-- **`transformers` 的版本无从考证。** `result.json` 的 `env` 只记 python / torch / numpy，没记 transformers，所以已入库的 8 个 BERT 模型结果**当初用的是哪个版本已经不可恢复**（代码里只留下"transformers >= 5 返回张量、旧版返回元组"这类兼容分支，可知是 5.x）。补装时选定的版本应当记进 `decisions.md`，并顺手把它加进 `env` 指纹。
+- **已入库结果的 `transformers` 版本永久不可考。** `env` 从 2026-08-01 起才记这个字段，此前只有 python / torch / numpy。已入库的 8 个 BERT 模型结果只能确定是 5.x（代码里"transformers >= 5 返回张量、旧版返回元组"的兼容分支），具体版本随旧机器一起没了。**同类缺口还有一个：`env` 不记 CPU 型号**，`investigations.md#cross-machine-hash` 的 ISA 假设因此无法事后验证——建议一并补上。
 - **MOSEI 尚未下载**。路线图定的是主数据集用 MOSEI（MOSI 测试集仅 686 条，判别力不足）。
 - **`/workspace` 不是持久卷**（本实例 `workspace_is_volume: false`）。recycle 或 destroy 会抹掉整个目录，只有推到远端的东西存活。数据集（879MB）和 venv 届时都要重来。
 - **MPS 未在真机验证**。无 Apple Silicon 硬件。

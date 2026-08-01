@@ -13,7 +13,7 @@
 - 数据集 `datasets/CMU-MOSI/`（不入库，879MB，sha256 记在 `DatasetSpec.file_sha256`）。MOSEI 尚未下载
 - **换机器**：`bash scripts/setup.sh` 建环境 + 校验数据 + 跑闸门；完整步骤见 `docs/migration.md`
 - **参照环境**：`bash scripts/setup_mmsa_reference.sh` 重建 `/workspace/MMSA` 与 `/workspace/mmsa_env`（都不入库，换机器必丢）。**不重建的代价是约定 5 的等价检查静默失效**——它 SKIP 时也记 PASS
-- **注意**：主 venv 目前**没有 `transformers`**，8 个 BERT 系模型在本机训不了（`pyproject.toml` 与 lock 都漏登记了这个依赖，闸门看不见）。见 `docs/roadmap.md`「下一步」第 1 项
+- `transformers` **钉死 5.14.1**（8 个 BERT 系模型要它）。跨大版本会改输出契约，`cenet.py` / `bert.py` 里的兼容分支就是证据；升级前先跑八个模型各一个 epoch 冒烟。理由见 `docs/decisions.md` 2026-08-01 那条
 
 ## 不可违背的约定
 
