@@ -26,6 +26,12 @@ run "lint"                 $PY -m ruff check src scripts --select E,F,W,B,SIM,I,
 run "data integrity"       $PY scripts/check_data.py
 run "invariants"           $PY scripts/check_invariants.py
 run "stored results"       $PY scripts/verify_runs.py --quiet
+run "per-model acceptance" $PY scripts/check_acceptance.py --all
+# Against MMSA's *code*, not its published table. The table is the claim under
+# test, but it is unreachable by MMSA's own implementation too (by more than it
+# is by ours), so gating on it would keep this red for a reason no change to this
+# repository can fix. See docs/investigations.md#aggregate-verdict.
+run "aggregate acceptance" $PY scripts/aggregate_acceptance.py --reference code
 # Skips itself when MMSA is not checked out, so a fresh clone still goes green.
 run "almt equivalence"     $PY scripts/check_almt_equivalence.py
 if [ "$FAST" != "--fast" ]; then
