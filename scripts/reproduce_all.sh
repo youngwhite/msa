@@ -54,6 +54,8 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     graph_mfn_mosi_ablation_frozen
     tfn_mosi_ablation_mmsaselect
     mfn_mosi_ablation_mmsaselect
+    misa_mosi_ablation_mmsaselect
+    self_mm_mosi_ablation_mmsaselect
     tfn_mosi_2021config
     ef_lstm_mosi_2021config
     tfn_mosi_mmsaseeds
@@ -181,6 +183,16 @@ args_for() {
         echo "--model tfn --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 0 --grad-clip 0 --epochs 200 --model-arg use_lengths=False --model-arg mask_pooling=False --select-reduction mmsa" ;;
     mfn_mosi_ablation_mmsaselect)
         echo "--model mfn --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 2e-3 --weight-decay 0 --batch-size 128 --grad-clip 0 --epochs 200 --select-reduction mmsa" ;;
+    # Two more at batch 16, testing the prediction that the effect tracks the
+    # final batch's overweight (3.1x here, against TFN's 5.7x and MFN's 1.13x).
+    # MISA and Self-MM because their protocol matches TFN's and MFN's — 200
+    # epochs, patience 8, no scheduler. MulT is batch 16 too but decays on
+    # plateau off the same quantity, and text_bert stops at 12 epochs; in either
+    # the reduction would change more than one thing.
+    misa_mosi_ablation_mmsaselect)
+        echo "--model misa --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-4 --weight-decay 0 --batch-size 16 --grad-clip 0.8 --clip-mode value --epochs 200 --patience 8 --accumulate-steps 2 --select-reduction mmsa" ;;
+    self_mm_mosi_ablation_mmsaselect)
+        echo "--model self_mm --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 0.001 --batch-size 16 --grad-clip 0 --epochs 200 --patience 8 --accumulate-steps 4 --select-reduction mmsa" ;;
     # TFN under the hyper-parameters MMSA's config held on 2021-05-06, the day
     # its results table was written — not the ones in its config today. Eight of
     # the eleven models were retuned afterwards without the table being
