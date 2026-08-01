@@ -63,6 +63,9 @@ FEATURES_FOR = {
     "mult": "unaligned", "misa": "unaligned", "self_mm": "unaligned",
     "cenet": "unaligned", "tetfn": "aligned", "bert_mag": "aligned",
     "mmim": "unaligned", "almt": "unaligned",
+    # MMSA's published MOSI table has no row for these two, so its own code is
+    # the only reference they can have. Both declare need_data_aligned.
+    "mctn": "aligned", "mfm": "aligned",
 }
 #: MMSA's metric names -> ours. Its Acc-2/F1 are already fractions; MAE and Corr
 #: are too. No rescaling happens anywhere in this file.
