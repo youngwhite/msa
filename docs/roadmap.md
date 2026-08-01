@@ -200,5 +200,7 @@ python scripts/check_acceptance.py --all         # 全部有参照的组
 - **已入库结果的 `transformers` 版本与 CPU 型号永久不可考。** `env` 从 2026-08-01 起才记 `transformers` / `cpu` / `cpu_capability` 三个字段，此前只有 python / torch / numpy。已入库的 8 个 BERT 模型结果只能确定是 5.x（代码里"transformers >= 5 返回张量、旧版返回元组"的兼容分支）；旧机器的 CPU 型号与向量化分派档位则完全没有记录，`investigations.md#cross-machine-hash` 的 ISA 假设因此**永远不会被验证**。字段本身已补上，救的是下一次换机器。
 - **MOSEI 尚未下载**。路线图定的是主数据集用 MOSEI（MOSI 测试集仅 686 条，判别力不足）。
 - **`/workspace` 不是持久卷**（本实例 `workspace_is_volume: false`）。recycle 或 destroy 会抹掉整个目录，只有推到远端的东西存活。数据集（879MB）和 venv 届时都要重来。
+  - **这条已经兑现过一次**：此前有一台实例磁盘写满、SSH 登不上去，未推送的工作全部报废。所以纪律是**做完一件推一件**，不要攒到阶段末尾。`check_all.sh` 现在每次都会报磁盘余量与未推送量（低于 3G 转红）——是警告不是闸门，因为闸门红了 `sync.sh` 就不推，而磁盘紧张正是最该推的时候。
+  - 当前余量 **6.4G / 16G**（`.venv` 独占 7.2G，刚清掉 1.2G 的 pip 缓存）。**下载 MOSEI 前必须先量余量**——它比 MOSI 的 879MB 大得多，是下一个最可能把盘写满的东西。
 - **MPS 未在真机验证**。无 Apple Silicon 硬件。
 - EF-LSTM 的崩溃 seed 说明判据缺稳健性维度，见 `docs/investigations.md#ef-lstm-collapse`。改判据前先记决策，**不得在已有结果之后调整以迎合结果**。

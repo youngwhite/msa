@@ -22,6 +22,39 @@ run() {
     fi
 }
 
+# Disk headroom, and how much work is only on this machine. A full disk on this
+# kind of instance does not merely stop a training run: it can take SSH down
+# with it, and /workspace is not a persistent volume, so anything unpushed goes
+# with the container. That has already cost this project a session's work once.
+#
+# Deliberately a WARNING and never a gate. A failing gate stops sync.sh from
+# pushing, and a low disk is exactly when pushing matters most -- a check that
+# blocks the escape route because the room is on fire is worse than no check.
+DISK_WARN_GB=${DISK_WARN_GB:-3}
+disk_note() {
+    local free_gb unpushed=0 dirty=0
+    free_gb=$(df -BG --output=avail . | tail -1 | tr -dc '0-9')
+    if git rev-parse '@{upstream}' >/dev/null 2>&1; then
+        unpushed=$(git rev-list --count '@{upstream}..HEAD' 2>/dev/null || echo 0)
+    fi
+    [ -n "$(git status --porcelain --untracked-files=no 2>/dev/null)" ] && dirty=1
+
+    if [ "$free_gb" -lt "$DISK_WARN_GB" ]; then
+        printf '\033[31m!! %sG disk free (warn below %sG)\033[0m\n' "$free_gb" "$DISK_WARN_GB"
+        printf '   Free space before training anything: pip cache purge, rm -rf mmsa_runs,\n'
+        printf '   outputs/**/best.pt. A full disk here can lock you out of the instance.\n'
+    else
+        printf 'disk: %sG free\n' "$free_gb"
+    fi
+    local what=""
+    [ "$unpushed" -gt 0 ] && what="$unpushed commit(s) unpushed"
+    if [ "$dirty" -eq 1 ]; then
+        [ -n "$what" ] && what="$what, plus uncommitted changes" || what="uncommitted changes"
+    fi
+    [ -n "$what" ] && printf '\033[33m   %s — only on this machine. bash scripts/sync.sh\033[0m\n' "$what"
+}
+disk_note
+
 run "lint"                 $PY -m ruff check src scripts --select E,F,W,B,SIM,I,UP --line-length 100
 run "data integrity"       $PY scripts/check_data.py
 run "invariants"           $PY scripts/check_invariants.py
@@ -40,6 +73,8 @@ if [ "$FAST" != "--fast" ]; then
 fi
 
 printf '\n'
+# Repeated at the end because the tail is what anyone actually reads.
+disk_note
 if [ ${#FAILED[@]} -eq 0 ]; then
     printf '\033[32mall gates passed\033[0m\n'
     exit 0
