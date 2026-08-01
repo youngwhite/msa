@@ -50,9 +50,7 @@ import json
 import math
 import sys
 
-from msa.config import OUTPUT_ROOT
-
-from check_acceptance import (  # noqa: E402  (same directory, run as a script)
+from check_acceptance import (
     CODE_REFERENCE_PATH,
     PRIMARY,
     REFERENCE_PATH,
@@ -61,6 +59,8 @@ from check_acceptance import (  # noqa: E402  (same directory, run as a script)
     standard_error,
     summarise,
 )
+
+from msa.config import OUTPUT_ROOT
 
 ALPHA = 0.05
 #: Reported alongside the verdict but excluded from it, declared in the decision
@@ -232,8 +232,9 @@ def main() -> None:
     if args.subject == "mmsa_code" and args.reference != "table":
         ap.error("--subject mmsa_code only makes sense against --reference table; "
                  "anything else compares MMSA's runs with themselves")
-    print(f"subject  : {'our implementation' if args.subject == 'ours' else
-                        'MMSA implementation, run by us'}")
+    subject_name = ("our implementation" if args.subject == "ours"
+                    else "MMSA implementation, run by us")
+    print(f"subject  : {subject_name}")
     print(f"reference: {sources[args.reference]}")
     rows = collect(reference, tuple(args.metrics), subject)
     verdicts = {}
