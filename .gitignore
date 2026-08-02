@@ -13,3 +13,4 @@ checkpoints/
 .claude/*.tmp.*
 
 mmsa_runs/
+papers/*.pdf

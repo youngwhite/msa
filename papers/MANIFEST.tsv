@@ -1,0 +1,33 @@
+file	sha256	bytes	source
+ALMT.pdf	456e5373ae908d4e	2845138	https://arxiv.org/pdf/2310.05804
+BERTMAG.pdf	17dadc414cfa8fd1	351229	https://aclanthology.org/2020.acl-main.214.pdf
+BeyondStaticAlignment_ACL2026.pdf	3fe5383f6f7278ce	2544933	见 survey.md 台账
+CMAD.pdf	5a5445203ecb52f9	1253020	https://openaccess.thecvf.com/content/ICCV2025/papers/Zhuang_CMAD_Correlation-Aware_and_Modalities-Aware_Distillation_for_Multimodal_Sentiment_Analysis_with_ICCV_2025_paper.pdf
+ConFEDE_ACL2023.pdf	b5c1c4c60ff03d94	638720	https://aclanthology.org/2023.acl-long.421.pdf
+CrossLingualMSA_Findings-ACL2025.pdf	5fb5b556f4191f4f	504156	见 survey.md 台账
+D2R_EMNLP2024.pdf	e0f747410ab91ce5	1391423	见 survey.md 台账
+DEAR.pdf	d62d9f550a181fb4	1125661	https://aclanthology.org/2026.findings-acl.1517.pdf
+DMD_CVPR2023.pdf	9450809458f8f857	1007372	https://arxiv.org/pdf/2303.13802
+DPDF-LQ_EMNLP2025.pdf	254a5e8b5c8ff5ab	1735177	见 survey.md 台账
+EBMC.pdf	c33d5d0a8e91597f	1251493	https://openaccess.thecvf.com/content/CVPR2026/papers/He_Enhance-then-Balance_Modality_Collaboration_for_Robust_Multimodal_Sentiment_Analysis_CVPR_2026_paper.pdf
+FastRetrievalSlowReasoning_Findings-ACL2026.pdf	7704f73639cc687d	357946	见 survey.md 台账
+FeaDA_IJCNLP2025.pdf	5314a4c0cc9eb56d	854839	见 survey.md 台账
+GraphMFN.pdf	aa9c9018b13b3beb	726107	https://aclanthology.org/P18-1208.pdf
+KuDA_Findings-EMNLP2024.pdf	9f53cc6042c84fda	4316842	见 survey.md 台账
+LMF.pdf	936528dc24082835	473656	https://aclanthology.org/P18-1209.pdf
+MCTN.pdf	692b87cf6362f4e5	955809	https://arxiv.org/pdf/1812.07809
+MERCLIP.pdf	be2bd15742339b97	1453606	https://openaccess.thecvf.com/content/WACV2025/papers/Song_Leveraging_CLIP_Encoder_for_Multimodal_Emotion_Recognition_WACV_2025_paper.pdf
+MFM.pdf	d295645a0386cbec	4444982	https://arxiv.org/pdf/1806.06176
+MFN.pdf	c972ac9fec14e5bc	363020	https://arxiv.org/pdf/1802.00927
+MISA.pdf	19bbf46bdb92e9b0	10950779	https://arxiv.org/pdf/2005.03545
+MMIM.pdf	6922b1e20ea05f48	711282	https://arxiv.org/pdf/2109.00412
+MoLAN.pdf	88ba45cd957de6e9	2570962	https://aclanthology.org/2026.findings-acl.1225.pdf
+MoMA.pdf	195b183c88a60503	526151	https://aclanthology.org/2025.naacl-long.90.pdf
+MulT.pdf	f49c6240beea462d	2325311	https://aclanthology.org/P19-1656.pdf
+P-RMF_ACL2025.pdf	8766d2519d2862b1	758121	见 survey.md 台账
+QA-MoE_ACL2026.pdf	af8f380d2eafaab9	3626186	见 survey.md 台账
+ResourceLimitedCoT_Findings-ACL2026.pdf	9bda245990104f5c	3499422	见 survey.md 台账
+SelfMM.pdf	2e9c4d3f221d284a	976352	https://arxiv.org/pdf/2102.04830
+TF-Mamba_Findings-EMNLP2025.pdf	71321ec405e520ff	610827	见 survey.md 台账
+TFN.pdf	c85400979efec227	414584	https://aclanthology.org/D17-1115.pdf
+UncertaintyCalibrated_Findings-ACL2026.pdf	b622da93af31157e	13196032	见 survey.md 台账
