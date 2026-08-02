@@ -34,6 +34,17 @@
    "do_not_retry": "Auditing the port for this gap, and switching the acceptance group to collapse_over_real_length=True. The latter would close the gap to +1.5 SE and is forbidden: MMSA runs the scaled configuration, so reproducing it means reproducing that. The finding explains the gap; it does not license changing what is measured.",
    "caveats": "The 2x2's third cell has no old-machine counterpart — that machine is gone — so seed spread on one machine stands in for cross-machine fragility. Related but not identical. The claim is that the scaling is the main source of variance, NOT that cross-machine instability has been shown to originate there.",
    "does_not_generalise": "Established for MFN only. graph_mfn shares the MFN backbone but moved -0.0092 with its spread shrinking, and passes. Any similar attribution needs its own reference run and its own record."
+  },
+  "mctn_mosi": {
+   "status": "gap_explained",
+   "metric": "corr",
+   "date": "2026-08-02",
+   "attribution": "The reference implementation is numerically invalid, so its Corr is not a target. MMSA's MCTN Encoder is an nn.LSTM with batch_first unset, fed (batch, seq, feat): the recurrence unrolls over the batch axis, treating the 50 timesteps as 50 samples. Its Seq2Seq agrees -- batch_size = src.shape[1] and trg_len = trg.shape[0] are both the wrong axis -- while the decoder in the same file transposes correctly. Consequence, measured on real MOSI test samples with one set of weights: changing only the batch size from 32 to 16 moves per-sample predictions by up to 3.05e-02 on a label range of 6. Ours moves 1.04e-07. A number that depends on how the test set is batched cannot be an acceptance target.",
+   "attribution_of_defect": "Introduced by MMSA's PyTorch re-implementation, not inherited. The authors' Keras code (hainow/MCTN, seq2seq/mctn_models.py) builds inputs as (batch_size, input_length, input_dim) and Keras recurrent layers are batch-first, so the authors' axis handling is correct. Convention 5: a defect introduced by the reference implementation is not to be reproduced.",
+   "evidence": "docs/investigations.md#mctn-batch-axis",
+   "do_not_retry": "Auditing our port for this gap, and tuning to close it. Closing it would mean chasing a leaking target. Reproducing the leak deliberately would mean shipping a model whose test predictions depend on batch composition.",
+   "caveats": "The leakage magnitude was measured with randomly initialised weights; a trained model could leak more or less. What is established is the structural property, not a specific error size. Our own MAE sits +1.6 SE from the same invalid reference, which is reported but carries no more meaning than the Corr.",
+   "does_not_generalise": "Established for MCTN only. No other ported model shares this Encoder. Any similar claim needs its own batch-composition test."
   }
  },
  "retracted": {
