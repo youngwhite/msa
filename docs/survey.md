@@ -167,6 +167,32 @@ curl -sL "https://aclanthology.org/volumes/<卷号>/" -o vol.html   # 每卷一�
 
 **分布本身是个结果**：11 篇权威论文里 8 篇有可运行官方代码（1 篇无许可证要卡），2 篇没提供，1 篇承诺了但仓库不存在。
 
+## 台账 D：逐卷枚举补核（2026-08-02）
+
+ACL 系逐卷枚举筛出的同任务论文，按核实规矩逐条核（全文解析 + 仓库实地请求）。
+
+| 方法 | 出处 | 数据集（正文实测） | 官方代码 | 实测 |
+|---|---|---|---|---|
+| **KuDA** Knowledge-Guided Dynamic Modality Attention Fusion | Findings of EMNLP 2024 | MOSI, MOSEI, CH-SIMS | [MKMaS-GUET/KuDA](https://github.com/MKMaS-GUET/KuDA) | 200 |
+| **TF-Mamba** Text-enhanced Fusion Mamba, Missing Modalities | Findings of EMNLP 2025 | MOSI, MOSEI, CH-SIMS | [codemous/TF-Mamba](https://github.com/codemous/TF-Mamba) | 200 |
+| **MulCoT-RD** Resource-Limited Joint MSA Reasoning（CoT 蒸馏） | Findings of ACL 2026 | 待核 | [123sghn/MulCoT-RD](https://github.com/123sghn/MulCoT-RD) | 200 |
+| **LFD-RT** Cross-lingual MSA, Language Family Disentanglement | Findings of ACL 2025 | MOSEI, SIMS, MELD（**无 MOSI**） | [ShuoyuGuan/LFD-RT](https://github.com/ShuoyuGuan/LFD-RT) | 200 |
+| **QA-MoE** Quality-Aware Mixture of Experts, Robust MSA | ACL 2026 长文 | CMU-MOSI, CMU-MOSEI, IEMOCAP | **正文无代码链接** | — |
+| **Fast Retrieval and Slow Reasoning** Explainable MSA | Findings of ACL 2026 | MOSI, MOSEI, CH-SIMS | **正文无代码链接** | — |
+| **Uncertainty-Calibrated Elastic Alignment**, Missing Modalities | Findings of ACL 2026 | MOSI, MOSEI, CH-SIMS | **正文无代码链接** | — |
+
+### 枚举筛出但**任务不同**，排除
+
+- **D2R**（EMNLP 2024）与 **Beyond Static Alignment**（ACL 2026 长文）：标题都写 "Multimodal Sentiment"，但正文用的是 **MVSA-Single / MVSA-Multiple / HFM**——**图文社交媒体情感**，不是视频三模态情感回归。**同名不同任务，不可混入同一张对照表。**
+  - 这两条是标题关键词筛的固有漏洞：任务归属只能由正文的数据集判定，**标题不可信**。逐卷枚举解决"漏"，不解决"错收"。
+- **Emosical**（Findings of EMNLP 2024）：情绪标注的音乐剧数据集，非方法论文。
+
+### 覆盖现状
+
+近三年同任务、且**有可运行官方代码**的合计 **12 篇**（台账 C 的 8 篇 + 本节 4 篇）；**无代码需自行实现**的 6 篇（DEAR、MER-CLIP、P-RMF、QA-MoE、Fast Retrieval、Uncertainty-Calibrated）。
+
+**仍未枚举**：CVF、AAAI、ACM MM、IJCNLP-AACL。历史长尾（ICCN、MAG-XLNet、HyCon、UniMSE 等）状态仍是**"未调研"**。
+
 ## 排除清单
 
 排除必须带理由，否则下一个人会重新纠结一遍。
