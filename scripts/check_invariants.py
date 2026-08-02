@@ -154,6 +154,34 @@ def check_pooling() -> None:
           torch.allclose(masked_mean(x[1:], lengths[1:]), masked_mean(x[1:], None)))
 
 
+def check_mctn_source_only() -> None:
+    """MCTN's whole claim: at inference only the source modality is needed.
+
+    Paper eq. 20-21. It is a structural property, not a trained behaviour -- the
+    prediction path reads the encoder of the language stream, and audio and
+    vision enter only through the translation losses. So it can be asserted
+    exactly: randomise the other two modalities and the prediction must not move
+    by a single bit. If a future change routes them into the prediction, this
+    fires, and without it the model would quietly stop being MCTN while still
+    scoring well.
+    """
+    from msa.models.mctn import MultimodalCyclicTranslationNetwork as MCTN
+
+    for faithful in (False, True):
+        torch.manual_seed(0)
+        model = MCTN(text_dim=768, audio_dim=5, vision_dim=20, paper_faithful=faithful).eval()
+        batch = {"text": torch.randn(4, 50, 768), "audio": torch.randn(4, 50, 5),
+                 "vision": torch.randn(4, 50, 20)}
+        with torch.no_grad():
+            before = model(batch)["M"]
+            after = model(dict(batch, audio=torch.randn(4, 50, 5),
+                               vision=torch.randn(4, 50, 20)))["M"]
+        check(f"MCTN(paper_faithful={faithful}) predicts from the source modality alone",
+              torch.equal(before, after),
+              f"randomising audio/vision moved the prediction by "
+              f"{(before - after).abs().max():.3e}")
+
+
 def check_metrics() -> None:
     print("\n== metrics ==")
     rng = np.random.default_rng(0)
@@ -290,6 +318,7 @@ def main() -> None:
     check_padding_conventions(spec)
     check_encoder_masking()
     check_pooling()
+    check_mctn_source_only()
     check_metrics()
     check_summary_convention()
     check_aggregate_statistics()

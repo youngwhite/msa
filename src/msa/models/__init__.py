@@ -8,6 +8,7 @@ from .cenet import CENet
 from .graph_mfn import GraphMemoryFusionNetwork
 from .lf_lstm import LateFusionLSTM
 from .lmf import LowRankFusion
+from .mctn import MultimodalCyclicTranslationNetwork
 from .mfn import MemoryFusionNetwork
 from .misa import MISA
 from .mmim import MMIM
@@ -28,6 +29,7 @@ __all__ = [
     "LateFusionDNN",
     "LateFusionLSTM",
     "LowRankFusion",
+    "MultimodalCyclicTranslationNetwork",
     "MemoryFusionNetwork",
     "MultimodalTransformer",
     "SelfMM",

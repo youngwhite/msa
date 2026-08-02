@@ -50,6 +50,8 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     almt_mosi
     tfn_mosi_ablation_masked
     lmf_mosi_ablation_masked
+    mctn_mosi
+    mctn_mosi_paper
     mfn_mosi_ablation_realseq
     mfn_mosi_ablation_reallenmean
     graph_mfn_mosi_ablation_frozen
@@ -93,6 +95,15 @@ args_for() {
     # their utterance mean the way MMSA's config does it.
     mfn_mosi)
         echo "--model mfn --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 2e-3 --weight-decay 0 --batch-size 128 --grad-clip 0 --epochs 200" ;;
+    # MCTN: MMSA hyper-parameters (lr 1e-4, bs 32, clip 1.0, hidden 32), which
+    # match the authors' own config (configs/hierarchical_mctn.yaml: init_lr
+    # 1e-4, hidden_dim 32, loss/cycle weight 0.1, regression weight 1.0). The
+    # acceptance group reproduces MMSA; _paper follows the paper where the two
+    # disagree. See docs/spec_mctn_mfm.md.
+    mctn_mosi)
+        echo "--model mctn --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-4 --weight-decay 0 --batch-size 32 --grad-clip 1.0 --epochs 200 --patience 8" ;;
+    mctn_mosi_paper)
+        echo "--model mctn --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-4 --weight-decay 0 --batch-size 32 --grad-clip 1.0 --epochs 200 --patience 8 --model-arg paper_faithful=True" ;;
     mfn_mosi_ablation_realseq)
         echo "--model mfn --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 2e-3 --weight-decay 0 --batch-size 128 --grad-clip 0 --epochs 200 --model-arg collapse_av_to_mean=False" ;;
     # The third cell of a 2x2. mfn_mosi (MMSA's config) and the realseq ablation
