@@ -6,6 +6,14 @@
 - 每条记录对应 `outputs/<group>/seed<N>/result.json`（超参、环境指纹、git commit、逐 epoch 历史、预测哈希），同级 `summary.json` 为多 seed 汇总。
 - `python scripts/verify_runs.py` 可从落盘预测重算全部指标并校验汇总，**下表每个数字都通过该检查**。
 
+> ## ⚠️ 迁移中（2026-08-02）
+>
+> **`outputs/` 里的数字已全部在 RTX 5080 上重跑，本文档正文尚未同步。** 正文里带具体数值的表格目前是**旧机器（RTX 5070 Ti）**的记录。
+>
+> 换机器后数字会变，且不是末位几个 bit——early stopping 把微小数值差放大成不同轨迹，见 [`investigations.md#cross-machine-hash`](investigations.md#cross-machine-hash) 与 [`#rebaseline-5080`](investigations.md#rebaseline-5080)。
+>
+> **权威来源以 `outputs/<group>/summary.json` 为准**；跨模型总表用 `python scripts/summary_table.py` 现生成。正文迁移是 `roadmap.md`「下一步」的第一项。
+
 ## CMU-MOSI，LF-LSTM 基线
 
 aligned_50，bs 32，lr 1e-3，dropout 0.2，按 valid MAE 选模型，CUDA：

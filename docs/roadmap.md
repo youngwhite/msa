@@ -149,6 +149,8 @@ python scripts/check_acceptance.py --all         # 全部有参照的组
 
 **对能复现的基准我们超过它**；对那张表两份实现都落后，而我们更接近。稳健的符号检验是 3/14、p=0.057，故严格表述为"至少打平，方向一致偏向我们"。限定见 [`investigations.md#aggregate-verdict`](investigations.md#aggregate-verdict)。
 
+> **⚠️ 上表是旧机器（RTX 5070 Ti）的结果，已被 2026-08-02 的重跑推翻。** 两侧都在 RTX 5080 上重跑后：**MAE Z=+0.17（p=0.864）、Corr Z=+1.88（p=0.060），判定为「打平」而非「超过」。** 成因是 EF-LSTM 一个模型（Corr z=+14.86，来自崩溃计数 2/10 对 0/10 的抽样运气）；排除它后仍为"超过"（Corr p=0.030）。**代码与判据一字未改，只换了 GPU。** 完整记录见 [`investigations.md#rebaseline-5080`](investigations.md#rebaseline-5080)。
+
 这一轮顺带做完/查清的：
 
 - 参照逐 seed 入库（`docs/mmsa_code_runs_mosi.json`）+ 生成脚本入库；修掉参照 sd 的 ddof=0/1 混用（判定未变）
@@ -188,10 +190,19 @@ python scripts/check_acceptance.py --all         # 全部有参照的组
 
 已装 5.14.1 并钉进 lock，`collect_env()` 开始记录它的版本。**验证方式是八个模型各用自己的真实配置训一个 epoch，全部通过**，不是"能 import"。选版理由与已否决项见 [`decisions.md`](decisions.md)。
 
+### 重立基线已完成（2026-08-02）
+
+两侧都在本机重跑：我们 38 组（5 小时），MMSA 代码参照 16 模型 × 10 seed（4.5 小时，含新增的 mctn / mfm），**均无失败**。参照文件现按模型记 `machine` 字段，`collect` 会拒绝跨机器合并。三个结论：**MFN 判定翻面**、**聚合判定 AHEAD → LEVEL**、**锚点哈希已在本机重立**（`199f629bfb036c93` / `969d5a4579736f8f`）。见 [`investigations.md#rebaseline-5080`](investigations.md#rebaseline-5080)。
+
 ### 下一步（按顺序）
 
-1. **MOSEI**：主数据集。换数据集后 `NOISE_FLOOR` 必须重测，SE 封顶与地板都依赖它。
-2. **第 2 阶段**：编码器换代 vs 融合结构（见上）。第 1 阶段的全部基础设施可直接复用。
+1. **把 `docs/experiments.md` 正文迁到本机数字**。`outputs/` 已全部是本机结果，正文仍是旧机器的，文档顶部已挂迁移横幅。跨模型总表可用 `scripts/summary_table.py` 现生成；`storyline.md` 的进度总表同理。
+2. **MCTN + MFM 收口**：参照已就位（各 10 seed，本机）。原作者实现均已核实可获取（[hainow/MCTN](https://github.com/hainow/MCTN)、[pliang279/factorized](https://github.com/pliang279/factorized/)），可按约定 5 双向核对。做完第 1 阶段完整。
+3. **预注册稳健性判据**：崩溃运行如何计入。**本轮不得追溯适用**（已看到结果），在 MOSEI 或第 2 阶段首次应用时同时报新旧两套判据。
+4. **MOSEI**：主数据集。换数据集后 `NOISE_FLOOR` 必须重测，SE 封顶与地板都依赖它。**下载前先量磁盘余量。**
+5. **第 2 阶段**：编码器换代 vs 融合结构（见上）。第 1 阶段的全部基础设施可直接复用。
+
+新方法的调研台账见 [`survey.md`](survey.md)：近三年 11 篇已核实，8 篇有可运行官方代码，DPDF-LQ（EMNLP 2025，带权重 + MIT）优先。
 
 ### 阻塞项与待决
 

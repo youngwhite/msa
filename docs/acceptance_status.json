@@ -1,35 +1,46 @@
 {
-  "note": "Adjudicated acceptance outcomes. A group listed here has been investigated and its gap attributed with evidence; check_acceptance.py reports it as explained instead of failing forever. Adding an entry requires evidence in docs/investigations.md — not a hunch.",
-  "groups": {
-    "tfn_mosi": {
-      "status": "gap_explained",
-      "metric": "corr",
-      "date": "2026-07-30",
-      "attribution": "MMSA's own code does not reach MMSA's own published Corr. Run on identical data, seeds 42-46 and device, it scores 0.6456 +- 0.0136 against the table's 0.6733 — short by 0.0277, twice our 0.0138, with none of its five seeds reaching the target. Ours scores 0.6595 on the same footing: better than the reference implementation. Device is not the explanation — our code moves 0.0007 between CUDA and CPU.",
-      "evidence": "docs/investigations.md#tfn-corr-resolved",
-      "do_not_retry": "Re-auditing the port. Nine hypotheses were ruled out and three implementations agree line by line; the shortfall is in the target, not the code. If it is revisited, the open questions are the device (MMSA's table was most likely CUDA, this comparison is CPU) and its unstated seed set, not our implementation.",
-      "caveats": "Five seeds rather than ten; CPU. The claim is that the published Corr is not reachable from MMSA's code under conditions we can control, NOT that it is wrong.",
-      "does_not_generalise": "Established for TFN only. Any similar attribution for another group requires running MMSA for that group first."
-    },
-    "ef_lstm_mosi": {
-      "status": "gap_explained",
-      "metric": "corr, mae",
-      "date": "2026-07-30",
-      "attribution": "MMSA's own EF-LSTM collapses too — 1 seed in 10 against our 2, the same distribution at the ~23% rate measured over 30 seeds — so the instability belongs to the configuration, not the port. Neither implementation reaches the published figures: against Corr 0.6690 its code averages 0.6358 (highest seed 0.6558) and ours 0.6215 on seeds 42-46; against MAE 0.9488 its code averages 1.0236 and ours 1.0712. On non-collapsed seeds only, ours scores Corr 0.6485 against its 0.6424. **Ours is worse than its code on this subset** (MAE 1.0712 vs 1.0236, Corr 0.6215 vs 0.6358) and that is entirely the collapse count: we collapsed on seeds 46 and 48, it collapsed on 45. One collapse dominates a five-seed mean. The published MAE of 0.9488 would require no collapses at all.",
-      "evidence": "docs/investigations.md#ef-lstm-corr-resolved",
-      "do_not_retry": "Auditing the port for the collapse. It is a property of four LSTM layers with 0.5 inter-layer dropout on 1284 training samples, present in both implementations, measured at 23% over 30 seeds. What remains open is the criterion's blindness to a large absolute gap hidden by wide spread — a robustness dimension, not an implementation fix.",
-      "caveats": "CPU while MMSA's table was most likely CUDA; its table's seed set is unstated. The claim is that the published numbers are not reachable from MMSA's code under conditions we can control, NOT that they are wrong.",
-      "does_not_generalise": "Established for EF-LSTM and TFN only. The other nine groups each need their own MMSA run before any similar attribution.",
-      "updated": "2026-07-31",
-      "note_2026_07_31": "MAE joined corr as a failure when the sigma cap landed: the criterion no longer lets two collapsed seeds inflate sigma to 0.2095 and turn a 3.2-noise-floor shortfall into +1.9 SE. That is the cap doing its job. The attribution is unchanged — the gap is the collapse rate, which both implementations share.",
-      "note_2026_07_31_config_generation": "The attribution now has a mechanism. MMSA's results table was written on 2021-05-06, when its EF-LSTM/MOSI config specified 2 LSTM layers, hidden 256, dropout 0.3, batch 128; today's specifies 4 layers, hidden 128, dropout 0.5, batch 32. Run at the 2021 config, ten seeds: MAE 0.9658 +- 0.0371 against the table's 0.9488, Corr 0.6510 against 0.6690, Acc-2 0.7800 against 0.7848, and ZERO collapsed seeds. The line above — 'the published MAE would require no collapses at all' — turns out to describe the configuration the table was actually written under. So the gap is largely a configuration-generation mismatch between subject and reference, not an implementation defect, and the 23% collapse rate belongs specifically to the four-layer stack. The acceptance group stays on today's config: switching to a better-scoring one after seeing the scores is forbidden. Evidence: docs/investigations.md#table-predates-config, group ef_lstm_mosi_2021config."
-    }
+ "note": "Adjudicated acceptance outcomes. A group listed here has been investigated and its gap attributed with evidence; check_acceptance.py reports it as explained instead of failing forever. Adding an entry requires evidence in docs/investigations.md — not a hunch.",
+ "groups": {
+  "tfn_mosi": {
+   "status": "gap_explained",
+   "metric": "corr",
+   "date": "2026-07-30",
+   "attribution": "MMSA's own code does not reach MMSA's own published Corr. Run on identical data, seeds 42-46 and device, it scores 0.6456 +- 0.0136 against the table's 0.6733 — short by 0.0277, twice our 0.0138, with none of its five seeds reaching the target. Ours scores 0.6595 on the same footing: better than the reference implementation. Device is not the explanation — our code moves 0.0007 between CUDA and CPU.",
+   "evidence": "docs/investigations.md#tfn-corr-resolved",
+   "do_not_retry": "Re-auditing the port. Nine hypotheses were ruled out and three implementations agree line by line; the shortfall is in the target, not the code. If it is revisited, the open questions are the device (MMSA's table was most likely CUDA, this comparison is CPU) and its unstated seed set, not our implementation.",
+   "caveats": "Five seeds rather than ten; CPU. The claim is that the published Corr is not reachable from MMSA's code under conditions we can control, NOT that it is wrong.",
+   "does_not_generalise": "Established for TFN only. Any similar attribution for another group requires running MMSA for that group first."
   },
-  "retracted": {
-    "tfn_mosi (2026-07-26)": {
-      "was": "Acc-2/Corr gap attributed to MMSA selecting hyper-parameters on the test set.",
-      "retracted_because": "The gap was ours. The acceptance run had been using our masked, length-aware pooling instead of MMSA's padding behaviour, which confounded reproduction fidelity with a change of our own. With the faithful port, TFN reproduces: MAE +0.5 SE, Acc-2 +1.0 SE. The test-selection observation about MMSA remains factually true and is still recorded in investigations.md, but it does not explain this gap and must not be cited as if it did.",
-      "lesson": "An adjudication is a claim about cause. Before recording one, rule out our own deviations from the reference — they are the most likely explanation and the cheapest to test."
-    }
+  "ef_lstm_mosi": {
+   "status": "gap_explained",
+   "metric": "corr, mae",
+   "date": "2026-07-30",
+   "attribution": "MMSA's own EF-LSTM collapses too — 1 seed in 10 against our 2, the same distribution at the ~23% rate measured over 30 seeds — so the instability belongs to the configuration, not the port. Neither implementation reaches the published figures: against Corr 0.6690 its code averages 0.6358 (highest seed 0.6558) and ours 0.6215 on seeds 42-46; against MAE 0.9488 its code averages 1.0236 and ours 1.0712. On non-collapsed seeds only, ours scores Corr 0.6485 against its 0.6424. **Ours is worse than its code on this subset** (MAE 1.0712 vs 1.0236, Corr 0.6215 vs 0.6358) and that is entirely the collapse count: we collapsed on seeds 46 and 48, it collapsed on 45. One collapse dominates a five-seed mean. The published MAE of 0.9488 would require no collapses at all.",
+   "evidence": "docs/investigations.md#ef-lstm-corr-resolved",
+   "do_not_retry": "Auditing the port for the collapse. It is a property of four LSTM layers with 0.5 inter-layer dropout on 1284 training samples, present in both implementations, measured at 23% over 30 seeds. What remains open is the criterion's blindness to a large absolute gap hidden by wide spread — a robustness dimension, not an implementation fix.",
+   "caveats": "CPU while MMSA's table was most likely CUDA; its table's seed set is unstated. The claim is that the published numbers are not reachable from MMSA's code under conditions we can control, NOT that they are wrong.",
+   "does_not_generalise": "Established for EF-LSTM and TFN only. The other nine groups each need their own MMSA run before any similar attribution.",
+   "updated": "2026-07-31",
+   "note_2026_07_31": "MAE joined corr as a failure when the sigma cap landed: the criterion no longer lets two collapsed seeds inflate sigma to 0.2095 and turn a 3.2-noise-floor shortfall into +1.9 SE. That is the cap doing its job. The attribution is unchanged — the gap is the collapse rate, which both implementations share.",
+   "note_2026_07_31_config_generation": "The attribution now has a mechanism. MMSA's results table was written on 2021-05-06, when its EF-LSTM/MOSI config specified 2 LSTM layers, hidden 256, dropout 0.3, batch 128; today's specifies 4 layers, hidden 128, dropout 0.5, batch 32. Run at the 2021 config, ten seeds: MAE 0.9658 +- 0.0371 against the table's 0.9488, Corr 0.6510 against 0.6690, Acc-2 0.7800 against 0.7848, and ZERO collapsed seeds. The line above — 'the published MAE would require no collapses at all' — turns out to describe the configuration the table was actually written under. So the gap is largely a configuration-generation mismatch between subject and reference, not an implementation defect, and the 23% collapse rate belongs specifically to the four-layer stack. The acceptance group stays on today's config: switching to a better-scoring one after seeing the scores is forbidden. Evidence: docs/investigations.md#table-predates-config, group ef_lstm_mosi_2021config."
+  },
+  "mfn_mosi": {
+   "status": "gap_explained",
+   "metric": "mae, corr",
+   "date": "2026-08-02",
+   "attribution": "MMSA's own code does not reach MMSA's own published numbers for MFN, and misses by more than we do. On this machine, identical data and seeds 42-51, its code scores MAE 0.9865 / Corr 0.6452 against the table's 0.9268 / 0.6702 — short by 0.0597 MAE and 0.0250 Corr, against our 0.0533 and 0.0165. Ours is therefore closer to the table than the reference implementation is, and better than it on both primary metrics (aggregate z = -0.39 MAE, -1.75 Corr). The group passed on the previous machine and fails here with no code change: the instability belongs to the configuration MMSA runs, not to the port.",
+   "mechanism": "MMSA's MFN config sets need_normalized + need_model_aligned: audio and vision are averaged over the PADDED width and repeated across the text timeline, which scales every sample's features by valid_len/50. A 2x2 isolates it — removing only that scaling drops the seed spread 55% (sd 0.0628 -> 0.0281, F=4.98, p=0.025) while restoring per-step streams adds nothing significant (F=2.03, p=0.31). Our port matches MMSA line for line here, including the choice to divide by the padded width.",
+   "evidence": "docs/investigations.md#rebaseline-5080",
+   "do_not_retry": "Auditing the port for this gap, and switching the acceptance group to collapse_over_real_length=True. The latter would close the gap to +1.5 SE and is forbidden: MMSA runs the scaled configuration, so reproducing it means reproducing that. The finding explains the gap; it does not license changing what is measured.",
+   "caveats": "The 2x2's third cell has no old-machine counterpart — that machine is gone — so seed spread on one machine stands in for cross-machine fragility. Related but not identical. The claim is that the scaling is the main source of variance, NOT that cross-machine instability has been shown to originate there.",
+   "does_not_generalise": "Established for MFN only. graph_mfn shares the MFN backbone but moved -0.0092 with its spread shrinking, and passes. Any similar attribution needs its own reference run and its own record."
   }
+ },
+ "retracted": {
+  "tfn_mosi (2026-07-26)": {
+   "was": "Acc-2/Corr gap attributed to MMSA selecting hyper-parameters on the test set.",
+   "retracted_because": "The gap was ours. The acceptance run had been using our masked, length-aware pooling instead of MMSA's padding behaviour, which confounded reproduction fidelity with a change of our own. With the faithful port, TFN reproduces: MAE +0.5 SE, Acc-2 +1.0 SE. The test-selection observation about MMSA remains factually true and is still recorded in investigations.md, but it does not explain this gap and must not be cited as if it did.",
+   "lesson": "An adjudication is a claim about cause. Before recording one, rule out our own deviations from the reference — they are the most likely explanation and the cheapest to test."
+  }
+ }
 }

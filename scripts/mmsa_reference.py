@@ -129,6 +129,18 @@ def run(model: str, seeds: list[int], out_root: Path) -> None:
     if freed:
         print(f"removed {freed / 1e6:.0f}MB of checkpoints", flush=True)
 
+    # Which machine produced these numbers. MMSA's code is as machine-bound as
+    # ours -- tfn seed 42 gives MAE 0.9305 on the RTX 5070 Ti and 0.9441 on the
+    # 5080 -- so a reference whose provenance is unrecorded cannot be paired
+    # with anything. collect() reads this back; without it the reference and
+    # our runs could silently come from two machines, which is worse than
+    # rerunning neither. See docs/investigations.md#cross-machine-hash.
+    from msa.repro import collect_env
+    env = collect_env(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+    (out / "machine.json").write_text(json.dumps(
+        {key: env[key] for key in ("device_description", "cpu", "cpu_capability",
+                                   "torch", "python")}, indent=2) + "\n")
+
 
 def parse_log(path: Path) -> dict[int, dict[str, float]]:
     """Per-seed metrics out of one MMSA log.
@@ -160,7 +172,16 @@ def parse_log(path: Path) -> dict[int, dict[str, float]]:
     return runs
 
 
-def collect(out_root: Path, extra_logs: list[Path]) -> None:
+def read_machine(model_dir: Path) -> str | None:
+    """The device description `run` recorded next to a model's logs, if any."""
+    path = model_dir / "machine.json"
+    if not path.exists():
+        return None
+    return json.loads(path.read_text()).get("device_description")
+
+
+def collect(out_root: Path, extra_logs: list[Path],
+            fallback_machine: str | None = None) -> None:
     """Parse every log under out_root (plus any given explicitly) into one file."""
     logs = sorted(out_root.glob("*/logs/*.log")) + list(extra_logs)
     if not logs:
@@ -176,6 +197,21 @@ def collect(out_root: Path, extra_logs: list[Path]) -> None:
         if not runs:
             print(f"  skip {log}: no per-seed result lines")
             continue
+        # Refuse to merge across machines. A per-seed value conflict is caught
+        # below, but two machines can also disagree *without* colliding -- one
+        # contributes seeds 42-46 and the other 47-51, and the merge succeeds
+        # while producing a distribution that exists on no machine at all.
+        machine = read_machine(out_root / model) or fallback_machine
+        stored = models.get(model, {}).get("machine")
+        if stored is not None and machine is not None and stored != machine:
+            raise SystemExit(
+                f"{model}: stored runs came from {stored!r}, these from "
+                f"{machine!r}.\nRerun this model's whole seed set on one "
+                f"machine rather than merging two.")
+        if machine is None:
+            print(f"  warn {model}: no machine.json and no --machine; "
+                  f"provenance will be null")
+
         merged = dict(models.get(model, {}).get("runs", {}))
         for seed, metrics in runs.items():
             if seed in merged and merged[seed] != metrics:
@@ -185,6 +221,7 @@ def collect(out_root: Path, extra_logs: list[Path]) -> None:
             merged[seed] = metrics
         models[model] = {
             "data_setting": FEATURES_FOR[model],
+            "machine": machine,
             "seeds": sorted(int(s) for s in merged),
             "n": len(merged),
             "runs": dict(sorted(merged.items(), key=lambda kv: int(kv[0]))),
@@ -245,6 +282,10 @@ def main() -> None:
     collect_cmd = sub.add_parser("collect", help="parse logs into docs/")
     collect_cmd.add_argument("--also", type=Path, nargs="*", default=[],
                              help="extra log files outside --out")
+    collect_cmd.add_argument("--machine", default=None,
+                             help="device description for logs written before "
+                                  "run() started recording machine.json; "
+                                  "ignored where machine.json exists")
     args = ap.parse_args()
 
     if args.command == "run":
@@ -253,7 +294,7 @@ def main() -> None:
             sys.path.insert(0, shim)
         run(args.model, args.seeds, args.out)
     else:
-        collect(args.out, args.also)
+        collect(args.out, args.also, args.machine)
 
 
 if __name__ == "__main__":
