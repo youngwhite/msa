@@ -85,6 +85,8 @@ class MemoryFusionNetwork(MSAModel):
         self.head = _mlp(total_hidden + memsize, out_hidden, 1, out_dropout)
         self.memsize = memsize
         self.hidden_sizes = (text_hidden, audio_hidden, vision_hidden)
+        #: Width of the vector the head reads; MFM encodes Z_y from it.
+        self.joint_dim = total_hidden + memsize
 
     def _prepare(self, batch: dict[str, torch.Tensor]) -> tuple[torch.Tensor, ...]:
         text = batch["text"]
@@ -132,4 +134,9 @@ class MemoryFusionNetwork(MSAModel):
             memory = (torch.sigmoid(self.gamma1(gated)) * memory
                       + torch.sigmoid(self.gamma2(gated)) * proposal)
 
-        return {"M": self.head(torch.cat([h_t, h_a, h_v, memory], dim=1)).view(-1)}
+        # `joint` is the vector the head reads: the three final hidden states
+        # plus the shared memory. Exposed because MFM (ICLR 2019) uses MFN as
+        # its multimodal encoder and needs this, not the scalar. Adding a key
+        # cannot change any number -- the trainer reads "M".
+        joint = torch.cat([h_t, h_a, h_v, memory], dim=1)
+        return {"M": self.head(joint).view(-1), "joint": joint}

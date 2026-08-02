@@ -9,6 +9,7 @@ from .graph_mfn import GraphMemoryFusionNetwork
 from .lf_lstm import LateFusionLSTM
 from .lmf import LowRankFusion
 from .mctn import MultimodalCyclicTranslationNetwork
+from .mfm import MultimodalFactorizationModel
 from .mfn import MemoryFusionNetwork
 from .misa import MISA
 from .mmim import MMIM
@@ -30,6 +31,7 @@ __all__ = [
     "LateFusionLSTM",
     "LowRankFusion",
     "MultimodalCyclicTranslationNetwork",
+    "MultimodalFactorizationModel",
     "MemoryFusionNetwork",
     "MultimodalTransformer",
     "SelfMM",

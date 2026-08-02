@@ -52,6 +52,8 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     lmf_mosi_ablation_masked
     mctn_mosi
     mctn_mosi_paper
+    mfm_mosi
+    mfm_mosi_paper
     mfn_mosi_ablation_realseq
     mfn_mosi_ablation_reallenmean
     graph_mfn_mosi_ablation_frozen
@@ -104,6 +106,17 @@ args_for() {
         echo "--model mctn --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-4 --weight-decay 0 --batch-size 32 --grad-clip 1.0 --epochs 200 --patience 8" ;;
     mctn_mosi_paper)
         echo "--model mctn --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-4 --weight-decay 0 --batch-size 32 --grad-clip 1.0 --epochs 200 --patience 8 --model-arg paper_faithful=True" ;;
+    # MFM: MMSA hyper-parameters for MOSI (bs 64, the factor/latent widths and
+    # four dropouts from its config, lda_mmd 100, lda_xl/xa/xv 0.5/0.01/0.5).
+    # lr 1e-3, not the 0.002 in MMSA's config: its MFM trainer builds Adam
+    # without passing the rate, so every published number used Adam's default.
+    # Same rule as MulT's never-applied weight decay -- match the behaviour.
+    mfm_mosi)
+        echo "--model mfm --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 0 --batch-size 64 --grad-clip 0 --epochs 200 --patience 8" ;;
+    # Paper claim 2: surrogate inference for missing modalities (ICLR 2019 SS2.3),
+    # which MMSA hard-codes to zero and never computes. Not an acceptance group.
+    mfm_mosi_paper)
+        echo "--model mfm --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-3 --weight-decay 0 --batch-size 64 --grad-clip 0 --epochs 200 --patience 8 --model-arg surrogate_inference=True" ;;
     mfn_mosi_ablation_realseq)
         echo "--model mfn --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 2e-3 --weight-decay 0 --batch-size 128 --grad-clip 0 --epochs 200 --model-arg collapse_av_to_mean=False" ;;
     # The third cell of a 2x2. mfn_mosi (MMSA's config) and the realseq ablation
