@@ -13,17 +13,22 @@
     "dataset": "mosi",
     "unaligned": false,
     "seeds": [
-      42,
-      43,
-      44
+      42
     ],
     "epochs": 40,
     "batch_size": 32,
     "lr": 0.001,
     "weight_decay": 0.0001,
     "grad_clip": 1.0,
+    "clip_mode": "norm",
+    "optimizer": "adam",
+    "lr_schedule": "none",
+    "lr_schedule_factor": 0.1,
+    "lr_schedule_patience": 5,
+    "accumulate_steps": 1,
     "patience": 8,
     "select_on": "mae",
+    "select_reduction": "sample",
     "model_arg": [
       "modalities=v"
     ],
@@ -32,6 +37,7 @@
     "device": "cuda",
     "deterministic": true,
     "deterministic_warn_only": false,
+    "keep_checkpoint": false,
     "run_group": "mod_v",
     "quiet": true
   },
@@ -43,30 +49,41 @@
     "lr": 0.001,
     "weight_decay": 0.0001,
     "grad_clip": 1.0,
+    "clip_mode": "norm",
+    "optimizer": "adam",
+    "lr_schedule": "none",
+    "lr_schedule_factor": 0.1,
+    "lr_schedule_patience": 5,
+    "accumulate_steps": 1,
     "patience": 8,
     "select_on": "mae",
-    "seed": 42
+    "select_reduction": "sample",
+    "seed": 42,
+    "keep_checkpoint": false
   },
   "env": {
     "python": "3.12.3",
-    "platform": "Linux-6.8.0-90-generic-x86_64-with-glibc2.39",
+    "platform": "Linux-6.8.0-124-generic-x86_64-with-glibc2.39",
     "machine": "x86_64",
     "torch": "2.11.0+cu128",
     "numpy": "2.5.1",
+    "transformers": "5.14.1",
     "cuda_version": "12.8",
     "cuda_available": true,
     "mps_available": false,
-    "cpu_threads": 12,
+    "cpu": "AMD Ryzen 7 7700 8-Core Processor",
+    "cpu_capability": "AVX512",
+    "cpu_threads": 8,
     "cudnn_version": 91900,
     "cudnn_deterministic": true,
     "cublas_workspace_config": ":4096:8",
     "deterministic_algorithms": true,
     "git": {
-      "commit": "8ea438f1324ed60c86c0b6c79cab169d8503a65f",
+      "commit": "3d2613264bcfea60837e4a64fde53fc08a3c72fe",
       "dirty": false
     },
     "device": "cuda",
-    "device_description": "cuda:0 NVIDIA GeForce RTX 5070 Ti (sm_120)"
+    "device_description": "cuda:0 NVIDIA GeForce RTX 5080 (sm_120)"
   },
   "summary": {
     "mae": {
@@ -81,16 +98,28 @@
         "44": 1.4761794725332529
       }
     },
-    "corr": {
-      "mean": 0.06946988000896494,
-      "std": 0.030327584765894998,
-      "min": 0.0507495792190893,
-      "max": 0.10446058153892486,
+    "mse": {
+      "mean": 2.9805009433594036,
+      "std": 0.03560530517869408,
+      "min": 2.939388423166427,
+      "max": 3.0012985940201786,
       "n": 3,
       "per_seed": {
-        "42": 0.0507495792190893,
-        "43": 0.053199479268880676,
-        "44": 0.10446058153892486
+        "42": 3.000815812891604,
+        "43": 2.939388423166427,
+        "44": 3.0012985940201786
+      }
+    },
+    "corr": {
+      "mean": 0.06946988000896494,
+      "std": 0.030327584765895046,
+      "min": 0.05074957921908929,
+      "max": 0.10446058153892492,
+      "n": 3,
+      "per_seed": {
+        "42": 0.05074957921908929,
+        "43": 0.05319947926888062,
+        "44": 0.10446058153892492
       }
     },
     "acc7": {
