@@ -1,0 +1,599 @@
+source	tier	venue	title
+cvf	IN_SCOPE	CVPR2026	Active Perceptual Inference: A Corticothalamic-Inspired Dynamic Nested Recurrent Network for Multimodal Sentiment Analysis with Incomplete Data
+cvf	IN_SCOPE	CVPR2026	CICA: Coupling Confidence-Aware Pretraining with Confidence-Informed Attention for Robust Multimodal Sentiment Analysis
+cvf	IN_SCOPE	CVPR2026	Conflict-Aware Adaptive Cross-Reconstruction for Multimodal Sentiment Analysis
+cvf	IN_SCOPE	CVPR2026	Enhance-then-Balance Modality Collaboration for Robust Multimodal Sentiment Analysis
+cvf	IN_SCOPE	CVPR2026	Factorize, Reconstruct, Enhance: A Unified Framework for Multimodal Sentiment Analysis
+cvf	IN_SCOPE	CVPR2026	Multi-Metric Representation Learning Strategy Based on Clustering for Fine-Grained Multimodal Sentiment Analysis
+cvf	IN_SCOPE	CVPR2026	Prototype-as-Prompt: Multimodal Sentiment Prototypes Endowing Large Language Models the Capability to Perform Multimodal Sentiment Analysis
+cvf	IN_SCOPE	CVPR2026	Tri-Subspaces Disentanglement for Multimodal Sentiment Analysis
+cvf	IN_SCOPE	ICCV2025	CMAD: Correlation-Aware and Modalities-Aware Distillation for Multimodal Sentiment Analysis with Missing Modalities
+cvf	other_task	CVPR2026	Beyond Missing Modalities: Hypergraph Conditioned Diffusion for Uncertainty-Aware Multimodal Emotion Recognition
+cvf	other_task	CVPR2026	Nano-EmoX: Unifying Multimodal Emotional Intelligence from Perception to Empathy
+cvf	other_task	WACV2026	Divide and Refine: Enhancing Multimodal Representation and Explainability for Emotion Recognition in Conversation
+cvf	other_task	WACV2026	Robust Multimodal Emotion Recognition from Incomplete Modalities via Query-Based Unimodal and Cross-Modal Learning
+cvf	other_task	WACV2026	SynchroRaMa : Lip-Synchronized and Emotion-Aware Talking Face Generation via Multi-Modal Emotion Embedding
+dblp	IN_SCOPE	aaai2019	Multi-Interactive Memory Network for Aspect Based Multimodal Sentiment Analysis
+dblp	IN_SCOPE	aaai2019	VistaNet: Visual Aspect Attention Network for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	aaai2020	Trimodal Attention Module for Multimodal Sentiment Analysis (Student Abstract)
+dblp	IN_SCOPE	aaai2021	Learning Modality-Specific Representations with Self-Supervised Multi-Task Learning for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	aaai2023	Robust-MSA: Understanding the Impact of Modality Noise on Multimodal Sentiment Analysis
+dblp	IN_SCOPE	aaai2024	A Unified Self-Distillation Framework for Multimodal Sentiment Analysis with Uncertain Missing Modalities
+dblp	IN_SCOPE	aaai2025	A Multi-Focus-Driven Multi-Branch Network for Robust Multimodal Sentiment Analysis
+dblp	IN_SCOPE	aaai2025	Bridging the Gap for Test-Time Multimodal Sentiment Analysis
+dblp	IN_SCOPE	aaai2025	DLF: Disentangled-Language-Focused Multimodal Sentiment Analysis
+dblp	IN_SCOPE	aaai2025	Enriching Multimodal Sentiment Analysis Through Textual Emotional Descriptions of Visual-Audio Content
+dblp	IN_SCOPE	aaai2025	MSAmba: Exploring Multimodal Sentiment Analysis with State Space Models
+dblp	IN_SCOPE	aaai2025	MSE-Adapter: A Lightweight Plugin Endowing LLMs with the Capability to Perform Multimodal Sentiment Analysis and Emotion Recognition
+dblp	IN_SCOPE	aaai2025	Semi-IIN: Semi-Supervised Intra-Inter Modal Interaction Learning Network for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	aaai2025	Towards Multimodal Sentiment Analysis via Hierarchical Correlation Modeling with Semantic Distribution Constraints
+dblp	IN_SCOPE	aaai2026	A Text-Routed Sparse Mixture-of-Experts Model with Explanation and Temporal Alignment for Multi-Modal Sentiment Analysis
+dblp	IN_SCOPE	aaai2026	FINE: Factorized Multimodal Sentiment Analysis via Mutual INformation Estimation
+dblp	IN_SCOPE	aaai2026	Group-aware Multiscale Ensemble Learning for Test-Time Multimodal Sentiment Analysis
+dblp	IN_SCOPE	aaai2026	MDF: A Modality-Aware Disentanglement and Fusion Framework for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	aaai2026	PSA-MF: Personality-Sentiment Aligned Multi-Level Fusion for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	aaai2026	PaSE: Prototype-aligned Calibration and Shapley-based Equilibrium for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	aaai2026	Recovering Coherent Affective Patterns: Addressing Modality Missing in Multimodal Sentiment Analysis
+dblp	IN_SCOPE	aaai2026	TMDC: A Two-Stage Modality Denoising and Complementation Framework for Multimodal Sentiment Analysis with Missing and Noisy Modalities
+dblp	IN_SCOPE	acl2018-1	Multimodal Language Analysis in the Wild: CMU-MOSEI Dataset and Interpretable Dynamic Fusion Graph
+dblp	IN_SCOPE	acl2020	CH-SIMS: A Chinese Multimodal Sentiment Analysis Dataset with Fine-grained Annotation of Modality
+dblp	IN_SCOPE	acl2021-1	CTFN: Hierarchical Learning for Multimodal Sentiment Analysis Using Coupled-Translation Fusion Network
+dblp	IN_SCOPE	acl2021-1	Multimodal Sentiment Detection Based on Multi-channel Graph Neural Networks
+dblp	IN_SCOPE	acl2021f	A Text-Centered Shared-Private Framework via Cross-Modal Prediction for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	acl2022-1	MSCTD: A Multimodal Sentiment Chat Translation Dataset
+dblp	IN_SCOPE	acl2022-d	M-SENA: An Integrated Platform for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	acl2022f	Sentiment Word Aware Multimodal Refinement for Multimodal Sentiment Analysis with ASR Errors
+dblp	IN_SCOPE	acl2023-1	ConFEDE: Contrastive Feature Decomposition for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	acl2023-1	Tackling Modality Heterogeneity with Multi-View Calibration Network for Multimodal Sentiment Detection
+dblp	IN_SCOPE	acl2023f	ConKI: Contrastive Knowledge Injection for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	acl2023f	Sentiment Knowledge Enhanced Self-supervised Learning for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	acl2025-1	Proxy-Driven Robust Multimodal Sentiment Analysis with Incomplete Data
+dblp	IN_SCOPE	acl2025f	Cross-lingual Multimodal Sentiment Analysis for Low-Resource Languages via Language Family Disentanglement and Rethinking Transfer
+dblp	IN_SCOPE	acl2026-1	Beyond Static Alignment: Adaptive Arbitration for Semantic Incongruence in Semi-Supervised Multimodal Sentiment Analysis
+dblp	IN_SCOPE	acl2026-1	QA-MoE: Towards a Continuous Reliability Spectrum with Quality-Aware Mixture of Experts for Robust Multimodal Sentiment Analysis
+dblp	IN_SCOPE	acl2026f	DEAR: Distributional Error-Aware Reliability for Robust Multimodal Sentiment Analysis with Missing Modalities
+dblp	IN_SCOPE	acl2026f	Fast Retrieval and Slow Reasoning for Explainable Multimodal Sentiment Analysis
+dblp	IN_SCOPE	acl2026f	MoLAN: A Unified Modality-Aware Noise Dynamic Editing Framework for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	acl2026f	Resource-Limited Joint Multimodal Sentiment Reasoning and Classification via Chain-of-Thought Enhancement and Distillation
+dblp	IN_SCOPE	acl2026f	Uncertainty-Calibrated Elastic Alignment for Multimodal Sentiment Analysis with Missing Modalities
+dblp	IN_SCOPE	cvpr2024	Correlation-Decoupled Knowledge Distillation for Multimodal Sentiment Analysis with Incomplete Modalities
+dblp	IN_SCOPE	emnlp2017	Tensor Fusion Network for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	emnlp2018	Contextual Inter-modal Attention for Multi-modal Sentiment Analysis
+dblp	IN_SCOPE	emnlp2019-1	Context-aware Interactive Attention for Multi-modal Sentiment and Emotion Analysis
+dblp	IN_SCOPE	emnlp2021f	Which is Making the Contribution: Modulating Unimodal and Cross-modal Dynamics for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	emnlp2022	Mitigating Inconsistencies in Multimodal Sentiment Analysis under Uncertain Missing Modalities
+dblp	IN_SCOPE	emnlp2022	UniMSE: Towards Unified Multimodal Sentiment Analysis and Emotion Recognition
+dblp	IN_SCOPE	emnlp2022f	Multimodal Contrastive Learning via Uni-Modal Coding and Cross-Modal Prediction for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	emnlp2023	Learning Language-guided Adaptive Hyper-modality Representation for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	emnlp2023f	Descriptive Prompt Paraphrasing for Target-Oriented Multimodal Sentiment Classification
+dblp	IN_SCOPE	emnlp2023f	Improving Multimodal Sentiment Analysis: Supervised Angular margin-based Contrastive Learning for Enhanced Fusion Representation
+dblp	IN_SCOPE	emnlp2023f	RethinkingTMSC: An Empirical Study for Target-Oriented Multimodal Sentiment Classification
+dblp	IN_SCOPE	emnlp2023f	Visual Elements Mining as Prompts for Instruction Learning for Target-Oriented Multimodal Sentiment Classification
+dblp	IN_SCOPE	emnlp2024	D2R: Dual-Branch Dynamic Routing Network for Multimodal Sentiment Detection
+dblp	IN_SCOPE	emnlp2024f	Knowledge-Guided Dynamic Modality Attention Fusion Framework for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	emnlp2025	Dual-Path Dynamic Fusion with Learnable Query for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	emnlp2025f	TF-Mamba: Text-enhanced Fusion Mamba with Missing Modalities for Robust Multimodal Sentiment Analysis
+dblp	IN_SCOPE	ijcai2019	Adapting BERT for Target-Oriented Multimodal Sentiment Classification
+dblp	IN_SCOPE	ijcai2019	DeepCU: Integrating both Common and Unique Latent Information for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	ijcai2022	Targeted Multimodal Sentiment Classification based on Coarse-to-Fine Grained Image-Target Matching
+dblp	IN_SCOPE	ijcai2024	HyDiscGAN: A Hybrid Distributed cGAN for Audio-Visual Privacy Preservation in Multimodal Sentiment Analysis
+dblp	IN_SCOPE	ijcai2025	DFMU: Distribution-based Framework for Modeling Aleatoric Uncertainty in Multimodal Sentiment Analysis
+dblp	IN_SCOPE	ijcai2025	Decoupling and Reconstructing: A Multimodal Sentiment Analysis Framework Towards Robustness
+dblp	IN_SCOPE	mm2019	Effective Sentiment-relevant Word Selection for Multi-modal Sentiment Analysis in Spoken Language
+dblp	IN_SCOPE	mm2020	MISA: Modality-Invariant and -Specific Representations for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	mm2020	Summary of MuSe 2020: Multimodal Sentiment Analysis, Emotion-target Engagement and Trustworthiness Detection in Real-life Media
+dblp	IN_SCOPE	mm2021	Transformer-based Feature Reconstruction Network for Robust Multimodal Sentiment Analysis
+dblp	IN_SCOPE	mm2022	Counterfactual Reasoning for Out-of-distribution Multimodal Sentiment Analysis
+dblp	IN_SCOPE	mm2022	CubeMLP: An MLP-based Model for Multimodal Sentiment Analysis and Depression Estimation
+dblp	IN_SCOPE	mm2023	AcFormer: An Aligned and Compact Transformer for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	mm2023	Building Robust Multimodal Sentiment Recognition via a Simple yet Effective Multimodal Transformer
+dblp	IN_SCOPE	mm2023	Cross-modality Representation Interactive Learning for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	mm2023	Few-shot Multimodal Sentiment Analysis Based on Multimodal Probabilistic Fusion Prompts
+dblp	IN_SCOPE	mm2023	General Debiasing for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	mm2024	Enhanced Experts with Uncertainty-Aware Routing for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	mm2024	GLoMo: Global-Local Modal Fusion for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	mm2024	GRACE: GRadient-based Active Learning with Curriculum Enhancement for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	mm2024	KEBR: Knowledge Enhanced Self-Supervised Balanced Representation for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	mm2024	Learning in Order! A Sequential Strategy to Learn Invariant Features for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	mm2024	Robust Multimodal Sentiment Analysis of Image-Text Pairs by Distribution-Based Feature Recovery and Fusion
+dblp	IN_SCOPE	mm2024	WisdoM: Improving Multimodal Sentiment Analysis by Fusing Contextual World Knowledge
+dblp	IN_SCOPE	mm2025	DDSE: A Decoupled Dual-Stream Enhanced Framework for Multimodal Sentiment Analysis with Text-Centric SSM
+dblp	IN_SCOPE	mm2025	DiffuFuse: Diffusion-Driven Dual-Stream Fusion Framework for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	mm2025	Impact of Stickers on Multimodal Sentiment and Intent in Social Media: A New Task, Dataset and Baseline
+dblp	IN_SCOPE	mm2025	LDW: Label Divergence Weighting for Multimodal Sentiment Analysis
+dblp	IN_SCOPE	mm2025	Towards Explainable Fusion and Balanced Learning in Multimodal Sentiment Analysis
+dblp	IN_SCOPE	naacl2022	Analyzing Modality Robustness in Multimodal Sentiment Analysis
+dblp	IN_SCOPE	naacl2022f	CLMLF: A Contrastive Learning and Multi-Layer Fusion Method for Multimodal Sentiment Detection
+dblp	IN_SCOPE	naacl2024f	CLGSI: A Multimodal Sentiment Analysis Framework based on Contrastive Learning Guided by Sentiment Intensity
+dblp	other_task	aaai2017	Learning Latent Sentiment Scopes for Entity-Level Sentiment Analysis
+dblp	other_task	aaai2017	Multimodal Fusion of EEG and Musical Features in Music-Emotion Recognition
+dblp	other_task	aaai2017	Unsupervised Sentiment Analysis with Signed Social Networks
+dblp	other_task	aaai2017	Visual Sentiment Analysis by Attending on Local Image Regions
+dblp	other_task	aaai2018	Cognition-Cognizant Sentiment Analysis With Multitask Subjectivity Summarization Based on Annotators' Gaze Behavior
+dblp	other_task	aaai2018	Cross-Lingual Propagation for Deep Sentiment Analysis
+dblp	other_task	aaai2018	Learning to Attend via Word-Aspect Associative Fusion for Aspect-Based Sentiment Analysis
+dblp	other_task	aaai2018	Multi-Entity Aspect-Based Sentiment Analysis With Context, Entity and Aspect Memory
+dblp	other_task	aaai2018	SenticNet 5: Discovering Conceptual Primitives for Sentiment Analysis by Means of Context Embeddings
+dblp	other_task	aaai2018	Sentiment Analysis via Deep Hybrid Textual-Crowd Learning Model
+dblp	other_task	aaai2018	Targeted Aspect-Based Sentiment Analysis via Embedding Commonsense Knowledge into an Attentive LSTM
+dblp	other_task	aaai2019	Video-Based Sentiment Analysis with hvnLBP-TOP Feature and bi-LSTM
+dblp	other_task	aaai2019	f-Similarity Preservation Loss for Soft Labels: A Demonstration on Cross-Corpus Speech Emotion Recognition
+dblp	other_task	aaai2020	Adversarial Training Based Multi-Source Unsupervised Domain Adaptation for Sentiment Analysis
+dblp	other_task	aaai2020	An End-to-End Visual-Audio Attention Network for Emotion Recognition in User-Generated Videos
+dblp	other_task	aaai2020	HARK: Harshness-Aware Sentiment Analysis Framework for Product Review (Student Abstract)
+dblp	other_task	aaai2020	Instance-Adaptive Graph for EEG Emotion Recognition
+dblp	other_task	aaai2020	Interpreting Multimodal Machine Learning Models Trained for Emotion Recognition to Address Robustness and Privacy Concerns
+dblp	other_task	aaai2020	Knowing What, How and Why: A Near Complete Solution for Aspect-Based Sentiment Analysis
+dblp	other_task	aaai2020	M3ER: Multiplicative Multimodal Emotion Recognition using Facial, Textual, and Speech Cues
+dblp	other_task	aaai2020	MIMAMO Net: Integrating Micro- and Macro-Motion for Video Emotion Recognition
+dblp	other_task	aaai2020	Privacy Enhanced Multimodal Neural Representations for Emotion Recognition
+dblp	other_task	aaai2020	Real-Time Emotion Recognition via Attention Gated Hierarchical Memory Network
+dblp	other_task	aaai2020	Synch-Graph: Multisensory Emotion Recognition Through Neural Synchrony via Graph Convolutional Networks
+dblp	other_task	aaai2020	Target-Aspect-Sentiment Joint Detection for Aspect-Based Sentiment Analysis
+dblp	other_task	aaai2020	Variational Pathway Reasoning for EEG Emotion Recognition
+dblp	other_task	aaai2020	Word-Level Contextual Sentiment Analysis with Interpretability
+dblp	other_task	aaai2021	A Joint Training Dual-MRC Framework for Aspect Based Sentiment Analysis
+dblp	other_task	aaai2021	A Neural Group-wise Sentiment Analysis Model with Data Sparsity Awareness
+dblp	other_task	aaai2021	An Adaptive Hybrid Framework for Cross-domain Aspect-based Sentiment Analysis
+dblp	other_task	aaai2021	Bridging Towers of Multi-task Learning with a Gating Mechanism for Aspect-based Sentiment Analysis and Sequential Metaphor Identification
+dblp	other_task	aaai2021	Context-Guided BERT for Targeted Aspect-Based Sentiment Analysis
+dblp	other_task	aaai2021	Contrastive Adversarial Learning for Person Independent Facial Emotion Recognition
+dblp	other_task	aaai2021	DialogXL: All-in-One XLNet for Multi-Party Conversation Emotion Recognition
+dblp	other_task	aaai2021	Human-Level Interpretable Learning for Aspect-Based Sentiment Analysis
+dblp	other_task	aaai2021	Multi-modal Multi-label Emotion Recognition with Heterogeneous Hierarchical Message Passing
+dblp	other_task	aaai2021	Plug-and-Play Domain Adaptation for Cross-Subject EEG-based Emotion Recognition
+dblp	other_task	aaai2021	Quantum Cognitively Motivated Decision Fusion for Video Sentiment Analysis
+dblp	other_task	aaai2021	Quantum-inspired Neural Network for Conversational Emotion Recognition
+dblp	other_task	aaai2021	Segmentation of Tweets with URLs and its Applications to Sentiment Analysis
+dblp	other_task	aaai2021	Zera-Shot Sentiment Analysis for Code-Mixed Data
+dblp	other_task	aaai2022	Aspect-Opinion Sentiment Alignment for Cross-Domain Sentiment Analysis (Student Abstract)
+dblp	other_task	aaai2022	Enhance Cross-Domain Aspect-Based Sentiment Analysis by Incorporating Commonsense Relational Structure (Student Abstract)
+dblp	other_task	aaai2022	Fortunately, Discourse Markers Can Enhance Language Models for Sentiment Analysis
+dblp	other_task	aaai2022	From Video to Images: Contrastive Pretraining for Emotion Recognition from Single Image (Student Abstract)
+dblp	other_task	aaai2022	Hybrid Curriculum Learning for Emotion Recognition in Conversation
+dblp	other_task	aaai2022	Is Discourse Role Important for Emotion Recognition in Conversation?
+dblp	other_task	aaai2022	Tailor Versatile Multi-Modal Learning for Multi-Label Emotion Recognition
+dblp	other_task	aaai2023	A Speaker Turn-Aware Multi-Task Adversarial Network for Joint User Satisfaction Estimation and Sentiment Analysis
+dblp	other_task	aaai2023	BERT-ERC: Fine-Tuning BERT Is Enough for Emotion Recognition in Conversation
+dblp	other_task	aaai2023	SKIER: A Symbolic Knowledge Integrated Model for Conversational Emotion Recognition
+dblp	other_task	aaai2024	A Brain-Inspired Way of Reducing the Network Complexity via Concept-Regularized Coding for Emotion Recognition
+dblp	other_task	aaai2024	A Novel Energy Based Model Mechanism for Multi-Modal Aspect-Based Sentiment Analysis
+dblp	other_task	aaai2024	Aspect-Based Sentiment Analysis with Explicit Sentiment Augmentations
+dblp	other_task	aaai2024	Beyond Mimicking Under-Represented Emotions: Deep Data Augmentation with Emotional Subspace Constraints for EEG-Based Emotion Recognition
+dblp	other_task	aaai2024	CAMEL: Capturing Metaphorical Alignment with Context Disentangling for Multimodal Emotion Recognition
+dblp	other_task	aaai2024	CARAT: Contrastive Feature Reconstruction and Aggregation for Multi-Modal Multi-Label Emotion Recognition
+dblp	other_task	aaai2024	Counterfactual-Enhanced Information Bottleneck for Aspect-Based Sentiment Analysis
+dblp	other_task	aaai2024	DMMR: Cross-Subject Domain Generalization for EEG-Based Emotion Recognition via Denoising Mixed Mutual Reconstruction
+dblp	other_task	aaai2024	Practical Sentiment Analysis for Education: The Power of Student Crowdsourcing
+dblp	other_task	aaai2024	QPEN: Quantum Projection and Quantum Entanglement Enhanced Network for Cross-Lingual Aspect-Based Sentiment Analysis
+dblp	other_task	aaai2024	TextGT: A Double-View Graph Transformer on Text for Aspect-Based Sentiment Analysis
+dblp	other_task	aaai2025	Aspect Enhancement and Text Simplification in Multimodal Aspect-Based Sentiment Analysis for Multi-Aspect and Multi-Sentiment Scenarios
+dblp	other_task	aaai2025	BIG-FUSION: Brain-Inspired Global-Local Context Fusion Framework for Multimodal Emotion Recognition in Conversations
+dblp	other_task	aaai2025	Beyond Single Emotion: Multi-label Approach to Conversational Emotion Recognition
+dblp	other_task	aaai2025	DEQA: Descriptions Enhanced Question-Answering Framework for Multimodal Aspect-Based Sentiment Analysis
+dblp	other_task	aaai2025	Dual-View Learning for Conversational Emotion Recognition Through Context and Emotion-Shift Modeling
+dblp	other_task	aaai2025	Dynamic Interactive Bimodal Hypergraph Networks for Emotion Recognition in Conversations
+dblp	other_task	aaai2025	Enhancing Multimodal Affective Analysis with Learned Live Comment Features
+dblp	other_task	aaai2025	GaitCycFormer: Leveraging Gait Cycles and Transformers for Gait Emotion Recognition
+dblp	other_task	aaai2025	Multi-to-Single: Reducing Multimodal Dependency in Emotion Recognition Through Contrastive Learning
+dblp	other_task	aaai2025	Personalized Dynamic Music Emotion Recognition with Dual-Scale Attention-Based Meta-Learning
+dblp	other_task	aaai2025	Revisiting Multimodal Emotion Recognition in Conversation from the Perspective of Graph Spectrum
+dblp	other_task	aaai2025	Utterance-level Emotion Recognition in Conversation with Conversation-level Supervision
+dblp	other_task	aaai2026	Advancing Multimodal Teacher Sentiment Analysis: The Large-Scale T-MED Dataset & the Effective AAM-TSA Model
+dblp	other_task	aaai2026	Causal-ERC: A Multimodal Framework with Causal Prompting for Emotion Recognition in Conversations with Large Language Models
+dblp	other_task	aaai2026	Cross-Space Synergy: A Unified Framework for Multimodal Emotion Recognition in Conversation
+dblp	other_task	aaai2026	Cross-modal Prompting for Balanced Incomplete Multi-modal Emotion Recognition
+dblp	other_task	aaai2026	DHCM-CACL: Dynamic Hierarchical Cross-modal Mamba with Confidence-Adaptive Contrastive Learning for Multimodal Emotion Recognition
+dblp	other_task	aaai2026	DanceHA: A Multi-Agent Framework for Document-Level Aspect-Based Sentiment Analysis
+dblp	other_task	aaai2026	Do LLMs Feel? Teaching Emotion Recognition with Prompts, Retrieval, and Curriculum Learning
+dblp	other_task	aaai2026	EmoVid: A Multimodal Emotion Video Dataset for Emotion-Centric Video Understanding and Generation
+dblp	other_task	aaai2026	Let the Model Learn to Feel: Mode-Guided Tonality Injection for Symbolic Music Emotion Recognition
+dblp	other_task	aaai2026	Reinforce Trustworthiness in Multimodal Emotional Support System
+dblp	other_task	aaai2026	SPP-SCL: Semi-Push-Pull Supervised Contrastive Learning for Image-Text Sentiment Analysis and Beyond
+dblp	other_task	aaai2026	TiCAL: Typicality-Based Consistency-Aware Learning for Multimodal Emotion Recognition
+dblp	other_task	aaai2026	Voices, Faces, and Feelings: Multi-modal Emotion-Cognition Captioning for Mental Health Understanding
+dblp	other_task	acl2017-1	Context-Dependent Sentiment Analysis in User-Generated Videos
+dblp	other_task	acl2017-2	Multilingual Connotation Frames: A Case Study on Social Media for Targeted Sentiment Analysis and Forecast
+dblp	other_task	acl2018-1	A Helping Hand: Transfer Learning for Deep Sentiment Analysis
+dblp	other_task	acl2018-1	Aspect Based Sentiment Analysis with Gated Convolutional Networks
+dblp	other_task	acl2018-1	Multimodal Affective Analysis Using Hierarchical Attention Strategy with Word-Level Alignment
+dblp	other_task	acl2018-3	BCSAT : A Benchmark Corpus for Sentiment Analysis in Telugu Using Word-level Annotations
+dblp	other_task	acl2019-1	An Interactive Multi-Task Learning Network for End-to-End Aspect-Based Sentiment Analysis
+dblp	other_task	acl2019-1	An Investigation of Transfer Learning-Based Sentiment Analysis in Japanese
+dblp	other_task	acl2019-1	Context-aware Embedding for Targeted Aspect-based Sentiment Analysis
+dblp	other_task	acl2019-1	Divide, Conquer and Combine: Hierarchical Feature Fusion Network with Local and Global Perspectives for Multimodal Affective Computing
+dblp	other_task	acl2019-1	MELD: A Multimodal Multi-Party Dataset for Emotion Recognition in Conversations
+dblp	other_task	acl2019-1	Multimodal and Multi-view Models for Emotion Recognition
+dblp	other_task	acl2019-1	Open-Domain Targeted Sentiment Analysis via Span-Based Extraction and Classification
+dblp	other_task	acl2019-1	Progressive Self-Supervised Attention Learning for Aspect-Level Sentiment Analysis
+dblp	other_task	acl2019-1	Tree Communication Models for Sentiment Analysis
+dblp	other_task	acl2019-2	Attention and Lexicon Regularized LSTM for Aspect-based Sentiment Analysis
+dblp	other_task	acl2019-2	Sentiment Analysis on Naija-Tweets
+dblp	other_task	acl2020	Adversarial and Domain-Aware BERT for Cross-Domain Sentiment Analysis
+dblp	other_task	acl2020	KinGDOM: Knowledge-Guided DOMain Adaptation for Sentiment Analysis
+dblp	other_task	acl2020	Modelling Context and Syntactical Features for Aspect-based Sentiment Analysis
+dblp	other_task	acl2020	Relation-Aware Collaborative Learning for Unified Aspect-Based Sentiment Analysis
+dblp	other_task	acl2020	Relational Graph Attention Network for Aspect-based Sentiment Analysis
+dblp	other_task	acl2020	SKEP: Sentiment Knowledge Enhanced Pre-training for Sentiment Analysis
+dblp	other_task	acl2021-1	A Unified Generative Framework for Aspect-based Sentiment Analysis
+dblp	other_task	acl2021-1	DialogueCRN: Contextual Reasoning Networks for Emotion Recognition in Conversations
+dblp	other_task	acl2021-1	Directed Acyclic Graph Network for Conversational Emotion Recognition
+dblp	other_task	acl2021-1	Dual Graph Convolutional Networks for Aspect-based Sentiment Analysis
+dblp	other_task	acl2021-1	DynaSent: A Dynamic Benchmark for Sentiment Analysis
+dblp	other_task	acl2021-1	Exploring the Efficacy of Automatically Generated Counterfactuals for Sentiment Analysis
+dblp	other_task	acl2021-1	MMGCN: Multimodal Fusion via Deep Graph Convolution Network for Emotion Recognition in Conversation
+dblp	other_task	acl2021-1	Missing Modality Imagination Network for Emotion Recognition with Uncertain Missing Modalities
+dblp	other_task	acl2021-1	Structured Sentiment Analysis as Dependency Graph Parsing
+dblp	other_task	acl2021-2	Deep Context- and Relation-Aware Learning for Aspect-based Sentiment Analysis
+dblp	other_task	acl2021-2	Towards Generative Aspect-Based Sentiment Analysis
+dblp	other_task	acl2021f	Cross-Domain Review Generation for Aspect-Based Sentiment Analysis
+dblp	other_task	acl2021f	DNN-driven Gradual Machine Learning for Aspect-term Sentiment Analysis
+dblp	other_task	acl2021f	Dynamic and Multi-Channel Graph Convolutional Networks for Aspect-Based Sentiment Analysis
+dblp	other_task	acl2021f	Making Flexible Use of Subtasks: A Multiplex Interaction Network for Unified Aspect-based Sentiment Analysis
+dblp	other_task	acl2021f	UserAdapter: Few-Shot User Learning in Sentiment Analysis
+dblp	other_task	acl2022-1	Adversarial Soft Prompt Tuning for Cross-Domain Sentiment Analysis
+dblp	other_task	acl2022-1	Discrete Opinion Tree Induction for Aspect-based Sentiment Analysis
+dblp	other_task	acl2022-1	Effective Token Graph Modeling using a Novel Labeling Strategy for Structured Sentiment Analysis
+dblp	other_task	acl2022-1	Vision-Language Pre-Training for Multimodal Aspect-Based Sentiment Analysis
+dblp	other_task	acl2022f	BiSyn-GAT+: Bi-Syntax Aware Graph Attention Network for Aspect-based Sentiment Analysis
+dblp	other_task	acl2022f	EmoCaps: Emotion Capsule based Model for Conversational Emotion Recognition
+dblp	other_task	acl2022f	Incorporating Dynamic Semantics into Pre-Trained Language Model for Aspect-based Sentiment Analysis
+dblp	other_task	acl2022f	Towards Unifying the Label Space for Aspect- and Sentence-based Sentiment Analysis
+dblp	other_task	acl2023-1	A Cross-Modality Context Fusion and Semantic Refinement Network for Emotion Recognition in Conversation
+dblp	other_task	acl2023-1	A Facial Expression-Aware Multimodal Multi-task Learning Framework for Emotion Recognition in Multi-party Conversations
+dblp	other_task	acl2023-1	AMR-based Network for Aspect-based Sentiment Analysis
+dblp	other_task	acl2023-1	Bidirectional Generative Framework for Cross-domain Aspect-based Sentiment Analysis
+dblp	other_task	acl2023-1	Cross-Domain Data Augmentation with Domain-Adaptive Language Modeling for Aspect-Based Sentiment Analysis
+dblp	other_task	acl2023-1	DualGATs: Dual Graph Attention Networks for Emotion Recognition in Conversations
+dblp	other_task	acl2023-1	Layer-wise Fusion with Modality Independence Modeling for Multi-modal Emotion Recognition
+dblp	other_task	acl2023-1	MultiEMO: An Attention-Based Correlation-Aware Multimodal Fusion Framework for Emotion Recognition in Conversations
+dblp	other_task	acl2023-1	Span-level Aspect-based Sentiment Analysis via Table Filling
+dblp	other_task	acl2023-1	Supervised Adversarial Contrastive Learning for Emotion Recognition in Conversations
+dblp	other_task	acl2023-1	USSA: A Unified Table Filling Scheme for Structured Sentiment Analysis
+dblp	other_task	acl2023f	An Empirical Study of Sentiment-Enhanced Pre-Training for Aspect-Based Sentiment Analysis
+dblp	other_task	acl2023f	AoM: Detecting Aspect-oriented Information for Multimodal Aspect-Based Sentiment Analysis
+dblp	other_task	acl2023f	BanglaBook: A Large-scale Bangla Dataset for Sentiment Analysis from Book Reviews
+dblp	other_task	acl2023f	Bias Beyond English: Counterfactual Tests for Bias in Sentiment Analysis in Four Languages
+dblp	other_task	acl2023f	Context or Knowledge is Not Always Necessary: A Contrastive Learning Framework for Emotion Recognition in Conversations
+dblp	other_task	acl2023f	End-to-end Aspect-based Sentiment Analysis with Combinatory Categorial Grammar
+dblp	other_task	acl2023f	Exploiting Rich Textual User-Product Context for Improving Personalized Sentiment Analysis
+dblp	other_task	acl2023f	Few-shot Joint Multimodal Aspect-Sentiment Analysis Based on Generative Multimodal Prompt
+dblp	other_task	acl2023f	Investigating the Saliency of Sentiment Expressions in Aspect-Based Sentiment Analysis
+dblp	other_task	acl2023f	Opinion Tree Parsing for Aspect-based Sentiment Analysis
+dblp	other_task	acl2023f	QAP: A Quantum-Inspired Adaptive-Priority-Learning Model for Multimodal Emotion Recognition
+dblp	other_task	acl2023f	Self-adaptive Context and Modal-interaction Modeling For Multimodal Emotion Recognition
+dblp	other_task	acl2023f	Sentiment Analysis using the Relationship between Users and Products
+dblp	other_task	acl2023f	Text Generation Model Enhanced with Semantic Information in Aspect Category Sentiment Analysis
+dblp	other_task	acl2023f	Topic and Style-aware Transformer for Multimodal Emotion Recognition
+dblp	other_task	acl2024-1	A Joint Coreference-Aware Approach to Document-Level Target Sentiment Analysis
+dblp	other_task	acl2024-1	EFSA: Towards Event-Level Financial Sentiment Analysis
+dblp	other_task	acl2024-1	Multimodal Prompt Learning with Missing Modalities for Sentiment Analysis and Emotion Recognition
+dblp	other_task	acl2024-1	Revisiting Structured Sentiment Analysis as Latent Dependency Graph Parsing
+dblp	other_task	acl2024-1	S²GSL: Incorporating Segment to Syntactic Enhanced Graph Structure Learning for Aspect-based Sentiment Analysis
+dblp	other_task	acl2024-1	The MERSA Dataset and a Transformer-Based Approach for Speech Emotion Recognition
+dblp	other_task	acl2024f	Amanda: Adaptively Modality-Balanced Domain Adaptation for Multimodal Emotion Recognition
+dblp	other_task	acl2024f	Argument-Based Sentiment Analysis on Forward-Looking Statements
+dblp	other_task	acl2024f	DINER: Debiasing Aspect-based Sentiment Analysis with Multi-variable Causal Inference
+dblp	other_task	acl2024f	Improving In-Context Learning with Prediction Feedback for Sentiment Analysis
+dblp	other_task	acl2024f	Instruction Tuning with Retrieval-based Examples Ranking for Aspect-based Sentiment Analysis
+dblp	other_task	acl2024f	It is Simple Sometimes: A Study On Improving Aspect-Based Sentiment Analysis Performance
+dblp	other_task	acl2024f	Refining and Synthesis: A Simple yet Effective Data Augmentation Framework for Cross-Domain Aspect-based Sentiment Analysis
+dblp	other_task	acl2024f	SenticVec: Toward Robust and Human-Centric Neurosymbolic Sentiment Analysis
+dblp	other_task	acl2024f	Transition-based Opinion Generation for Aspect-based Sentiment Analysis
+dblp	other_task	acl2025-1	BRIGHTER: BRIdging the Gap in Human-Annotated Textual Emotion Recognition Datasets for 28 Languages
+dblp	other_task	acl2025-1	CoE: A Clue of Emotion Framework for Emotion Recognition in Conversations
+dblp	other_task	acl2025-1	DS²-ABSA: Dual-Stream Data Synthesis with Label Refinement for Few-Shot Aspect-Based Sentiment Analysis
+dblp	other_task	acl2025-1	ECERC: Evidence-Cause Attention Network for Multi-Modal Emotion Recognition in Conversation
+dblp	other_task	acl2025-1	Error Comparison Optimization for Large Language Models on Aspect-Based Sentiment Analysis
+dblp	other_task	acl2025-1	LACA: Improving Cross-lingual Aspect-Based Sentiment Analysis with LLM Data Augmentation
+dblp	other_task	acl2025-2	Dynamic Order Template Prediction for Generative Aspect-Based Sentiment Analysis
+dblp	other_task	acl2025-4	Pragmatic Perspective on Assessing Implicit Meaning Interpretation in Sentiment Analysis Models
+dblp	other_task	acl2025-4	Towards Robust Sentiment Analysis of Temporally-Sensitive Policy-Related Online Text
+dblp	other_task	acl2025f	Akan Cinematic Emotions (ACE): A Multimodal Multi-party Dataset for Emotion Recognition in Movie Dialogues
+dblp	other_task	acl2025f	DaNet: Dual-Aware Enhanced Alignment Network for Multimodal Aspect-Based Sentiment Analysis
+dblp	other_task	acl2025f	Latent Distribution Decouple for Uncertain-Aware Multimodal Multi-label Emotion Recognition
+dblp	other_task	acl2025f	Sentimental Image Generation for Aspect-based Sentiment Analysis
+dblp	other_task	acl2025f	TDCSA: LLM-Guided Top-Down Approach for Robust Citation Sentiment Analysis
+dblp	other_task	acl2026-1	DimABSA: Building Multilingual and Multidomain Datasets for Dimensional Aspect-Based Sentiment Analysis
+dblp	other_task	acl2026-1	ERCThinker: Fast-Slow Thinking for Emotion Recognition in Conversation
+dblp	other_task	acl2026-1	Emotion-Wheel-Guided Audio-Referred Text Representation for Multimodal Emotion Recognition in Conversation
+dblp	other_task	acl2026-1	JoPR: Joint Emotion Perception and Reasoning for Conversational Emotion Recognition
+dblp	other_task	acl2026-1	Locate and Explain: Joint Multimodal Emotion Cause Extraction and Summarization in Conversation
+dblp	other_task	acl2026-1	MSMO-ABSA: Multi-Scale and Multi-Objective Optimization for Cross-Lingual Aspect-Based Sentiment Analysis
+dblp	other_task	acl2026-1	Prosody as Supervision: Bridging the Non-Verbal-Verbal for Multilingual Speech Emotion Recognition
+dblp	other_task	acl2026-1	Single-Pass, Depth-Selective Reading for Multi-Aspect Sentiment Analysis
+dblp	other_task	acl2026-1	Uncovering Sentiment Analysis Circuit in Large Language Model
+dblp	other_task	acl2026-4	From Graphs to Hypergraphs: Enhancing Aspect-Term Sentiment Analysis via Multi-Level Relational Modeling
+dblp	other_task	acl2026-4	Sentiment Analysis of Yelp Review Dataset: A Comparative Study of Machine Learning Methods
+dblp	other_task	acl2026f	Beyond Semantic Similarity: Appraisal-Guided Chain-of-Thought Reasoning and Retrieval for Multimodal Emotional Support Conversations
+dblp	other_task	acl2026f	CAIR: Causal Adaptive Information-based Reinforcement Learning for Multimodal Emotion Reasoning
+dblp	other_task	acl2026f	CMTD: Cognitive Modeling with Traits and Distortions for Multimodal Emotion Recognition in Conversations
+dblp	other_task	acl2026f	CaM-HG: Causal-Enhanced MoE and Hypergraphs Network for Incomplete Multimodal Emotion Recognition in Conversations
+dblp	other_task	acl2026f	E-ABSA20K: A Dataset and Propose-and-Verify for Aspect-Based Sentiment Analysis in Long E-commerce Reviews
+dblp	other_task	acl2026f	EmoMM: Benchmarking and Steering MLLM for Multimodal Emotion Recognition under Conflict and Missingness
+dblp	other_task	acl2026f	EmotionTalk: An Interactive Chinese Multimodal Emotion Dataset With Rich Annotations
+dblp	other_task	acl2026f	Exploring Multilingual Pre-trained Language Model for Aspect-based Sentiment Analysis
+dblp	other_task	acl2026f	From Coarse to Fine: A Multi-Granularity Multimodal Framework for Teacher Sentiment Analysis
+dblp	other_task	acl2026f	Human-Centered Supervision for Sentiment Analysis in Telugu: A Systematic Inquiry Beyond Accuracy
+dblp	other_task	acl2026f	JX4MEI: Multimodal Semantically-Enhanced LLM for Joint Multimodal Emotion-Intent Explanation and Classification
+dblp	other_task	acl2026f	Model in Distress: Sentiment Analysis on French Synthetic Social Media
+dblp	other_task	cvpr2017	Emotion Recognition in Context
+dblp	other_task	cvpr2018	3D Human Sensing, Action and Emotion Recognition in Robot Assisted Therapy of Children With Autism
+dblp	other_task	cvpr2018	Weakly Supervised Coupled Networks for Visual Sentiment Analysis
+dblp	other_task	cvpr2020	EmotiCon: Context-Aware Multimodal Emotion Recognition Using Frege's Principle
+dblp	other_task	cvpr2021	Progressive Modality Reinforcement for Human Multimodal Emotion Recognition From Unaligned Multimodal Sequences
+dblp	other_task	cvpr2023	Context De-Confounded Emotion Recognition
+dblp	other_task	cvpr2023	Decoupled Multimodal Distilling for Emotion Recognition
+dblp	other_task	cvpr2023	High-Fidelity Generalized Emotional Talking Face Generation with Multi-Modal Emotion Space Learning
+dblp	other_task	cvpr2023	Multivariate, Multi-Frequency and Multimodal: Rethinking Graph Neural Networks for Emotion Recognition in Conversation
+dblp	other_task	cvpr2024	Robust Emotion Recognition in Context Debiasing
+dblp	other_task	cvpr2025	CocoER: Aligning Multi-Level Feature by Competition and Coordination for Emotion Recognition
+dblp	other_task	cvpr2025	Knowledge-Aligned Counterfactual-Enhancement Diffusion Perception for Unsupervised Cross-Domain Visual Emotion Recognition
+dblp	other_task	emnlp2017	A Cognition Based Attention Model for Sentiment Analysis
+dblp	other_task	emnlp2017	A Multilayer Perceptron based Ensemble Technique for Fine-grained Financial Sentiment Analysis
+dblp	other_task	emnlp2017	Capturing User and Product Information for Document Level Sentiment Analysis with Deep Memory Network
+dblp	other_task	emnlp2017	Recurrent Attention Network on Memory for Aspect Sentiment Analysis
+dblp	other_task	emnlp2017	Refining Word Embeddings for Sentiment Analysis
+dblp	other_task	emnlp2018	CARER: Contextualized Affect Representations for Emotion Recognition
+dblp	other_task	emnlp2018	IARM: Inter-Aspect Relation Modeling with Memory Networks in Aspect-Based Sentiment Analysis
+dblp	other_task	emnlp2018	ICON: Interactive Conversational Memory Network for Multimodal Emotion Detection
+dblp	other_task	emnlp2018	Improving the results of string kernels in sentiment analysis and Arabic dialect identification by adapting them to your test set
+dblp	other_task	emnlp2018	Joint Aspect and Polarity Classification for Aspect-based Sentiment Analysis with End-to-End Neural Networks
+dblp	other_task	emnlp2018	Joint Learning for Targeted Sentiment Analysis
+dblp	other_task	emnlp2019-1	A Challenge Dataset and Effective Models for Aspect-Based Sentiment Analysis
+dblp	other_task	emnlp2019-1	A Novel Aspect-Guided Deep Transition Model for Aspect Based Sentiment Analysis
+dblp	other_task	emnlp2019-1	Aspect-Level Sentiment Analysis Via Convolution over Dependency Tree
+dblp	other_task	emnlp2019-1	CAN: Constrained Attention Networks for Multi-Aspect Sentiment Analysis
+dblp	other_task	emnlp2019-1	DialogueGCN: A Graph Convolutional Neural Network for Emotion Recognition in Conversation
+dblp	other_task	emnlp2019-1	Investigating Dynamic Routing in Tree-Structured LSTM for Sentiment Analysis
+dblp	other_task	emnlp2019-1	Learning Explicit and Implicit Structures for Targeted Sentiment Analysis
+dblp	other_task	emnlp2019-1	Shallow Domain Adaptive Embeddings for Sentiment Analysis
+dblp	other_task	emnlp2019-1	Transferable End-to-End Aspect-based Sentiment Analysis with Selective Adversarial Learning
+dblp	other_task	emnlp2020-1	A Multi-Task Incremental Learning Framework with Category Name Embedding for Aspect-Category Sentiment Analysis
+dblp	other_task	emnlp2020-1	Convolution over Hierarchical Syntactic and Lexical Graphs for Aspect Level Sentiment Analysis
+dblp	other_task	emnlp2020-1	Multi-Instance Multi-Label Learning Networks for Aspect-Category Sentiment Analysis
+dblp	other_task	emnlp2020-1	Relation-aware Graph Attention Networks with Relational Position Encodings for Emotion Recognition in Conversations
+dblp	other_task	emnlp2020-1	Sentiment Analysis of Tweets using Heterogeneous Multi-layer Network Representation and Embedding
+dblp	other_task	emnlp2020-1	Tasty Burgers, Soggy Fries: Probing Aspect Robustness in Aspect-Based Sentiment Analysis
+dblp	other_task	emnlp2020-1	Unified Feature and Instance Based Domain Adaptation for Aspect-Based Sentiment Analysis
+dblp	other_task	emnlp2020-1	Weakly-Supervised Aspect-Based Sentiment Analysis via Joint Aspect-Sentiment Topic Embedding
+dblp	other_task	emnlp2020f	A Shared-Private Representation Model with Coarse-to-Fine Extraction for Target Sentiment Analysis
+dblp	other_task	emnlp2020f	DomBERT: Domain-oriented Language Model for Aspect-based Sentiment Analysis
+dblp	other_task	emnlp2020f	Exploiting Unsupervised Data for Emotion Recognition in Conversations
+dblp	other_task	emnlp2020f	GRACE: Gradient Harmonized and Cascaded Labeling for Aspect-based Sentiment Analysis
+dblp	other_task	emnlp2020f	Improving Aspect-based Sentiment Analysis with Gated Graph Convolutional Networks and Syntax-based Regulation
+dblp	other_task	emnlp2020f	Octa: Omissions and Conflicts in Target-Aspect Sentiment Analysis
+dblp	other_task	emnlp2020f	Sentiment Analysis with Weighted Graph Convolutional Networks
+dblp	other_task	emnlp2021f	A Discourse-Aware Graph Neural Network for Emotion Recognition in Multi-Party Conversation
+dblp	other_task	emnlp2021f	An Iterative Multi-Knowledge Transfer Network for Aspect-Based Sentiment Analysis
+dblp	other_task	emnlp2021f	Aspect-based Sentiment Analysis in Question Answering Forums
+dblp	other_task	emnlp2021f	DialogueTRM: Exploring Multi-Modal Emotional Dynamics in a Conversation
+dblp	other_task	emnlp2021f	Knowledge-Interactive Network with Sentiment Polarity Intensity-Aware Multi-Task Learning for Emotion Recognition in Conversations
+dblp	other_task	emnlp2021f	Past, Present, and Future: Conversational Emotion Recognition through Structural Modeling of Psychological Knowledge
+dblp	other_task	emnlp2021f	Self Question-answering: Aspect-based Sentiment Analysis by Role Flipped Machine Reading Comprehension
+dblp	other_task	emnlp2022	AX-MABSA: A Framework for Extremely Weakly Supervised Multi-label Aspect Based Sentiment Analysis
+dblp	other_task	emnlp2022	Affective Knowledge Enhanced Multiple-Graph Fusion Networks for Aspect-based Sentiment Analysis
+dblp	other_task	emnlp2022	Curriculum Knowledge Distillation for Emoji-supervised Cross-lingual Sentiment Analysis
+dblp	other_task	emnlp2022	Face-Sensitive Image-to-Emotional-Text Cross-modal Translation for Multimodal Aspect-based Sentiment Analysis
+dblp	other_task	emnlp2022	SEMGraph: Incorporating Sentiment Knowledge and Eye Movement into Graph Model for Sentiment Analysis
+dblp	other_task	emnlp2022	Sentiment-Aware Word and Sentence Level Pre-training for Sentiment Analysis
+dblp	other_task	emnlp2022	Supervised Prototypical Contrastive Learning for Emotion Recognition in Conversation
+dblp	other_task	emnlp2022f	Empathetic Dialogue Generation via Sensitive Emotion Recognition and Sensible Knowledge Selection
+dblp	other_task	emnlp2022f	Generative Aspect-Based Sentiment Analysis with Contrastive Learning and Expressive Structure
+dblp	other_task	emnlp2022f	Progressive Sentiment Analysis for Code-Switched Text Data
+dblp	other_task	emnlp2022f	Self-supervised Cross-modal Pretraining for Speech Emotion Recognition and Sentiment Analysis
+dblp	other_task	emnlp2023	AfriSenti: A Twitter Sentiment Analysis Benchmark for African Languages
+dblp	other_task	emnlp2023	Cross-lingual Transfer Can Worsen Bias in Sentiment Analysis
+dblp	other_task	emnlp2023	Joyful: Joint Modality Fusion and Graph Contrastive Learning for Multimoda Emotion Recognition
+dblp	other_task	emnlp2023	M2DF: Multi-grained Multi-curriculum Denoising Framework for Multimodal Aspect-based Sentiment Analysis
+dblp	other_task	emnlp2023	SentiStream: A Co-Training Framework for Adaptive Online Sentiment Analysis in Evolving Data Streams
+dblp	other_task	emnlp2023	Sentiment Analysis on Streaming User Reviews via Dual-Channel Dynamic Graph Neural Network
+dblp	other_task	emnlp2023	The Sentiment Problem: A Critical Survey towards Deconstructing Sentiment Analysis
+dblp	other_task	emnlp2023f	A Sequence-to-Structure Approach to Document-level Targeted Sentiment Analysis
+dblp	other_task	emnlp2023f	Adaptive Structure Induction for Aspect-based Sentiment Analysis with Spectral Perspective
+dblp	other_task	emnlp2023f	An Empirical Study on Multiple Knowledge from ChatGPT for Emotion Recognition in Conversations
+dblp	other_task	emnlp2023f	Aspect-Category Enhanced Learning with a Neural Coherence Model for Implicit Sentiment Analysis
+dblp	other_task	emnlp2023f	Aspect-to-Scope Oriented Multi-view Contrastive Learning for Aspect-based Sentiment Analysis
+dblp	other_task	emnlp2023f	Do Stochastic Parrots have Feelings Too? Improving Neural Detection of Synthetic Text via Emotion Recognition
+dblp	other_task	emnlp2023f	Domain Adaptation for Sentiment Analysis Using Robust Internal Representations
+dblp	other_task	emnlp2023f	Efficient Cross-Task Prompt Tuning for Few-Shot Conversational Emotion Recognition
+dblp	other_task	emnlp2023f	Enhancing Emotion Recognition in Conversation via Multi-view Feature Alignment and Memorization
+dblp	other_task	emnlp2023f	Evaluating Emotion Arcs Across Languages: Bridging the Global Divide in Sentiment Analysis
+dblp	other_task	emnlp2023f	Exploring Graph Pre-training for Aspect-based Sentiment Analysis
+dblp	other_task	emnlp2023f	Late Fusion of Transformers for Sentiment Analysis of Code-Switched Data
+dblp	other_task	emnlp2023f	Neuro-Symbolic Sentiment Analysis with Dynamic Word Sense Disambiguation
+dblp	other_task	emnlp2023f	Pre-trained Speech Processing Models Contain Human-Like Biases that Propagate to Speech Emotion Recognition
+dblp	other_task	emnlp2023f	Reducing Spurious Correlations in Aspect-based Sentiment Analysis with Explanation from Large Language Models
+dblp	other_task	emnlp2023f	SIR-ABSC: Incorporating Syntax into RoBERTa-based Sentiment Analysis Models with a Special Aggregator Token
+dblp	other_task	emnlp2024	Dynamic Multi-granularity Attribution Network for Aspect-based Sentiment Analysis
+dblp	other_task	emnlp2024	Visual Prompting in LLMs for Enhancing Emotion Recognition
+dblp	other_task	emnlp2024f	Boosting Large Language Models with Continual Learning for Aspect-based Sentiment Analysis
+dblp	other_task	emnlp2024f	DetectiveNN: Imitating Human Emotional Reasoning with a Recall-Detect-Predict Framework for Emotion Recognition in Conversations
+dblp	other_task	emnlp2024f	Do LLMs Think Fast and Slow? A Causal Study on Sentiment Analysis
+dblp	other_task	emnlp2024f	Exploiting Careful Design of SVM Solution for Aspect-term Sentiment Analysis
+dblp	other_task	emnlp2024f	Is Compound Aspect-Based Sentiment Analysis Addressed by LLMs?
+dblp	other_task	emnlp2024f	Make Compound Sentences Simple to Analyze: Learning to Split Sentences for Aspect-based Sentiment Analysis
+dblp	other_task	emnlp2024f	Multiple Knowledge-Enhanced Interactive Graph Network for Multimodal Conversational Emotion Recognition
+dblp	other_task	emnlp2024f	PFA-ERC: Psuedo-Future Augmented Dynamic Emotion Recognition in Conversations
+dblp	other_task	emnlp2024f	Shoes-ACOSI: A Dataset for Aspect-Based Sentiment Analysis with Implicit Opinion Extraction
+dblp	other_task	emnlp2024f	The Overlooked Repetitive Lengthening Form in Sentiment Analysis
+dblp	other_task	emnlp2024f	UniMEEC: Towards Unified Multimodal Emotion Recognition and Emotion Cause
+dblp	other_task	emnlp2024f	Vanessa: Visual Connotation and Aesthetic Attributes Understanding Network for Multimodal Aspect-based Sentiment Analysis
+dblp	other_task	emnlp2025	BTC-SAM: Leveraging LLMs for Generation of Bias Test Cases for Sentiment Analysis Models
+dblp	other_task	emnlp2025	Comprehensive and Efficient Distillation for Lightweight Sentiment Analysis Models
+dblp	other_task	emnlp2025	Emotion Transfer with Enhanced Prototype for Unseen Emotion Recognition in Conversation
+dblp	other_task	emnlp2025	M-ABSA: A Multilingual Dataset for Aspect-Based Sentiment Analysis
+dblp	other_task	emnlp2025	MERMAID: Multi-perspective Self-reflective Agents with Generative Augmentation for Emotion Recognition
+dblp	other_task	emnlp2025	Power doesn't reside in size: A Low Parameter Hybrid Language Model (HLM) for Sentiment Analysis in Code-mixed data
+dblp	other_task	emnlp2025	RD-MCSA: A Multi-Class Sentiment Analysis Approach Integrating In-Context Classification Rationales and Demonstrations
+dblp	other_task	emnlp2025	Targeted Distillation for Sentiment Analysis
+dblp	other_task	emnlp2025f	Aspect-based Sentiment Analysis via Synthetic Image Generation
+dblp	other_task	emnlp2025f	EMO-RL: Emotion-Rule-Based Reinforcement Learning Enhanced Audio-Language Model for Generalized Speech Emotion Recognition
+dblp	other_task	emnlp2025f	Flexible Thinking for Multimodal Emotional Support Conversation via Reinforcement Learning
+dblp	other_task	emnlp2025f	GRPO-Guided Modality Selection Enhanced LoRA-Tuned LLMs for Multimodal Emotion Recognition
+dblp	other_task	emnlp2025f	Multimodal Emotion Recognition in Conversations: A Survey of Methods, Trends, Challenges and Prospects
+dblp	other_task	emnlp2025f	Zero-Shot Cross-Domain Aspect-Based Sentiment Analysis via Domain-Contextualized Chain-of-Thought Reasoning
+dblp	other_task	iclr2023tiny	A Change of Heart: Improving Speech Emotion Recognition through Speech-to-Text Modality Conversion
+dblp	other_task	iclr2023tiny	Transfer Learning on Kinyarwanda Tweets Sentiment Analysis
+dblp	other_task	iclr2024	VBH-GNN: Variational Bayesian Heterogeneous Graph Neural Networks for Cross-subject Emotion Recognition
+dblp	other_task	icml2019	A Personalized Affective Memory Model for Improving Emotion Recognition
+dblp	other_task	icml2020	How recurrent networks implement contextual processing in sentiment analysis
+dblp	other_task	icml2025	OV-MER: Towards Open-Vocabulary Multimodal Emotion Recognition
+dblp	other_task	ijcai2017	Dependency Exploitation: A Unified CNN-RNN Approach for Visual Emotion Recognition
+dblp	other_task	ijcai2017	Recommendation vs Sentiment Analysis: A Text-Driven Latent Factor Model for Rating Prediction with Cold-Start Awareness
+dblp	other_task	ijcai2018	A Novel Neural Network Model based on Cerebral Hemispheric Asymmetry for EEG Emotion Recognition
+dblp	other_task	ijcai2018	Beyond Polarity: Interpretable Financial Sentiment Analysis with Hierarchical Query-driven Attention
+dblp	other_task	ijcai2018	Personality-Aware Personalized Emotion Recognition from Physiological Signals
+dblp	other_task	ijcai2019	Addressing Age-Related Bias in Sentiment Analysis
+dblp	other_task	ijcai2019	Cold-Start Aware Deep Memory Network for Multi-Entity Aspect-Based Sentiment Analysis
+dblp	other_task	ijcai2019	Earlier Attention? Aspect-Aware LSTM for Aspect-Based Sentiment Analysis
+dblp	other_task	ijcai2019	Learn to Select via Hierarchical Gate Mechanism for Aspect-Based Sentiment Analysis
+dblp	other_task	ijcai2019	Quantum-Inspired Interactive Networks for Conversational Sentiment Analysis
+dblp	other_task	ijcai2019	Towards Discriminative Representation Learning for Speech Emotion Recognition
+dblp	other_task	ijcai2021	An Entanglement-driven Fusion Neural Network for Video Sentiment Analysis
+dblp	other_task	ijcai2022	Aspect-based Sentiment Analysis with Opinion Tree Generation
+dblp	other_task	ijcai2022	Automatic Multimodal Emotion Recognition Using Facial Expression, Voice, and Text
+dblp	other_task	ijcai2022	CTL-MTNet: A Novel CapsNet and Transfer Learning-Based Mixed Task Net for Single-Corpus and Cross-Corpus Speech Emotion Recognition
+dblp	other_task	ijcai2022	CauAIN: Causal Aware Interaction Network for Emotion Recognition in Conversations
+dblp	other_task	ijcai2022	Inheriting the Wisdom of Predecessors: A Multiplex Cascade Framework for Unified Aspect-based Sentiment Analysis
+dblp	other_task	ijcai2022	Online ECG Emotion Recognition for Unknown Subjects via Hypergraph-Based Transfer Learning
+dblp	other_task	ijcai2022	Speaker-Guided Encoder-Decoder Framework for Emotion Recognition in Conversation
+dblp	other_task	ijcai2023	Mimicking the Thinking Process for Emotion Recognition in Conversation with Prompts and Paraphrasing
+dblp	other_task	ijcai2024	Apprenticeship-Inspired Elegance: Synergistic Knowledge Distillation Empowers Spiking Neural Networks for Efficient Single-Eye Emotion Recognition
+dblp	other_task	ijcai2024	Joint Multimodal Aspect Sentiment Analysis with Aspect Enhancement and Syntactic Adaptive Learning
+dblp	other_task	ijcai2024	Multi-level Disentangling Network for Cross-Subject Emotion Recognition Based on Multimodal Physiological Signals
+dblp	other_task	ijcai2024	VSGT: Variational Spatial and Gaussian Temporal Graph Models for EEG-based Emotion Recognition
+dblp	other_task	ijcai2025	A Cross-Modal Densely Guided Knowledge Distillation Based on Modality Rebalancing Strategy for Enhanced Unimodal Emotion Recognition
+dblp	other_task	ijcai2025	FCKT: Fine-Grained Cross-Task Knowledge Transfer with Semantic Contrastive Learning for Targeted Sentiment Analysis
+dblp	other_task	ijcai2025	GSDNet: Revisiting Incomplete Multimodality-Diffusion Emotion Recognition from the Perspective of Graph Spectrum
+dblp	other_task	ijcai2025	Hybrid Relational Graphs with Sentiment-laden Semantic Alignment for Multimodal Emotion Recognition in Conversation
+dblp	other_task	ijcai2025	MATCH: Modality-Calibrated Hypergraph Fusion Network for Conversational Emotion Recognition
+dblp	other_task	ijcai2025	Multi-modal Anchor Gated Transformer with Knowledge Distillation for Emotion Recognition in Conversation
+dblp	other_task	ijcai2025	Picturized and Recited with Dialects: A Multimodal Chinese Representation Framework for Sentiment Analysis of Classical Chinese Poetry
+dblp	other_task	ijcai2025	RAMer: Reconstruction-based Adversarial Model for Multi-party Multi-modal Multi-label Emotion Recognition
+dblp	other_task	ijcai2025	Sentiment-enhanced Multi-hop Connected Graph Attention Network for Multimodal Aspect-Based Sentiment Analysis
+dblp	other_task	mm2017	Deep Temporal Models using Identity Skip-Connections for Speech Emotion Recognition
+dblp	other_task	mm2017	From Hard to Soft: Towards more Human-like Emotion Recognition by Modelling the Perception Uncertainty
+dblp	other_task	mm2017	Social Multimedia Sentiment Analysis
+dblp	other_task	mm2017	Visual Sentiment Analysis for Review Images with Item-Oriented and User-Oriented CNN
+dblp	other_task	mm2018	Emotion Recognition in Speech using Cross-Modal Transfer in the Wild
+dblp	other_task	mm2018	Twitter Sentiment Analysis via Bi-sense Emoji Embedding and Attention-based LSTM
+dblp	other_task	mm2019	Emotion Recognition using Multimodal Residual LSTM Network
+dblp	other_task	mm2019	Mutual Correlation Attentive Factors in Dyadic Fusion Networks for Speech Emotion Recognition
+dblp	other_task	mm2020	CM-BERT: Cross-Modal BERT for Text-Audio Sentiment Analysis
+dblp	other_task	mm2020	Cross Corpus Physiological-based Emotion Recognition Using a Learnable Visual Semantic Graph Convolutional Network
+dblp	other_task	mm2020	MEmoR: A Dataset for Multimodal Emotion Reasoning in Videos
+dblp	other_task	mm2020	Reproducibility Companion Paper: Visual Sentiment Analysis for Review Images with Item-Oriented and User-Oriented CNN
+dblp	other_task	mm2020	SST-EmotionNet: Spatial-Spectral-Temporal based Attention 3D Dense Network for EEG Emotion Recognition
+dblp	other_task	mm2020	Semi-supervised Multi-modal Emotion Recognition with Cross-Modal Distribution Matching
+dblp	other_task	mm2021	A Multi-Domain Adaptive Graph Convolutional Network for EEG-based Emotion Recognition
+dblp	other_task	mm2021	HetEmotionNet: Two-Stream Heterogeneous Graph Recurrent Neural Network for Multi-modal Emotion Recognition
+dblp	other_task	mm2021	Learning What and When to Drop: Adaptive Multimodal and Contextual Dynamics for Emotion Recognition in Conversation
+dblp	other_task	mm2021	MuSe 2021 Challenge: Multimodal Emotion, Sentiment, Physiological-Emotion, and Stress Detection
+dblp	other_task	mm2021	SFE-Net: EEG-based Emotion Recognition with Symmetrical Spatial Feature Extraction
+dblp	other_task	mm2021	Simplifying Multimodal Emotion Recognition with Single Eye Movement Modality
+dblp	other_task	mm2021	Zero-shot Video Emotion Recognition via Multimodal Protagonist-aware Transformer Network
+dblp	other_task	mm2022	Disentangled Representation Learning for Multimodal Emotion Recognition
+dblp	other_task	mm2022	Feeling Without Sharing: A Federated Video Emotion Recognition Framework Via Privacy-Agnostic Hybrid Aggregation
+dblp	other_task	mm2022	SER30K: A Large-Scale Dataset for Sticker Emotion Recognition
+dblp	other_task	mm2022	Towards Unbiased Visual Emotion Recognition via Causal Intervention
+dblp	other_task	mm2022	Unified Multi-modal Pre-training for Few-shot Sentiment Analysis with Prompt-based Learning
+dblp	other_task	mm2022	Unsupervised Domain Adaptation Integrating Transformer and Mutual Information for Cross-Corpus Speech Emotion Recognition
+dblp	other_task	mm2023	ASTDF-Net: Attention-Based Spatial-Temporal Dual-Stream Fusion Network for EEG-Based Emotion Recognition
+dblp	other_task	mm2023	Emo-DNA: Emotion Decoupling and Alignment Learning for Cross-Corpus Speech Emotion Recognition
+dblp	other_task	mm2023	Emotion Recognition ToolKit (ERTK): Standardising Tools For Emotion Recognition Research
+dblp	other_task	mm2023	EmotionKD: A Cross-Modal Knowledge Distillation Framework for Emotion Recognition Based on Physiological Signals
+dblp	other_task	mm2023	Graph to Grid: Learning Deep Representations for Multimodal Emotion Recognition
+dblp	other_task	mm2023	Mining High-quality Samples from Raw Data and Majority Voting Method for Multimodal Emotion Recognition
+dblp	other_task	mm2023	Multimodal Emotion Interaction and Visualization Platform
+dblp	other_task	mm2023	Multimodal Emotion Recognition in Noisy Environment Based on Progressive Label Revision
+dblp	other_task	mm2023	Multimodal Physiological Signals Fusion for Online Emotion Recognition
+dblp	other_task	mm2023	Multimodal Prompt Transformer with Hybrid Contrastive Learning for Emotion Recognition in Conversation
+dblp	other_task	mm2023	Revisiting Disentanglement and Fusion on Modality and Context in Conversational Multimodal Emotion Recognition
+dblp	other_task	mm2023	Semi-Supervised Multimodal Emotion Recognition with Class-Balanced Pseudo-labeling
+dblp	other_task	mm2023	Semi-Supervised Multimodal Emotion Recognition with Expression MAE
+dblp	other_task	mm2023	UniSA: Unified Generative Framework for Sentiment Analysis
+dblp	other_task	mm2023	Unlocking the Power of Multimodal Learning for Emotion Recognition in Conversation
+dblp	other_task	mm2024	A Unimodal Valence-Arousal Driven Contrastive Learning Framework for Multimodal Multi-Label Emotion Recognition
+dblp	other_task	mm2024	Ada2I: Enhancing Modality Balance for Multimodal Conversational Emotion Recognition
+dblp	other_task	mm2024	Aspects are Anchors:  Towards Multimodal Aspect-based Sentiment Analysis via Aspect-driven Alignment and Refinement
+dblp	other_task	mm2024	Correlation-Driven Multi-Modality Graph Decomposition for Cross-Subject Emotion Recognition
+dblp	other_task	mm2024	DQ-Former: Querying Transformer with Dynamic Modality Priority for Cognitive-aligned Multimodal Emotion Recognition in Conversation
+dblp	other_task	mm2024	Emotion Recognition in HMDs: A Multi-task Approach Using Physiological Signals and Occluded Faces
+dblp	other_task	mm2024	Label-Efficient Emotion and Sentiment Analysis
+dblp	other_task	mm2024	Multimodal Emotion Recognition Calibration in Conversations
+dblp	other_task	mm2024	Multimodal Fusion via Hypergraph Autoencoder and Contrastive Learning for Emotion Recognition in Conversation
+dblp	other_task	mm2024	Observe before Generate: Emotion-Cause aware Video Caption for Multimodal Emotion Cause Generation in Conversations
+dblp	other_task	mm2024	PanoSent: A Panoptic Sextuple Extraction Benchmark for Multimodal Conversational Aspect-based Sentiment Analysis
+dblp	other_task	mm2024	Sentiment-oriented Sarcasm Integration for Video Sentiment Analysis Enhancement with Sarcasm Assistance
+dblp	other_task	mm2024	TGCA-PVT: Topic-Guided Context-Aware Pyramid Vision Transformer for Sticker Emotion Recognition
+dblp	other_task	mm2024	Two in One Go: Single-stage Emotion Recognition with Decoupled Subject-context Transformer
+dblp	other_task	mm2024	WSEL: EEG Feature Selection with Weighted Self-expression Learning for Incomplete Multi-dimensional Emotion Recognition
+dblp	other_task	mm2025	Affective-CoT: Decomposing Multimodal Emotion Reasoning through a Hierarchical Cognitive Workflow
+dblp	other_task	mm2025	Agent-MER: A Cognitive Agent with Hierarchical Deliberation for Open-Vocabulary Multimodal Emotion Recognition
+dblp	other_task	mm2025	Benchmarking and Bridging Emotion Conflicts for Multimodal Emotion Reasoning
+dblp	other_task	mm2025	Beyond Emotion Recognition: A Multi-Turn Multimodal Emotion Understanding and Reasoning Benchmark
+dblp	other_task	mm2025	CogMAEC'25: The 1st Workshop on Cognition-oriented Multimodal Affective and Empathetic Computing
+dblp	other_task	mm2025	DEEMO: De-identity Multimodal Emotion Recognition and Reasoning
+dblp	other_task	mm2025	DRKF: Decoupled Representations with Knowledge Fusion for Multimodal Emotion Recognition
+dblp	other_task	mm2025	EEG-SCMM: Soft Contrastive Masked Modeling for Cross-Corpus EEG-Based Emotion Recognition
+dblp	other_task	mm2025	EMO-Avatar: An LLM-Agent-Orchestrated Framework for Multimodal Emotional Support in Human Animation
+dblp	other_task	mm2025	Emotion across Modalities and Cultures: Multilingual Multimodal Emotion-Cause Analysis with Memory-inspired Framework
+dblp	other_task	mm2025	Eye-based Emotion Recognition via Event-Driven Sparse Transformers
+dblp	other_task	mm2025	Grounding Emotion Recognition with Visual Prototypes: VEGA - Revisiting CLIP in MERC
+dblp	other_task	mm2025	Hardness-Aware Dynamic Curriculum Learning for Robust Multimodal Emotion Recognition with Missing Modalities
+dblp	other_task	mm2025	MGHFT: Multi-Granularity Hierarchical Fusion Transformer for Cross-Modal Sticker Emotion Recognition
+dblp	other_task	mm2025	MoCERNet: A Modality-Complete Modeling Framework for Emotion Recognition in Physiological Signals under Imperfect Modal Matching
+dblp	other_task	mm2025	Multimodal Emotion Recognition with Missing Modality via a Unified Multi-task Pre-training Framework
+dblp	other_task	mm2025	Personality Prediction via Multimodal Fusion with Sentiment Analysis Enhancement
+dblp	other_task	mm2025	Real-Time EEG Emotion Recognition from Dynamic Mixed Spatiotemporal Graph Learning
+dblp	other_task	mm2025	SDG-MLLM: Injecting Structured Dialogue Graphs into MLLM for Multimodal Conversational Aspect-Based Sentiment Analysis
+dblp	other_task	mm2025	Sera: Separated Coarse-to-fine Representation Alignment for Cross-subject EEG-based Emotion Recognition
+dblp	other_task	mm2025	Structured Prompting and LLM Ensembling for Multimodal Conversational Aspect-based Sentiment Analysis
+dblp	other_task	mm2025	The ACM Multimedia 2025 Grand Challenge of Multimodal Conversational Aspect-based Sentiment Analysis
+dblp	other_task	mm2025	Toward Reliable Emotion Recognition: Alleviating Label Noise and Reducing Uncertain Prediction
+dblp	other_task	mm2025	UniEmotion: A Unified Framework for Multimodal Emotion Recognition with Iterative Consensus-based Training
+dblp	other_task	naacl2018-1	Conversational Memory Network for Emotion Recognition in Dyadic Dialogue Videos
+dblp	other_task	naacl2018-1	Sentiment Analysis: It's Complicated!
+dblp	other_task	naacl2018-1	Solving Data Sparsity for Aspect Based Sentiment Analysis Using Cross-Linguality and Multi-Linguality
+dblp	other_task	naacl2018-2	Knowledge-Enriched Two-Layered Attention Network for Sentiment Analysis
+dblp	other_task	naacl2018-2	Modeling Inter-Aspect Dependencies for Aspect-Based Sentiment Analysis
+dblp	other_task	naacl2018-2	Recurrent Entity Networks with Delayed Memory Update for Targeted Aspect-Based Sentiment Analysis
+dblp	other_task	naacl2019-1	BERT Post-Training for Review Reading Comprehension and Aspect-based Sentiment Analysis
+dblp	other_task	naacl2019-1	HiGRU: Hierarchical Gated Recurrent Units for Utterance-Level Emotion Recognition
+dblp	other_task	naacl2019-1	Multi-task Learning for Multi-modal Emotion Recognition and Sentiment Analysis
+dblp	other_task	naacl2019-1	Utilizing BERT for Aspect-Based Sentiment Analysis via Constructing Auxiliary Sentence
+dblp	other_task	naacl2021	ASAP: A Chinese Review Dataset Towards Aspect Category Sentiment Analysis and Rating Prediction
+dblp	other_task	naacl2021	Aspect-based Sentiment Analysis with Type-aware Graph Convolutional Networks and Layer Ensemble
+dblp	other_task	naacl2021	Does syntax matter? A strong baseline for Aspect-based Sentiment Analysis with RoBERTa
+dblp	other_task	naacl2021	Domain Adaptation for Arabic Cross-Domain and Cross-Dialect Sentiment Analysis from Contextualized Word Embedding
+dblp	other_task	naacl2021	MUSER: MUltimodal Stress detection using Emotion Recognition as an Auxiliary Task
+dblp	other_task	naacl2021	Multimodal End-to-End Sparse Model for Emotion Recognition
+dblp	other_task	naacl2021-2	When and Why a Model Fails? A Human-in-the-loop Error Detection Framework for Sentiment Analysis
+dblp	other_task	naacl2022	Aspect Is Not You Need: No-aspect Differential Sentiment Framework for Aspect-based Sentiment Analysis
+dblp	other_task	naacl2022	COGMEN: COntextualized GNN based Multimodal Emotion recognitioN
+dblp	other_task	naacl2022	CoMPM: Context Modeling with Speaker's Pre-trained Memory Tracking for Emotion Recognition in Conversation
+dblp	other_task	naacl2022	Multi-Domain Targeted Sentiment Analysis
+dblp	other_task	naacl2022	SSEGCN: Syntactic and Semantic Enhanced Graph Convolutional Network for Aspect-based Sentiment Analysis
+dblp	other_task	naacl2022	UserIdentifier: Implicit User Representations for Simple and Effective Personalized Sentiment Analysis
+dblp	other_task	naacl2022f	A Generative Language Model for Few-shot Aspect-Based Sentiment Analysis
+dblp	other_task	naacl2024	IndiSentiment140: Sentiment Analysis Dataset for Indian Languages with Emphasis on Low-Resource Languages using Machine Translation
+dblp	other_task	naacl2024	Multimodal Multi-loss Fusion Network for Sentiment Analysis
+dblp	other_task	naacl2024	Quantum-inspired Language Model with Lindblad Master Equation and Interference Measurement for Sentiment Analysis
+dblp	other_task	naacl2024	TelME: Teacher-leading Multimodal Fusion Network for Emotion Recognition in Conversation
+dblp	other_task	naacl2024-2	InstructABSA: Instruction Learning for Aspect Based Sentiment Analysis
+dblp	other_task	naacl2024f	Aspect-based Sentiment Analysis with Context Denoising
+dblp	other_task	naacl2024f	C³LPGCN:Integrating Contrastive Learning and Cooperative Learning with Prompt into Graph Convolutional Network for Aspect-based Sentiment Analysis
+dblp	other_task	naacl2024f	DAGCN: Distance-based and Aspect-oriented Graph Convolutional Network for Aspect-based Sentiment Analysis
+dblp	other_task	naacl2024f	Emotion-Anchored Contrastive Learning Framework for Emotion Recognition in Conversation
+dblp	other_task	naacl2024f	Sentiment Analysis in the Era of Large Language Models: A Reality Check
+dblp	other_task	naacl2025-1	Mixture of Multimodal Adapters for Sentiment Analysis
+dblp	other_task	naacl2025-1	Single Ground Truth Is Not Enough: Adding Flexibility to Aspect-Based Sentiment Analysis Evaluation
+dblp	other_task	naacl2025-4	Detecting Sexism in Tweets: A Sentiment Analysis and Graph Neural Network Approach
+dblp	other_task	naacl2025-4	From Annotation to Adaptation: Metrics, Synthetic Data, and Aspect Extraction for Aspect-Based Sentiment Analysis with Large Language Models
+dblp	other_task	naacl2025f	A Comprehensive Survey of Contemporary Arabic Sentiment Analysis: Methods, Challenges, and Future Directions
+dblp	other_task	naacl2025f	Beyond Silent Letters: Amplifying LLMs in Emotion Recognition with Vocal Nuances
+dblp	other_task	naacl2025f	Evaluating Vision-Language Models for Emotion Recognition
+dblp	other_task	naacl2025f	Exploring Hybrid Sampling Inference for Aspect-based Sentiment Analysis
+dblp	other_task	naacl2025f	Multi-Condition Guided Diffusion Network for Multimodal Emotion Recognition in Conversation
+dblp	other_task	naacl2025f	PEMV: Improving Spatial Distribution for Emotion Recognition in Conversations Using Proximal Emotion Mean Vectors
