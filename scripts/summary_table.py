@@ -23,8 +23,8 @@ LOWER_IS_BETTER = {"mae"}
 
 #: The order the storyline tells it in, not alphabetical.
 STORY_ORDER = [
-    "ef_lstm", "lf_dnn", "tfn", "lmf", "mfn", "graph_mfn", "mult", "misa",
-    "self_mm", "text_bert", "lf_lstm",
+    "ef_lstm", "lf_dnn", "tfn", "lmf", "mfn", "graph_mfn", "mctn", "mfm",
+    "mult", "misa", "self_mm", "text_bert", "lf_lstm",
 ]
 COLUMNS = ["mae", "corr", "acc2_non0", "acc7"]
 
