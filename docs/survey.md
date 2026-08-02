@@ -62,7 +62,10 @@ curl -s -o /dev/null -w "%{http_code}" <repo URL>     # 每个链接实地请求
 | bert_mag | Integrating Multimodal Information in Large Pretrained Transformers；Rahman, Hasan, Lee, Bagher Zadeh, Mao, Morency, Hoque；[ACL 2020](https://aclanthology.org/2020.acl-main.214/) pp.2359-2369 | [WasifurRahman/BERT_multimodal_transformer](https://github.com/WasifurRahman/BERT_multimodal_transformer) | 200 |
 | mctn | Found in Translation: Learning Robust Joint Representations by Cyclic Translations Between Modalities；Pham, Liang, Manzini, Morency, Póczos；**AAAI 2019** vol.33 pp.6892-6899 | [hainow/MCTN](https://github.com/hainow/MCTN) | 200 |
 | mfm | Learning Factorized Multimodal Representations；Tsai, Liang, Zadeh, Morency, Salakhutdinov；**ICLR 2019** | [pliang279/factorized](https://github.com/pliang279/factorized/) | 200 |
-| almt / cenet / tetfn / mmim | 待核（见「待核实」） | | |
+| mmim | Improving Multimodal Fusion with Hierarchical Mutual Information Maximization for Multimodal Sentiment Analysis；Wei Han, Hui Chen, Soujanya Poria；[EMNLP 2021](https://aclanthology.org/2021.emnlp-main.723/) pp.9180-9192 | [declare-lab/Multimodal-Infomax](https://github.com/declare-lab/Multimodal-Infomax)（论文正文） | 200 |
+| almt | Learning Language-guided Adaptive Hyper-modality Representation for Multimodal Sentiment Analysis；Haoyu Zhang, Yu Wang, Guanghao Yin, Kejun Liu, Yuanyuan Liu, Tianshu Yu；[EMNLP 2023](https://aclanthology.org/2023.emnlp-main.49/) pp.756-767 | **论文正文与 ACL 页面均无代码链接**；`Haoyu-ha/ALMT`（200）出自 **MMSA 的 docstring**，非论文 | 见左 |
+| cenet | Cross-modal enhancement network for multimodal sentiment analysis；Di Wang, Shuai Liu, Quan Wang, Yumin Tian, Lihuo He, Xinbo Gao；**IEEE TMM 2022** pp.4909-4921 | **未核**（IEEE 全文需订阅） | — |
+| tetfn | TETFN: A text enhanced transformer fusion network for multimodal sentiment analysis；Wang 等；**Pattern Recognition 2023**, vol.136, 109259 | **未核**（ScienceDirect 返回 403） | — |
 
 **四条值得单记的事实：**
 
@@ -70,6 +73,17 @@ curl -s -o /dev/null -w "%{http_code}" <repo URL>     # 每个链接实地请求
 2. **MFN 与 Graph-MFN 的作者代码链接都已失效**（`A2Zadeh/MFN`、`A2Zadeh/CMU-MultimodalDataSDK` 均 404）。MFN 目前只能以 MMSA 为参照，**这解释了为什么 `#mfn` 那轮"对原作者实现核对"只能止于无发现**。数据 SDK 已迁至 [CMU-MultiComp-Lab/CMU-MultimodalSDK](https://github.com/CMU-MultiComp-Lab/CMU-MultimodalSDK)（200）。
 3. **Graph-MFN 的原论文同时是 CMU-MOSEI 的发布论文。** 路线图里"主数据集换 MOSEI"要引的，和 Graph-MFN 是同一篇。
 4. **MISA 论文引用了 `pliang279/MFN` 与 `pliang279/factorized`** 作为其基线来源——后者正是 MFM 的官方实现，两条线在这里交汇。
+5. **ALMT 的论文里唯一的 GitHub 链接是 MMSA 的 `result-stat.md`**——和 ConFEDE 一样，**它的对照基线就是那张我们已证"MMSA 自己的代码在 9/11 个模型上都够不到"的表**。已发现两篇顶会论文以该表为基线，这不再是孤例。
+6. **两篇期刊论文（CENET / TETFN）的全文拿不到**：ScienceDirect 返回 403，IEEE 需订阅。出处以出版商元数据为准，**代码链接一栏记"未核"而不是"无"**——这两者不能混。
+
+### 分档汇总（12 个已核模型）
+
+- **原作者代码可用**（论文正文所载且实测 200）：lmf、mult、misa、self_mm、bert_mag、mmim、mctn、mfm —— **8 个**
+- **原论文未给代码**：tfn、almt —— **2 个**
+- **作者链接已失效**：mfn、graph_mfn —— **2 个**
+- **全文不可获取，未核**：cenet、tetfn —— **2 个**
+
+也就是说，**我们对照表里 12 个已核模型中，有 6 个拿不到可验证归属的作者实现**。这与近三年新论文的比例（11 篇中 8 篇有代码）方向一致：**领域整体的可复现基础设施，比论文数量增长得慢。**
 
 ## 台账 A：已在对照表中
 
@@ -138,7 +152,8 @@ curl -s -o /dev/null -w "%{http_code}" <repo URL>     # 每个链接实地请求
 
 **不许当已知事实引用。**
 
-- **台账 A0 尚缺四条**：almt（记为 Zhang et al., EMNLP 2023）、cenet（Wang et al., TMM 2022）、tetfn（Wang et al., PR 2023）、mmim（Han et al., EMNLP 2021）。**期刊出处（TMM / Pattern Recognition）比会议更易记错，须重点核。**
+- **cenet / tetfn 的论文全文**：两家出版商都挡住了（403 / 需订阅）。需要机构访问权限才能核代码链接与实验设定。**在拿到之前，这两条的代码栏保持"未核"。**
+- **tetfn 的完整作者名单**：只确认到 "Wang 等"，出版商元数据未给全。
 - ef_lstm / lf_dnn 在 MMSA 中是通用基线，**是否有可指认的原始论文尚未确认**——若无，应在故事线里明说"出自 MMSA 的基线实现"，不要虚构出处
 - DMD 使用谁家的预处理特征（决定其数字能否与我们直接比；README 未写）
 - DEAR / MER-CLIP 的论文完整性：能否只凭正文写出全部公式、超参、初始化与调度 → 决定 `reimpl` 还是 `reimpl-partial`
