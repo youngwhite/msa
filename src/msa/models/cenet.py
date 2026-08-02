@@ -1,4 +1,4 @@
-"""CENET — Cross-modal Enhancement Network (Wang et al., TMM 2022).
+"""CENET — Cross-modal Enhancement Network (Wang et al., IEEE TMM vol.25, 2023).
 
 Where every earlier model in the storyline fuses *after* the encoders have run,
 CENET reaches inside the text encoder: audio and vision are turned into a shift

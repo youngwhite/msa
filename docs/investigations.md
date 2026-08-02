@@ -723,7 +723,7 @@ done
 
 ### MFN 对原作者实现的核对：无发现（2026-07-31）
 
-`pliang279/MFN` 的 `test_mosi.py`，逐行比对我们的 `src/msa/models/mfn.py`：
+`pliang279/MFN` 的 `test_mosi.py`，逐行比对我们的 `src/msa/models/mfn.py`。**2026-08-02 补注**：论文正文给的 `A2Zadeh/MFN` 已 404，此处用的 `pliang279/MFN` 是**合著者 Paul Pu Liang 的仓库**（MFN 作者名单第二位），仍属作者实现——记此以免日后误以为本轮核对没有参照物。
 
 | 环节 | 原作 | 我们 | |
 |---|---|---|---|

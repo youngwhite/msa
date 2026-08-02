@@ -101,6 +101,8 @@
 
 ## 1. TFN — Tensor Fusion Network (Zadeh et al., EMNLP 2017) ✅ 通过（Corr 缺口已裁定）
 
+> **TFN 的原论文没有发布代码。** 领域普遍当作"官方实现"使用的 `Justin1904/TensorFusionNetworks`，出现在 **MISA 论文的引用**里（作为其复现 TFN 所用的实现），并非 TFN 作者发布。因此这一支的参照实现**从一开始就是第三方的**，本节所有"对照原作者"的表述都不适用于 TFN。核实过程见 [`survey.md`](survey.md) 台账 A0。
+
 **解决了什么**：早期工作把三个模态的向量直接拼接，模型只能学到线性组合。TFN 给每个模态向量补一个 1 后做三路外积，显式构造出全部一元、二元、三元交互项，让融合层直接看到 `text ⊗ audio ⊗ vision`。
 
 **代价**：融合张量维度 (32+1)×(128+1)×(32+1) = 140,481，后接全连接层——**9.50M 参数里绝大部分在这一层**。这正是下一步 LMF 要解决的问题。
@@ -194,6 +196,8 @@ MFN 的配置同时设了 `need_normalized` 与 `need_model_aligned`。前者把
 ---
 
 ## 3b. Graph-MFN — Graph Memory Fusion Network (Zadeh et al., ACL 2018) ✅ 复现成功
+
+> **它的原论文就是 CMU-MOSEI 的发布论文**（*Multimodal Language Analysis in the Wild: CMU-MOSEI Dataset and Interpretable Dynamic Fusion Graph*, ACL 2018, pp.2236-2246）。路线图里"主数据集换 MOSEI"要引的，与本节是同一篇。**论文只发布了数据 SDK，没有模型代码**（正文所给的 `A2Zadeh/CMU-MultimodalDataSDK` 现已 404，SDK 迁至 `CMU-MultiComp-Lab/CMU-MultimodalSDK`），故本模型只有 MMSA 一份参照——见 [`survey.md`](survey.md) 台账 A0。
 
 **解决了什么**：MFN 用一个注意力向量决定"哪些记忆维度值得写入"，但它无法区分**是哪几个模态的组合**产生了这次交互。Graph-MFN 把融合过程显式建成一张动态图：每个模态是一个顶点，二元与三元组合各是一条边，边上有独立的顶点网络，并由数据决定每条边此刻的权重。
 
@@ -391,7 +395,7 @@ Self-MM 的 MAE 绝对差只有 **0.006**，远小于第 0 节标定的 seed 噪
 
 ---
 
-## 9. TETFN — Text Enhanced Transformer Fusion Network (Wang et al., PR 2023) ✅ 通过
+## 9. TETFN — Text Enhanced Transformer Fusion Network (Di Wang et al., Pattern Recognition 136:109259, 2023) ✅ 通过
 
 **解决了什么**：MulT 给每个有序模态对都配一条跨模态通道，包括 A→V 与 V→A 直连。TETFN **取消了这两条直连**——音频与视觉各自先注意文本，对方再注意"被文本增强过的"那个表示。**两者从不直接相见。** 它同时把 Self-MM 的自监督单模态标签接了进来，跑在微调 BERT 上，是这条故事线上三股线索的合流。
 
@@ -556,6 +560,8 @@ xavier 初始化我们写成干净的单次遍历，参照是 O(n²) 的嵌套�
 MMSA 的验证选择量是逐 batch 平均并四舍五入到 1e-4，我们是逐样本平均不取整。**这适用于我们移植的每一个模型**，理由与不改它的原因见 `#mmim`。
 
 ## 13. ALMT — Adaptive Language-guided Multimodal Transformer (Zhang et al., EMNLP 2023) ✅ 通过
+
+> **论文正文与 ACL 页面都没有代码链接**；领域使用的 `Haoyu-ha/ALMT` 出自 MMSA 的 docstring，不是作者给出的归属。另外，**ALMT 论文正文里唯一的 GitHub 链接是 MMSA 的 `result-stat.md`**——它的对照基线正是本项目已证"MMSA 自己的代码在 9/11 个模型上都够不到"的那张表（ConFEDE 亦然）。见 [`survey.md`](survey.md) 台账 A0。
 
 ### 解决了什么问题
 

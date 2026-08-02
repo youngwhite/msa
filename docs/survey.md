@@ -75,7 +75,7 @@ curl -sL "https://aclanthology.org/volumes/<卷号>/" -o vol.html   # 每卷一�
 |---|---|---|---|
 | tfn | Tensor Fusion Network for Multimodal Sentiment Analysis；Zadeh, Chen, Poria, Cambria, Morency；[EMNLP 2017](https://aclanthology.org/D17-1115/) pp.1103-1114 | **正文无代码链接** | — |
 | lmf | Efficient Low-rank Multimodal Fusion With Modality-Specific Factors；Liu, Shen, Lakshminarasimhan, Liang, Bagher Zadeh, Morency；[ACL 2018](https://aclanthology.org/P18-1209/) pp.2247-2256 | [Justin1904/Low-rank-Multimodal-Fusion](https://github.com/Justin1904/Low-rank-Multimodal-Fusion) | 200 |
-| mfn | Memory Fusion Network for Multi-view Sequential Learning；Zadeh, Liang, Mazumder, Poria, Cambria, Morency；[AAAI-18](https://ojs.aaai.org/index.php/AAAI/article/view/12021) | 正文给 `A2Zadeh/MFN` | **404，已失效** |
+| mfn | Memory Fusion Network for Multi-view Sequential Learning；Zadeh, Liang, Mazumder, Poria, Cambria, Morency；[AAAI-18](https://ojs.aaai.org/index.php/AAAI/article/view/12021) | 正文给 `A2Zadeh/MFN`（**404**）；实际可用的是合著者仓库 [pliang279/MFN](https://github.com/pliang279/MFN) | 200 |
 | graph_mfn | Multimodal Language Analysis in the Wild: **CMU-MOSEI Dataset** and Interpretable Dynamic Fusion Graph；Bagher Zadeh, Liang, Poria, Cambria, Morency；[ACL 2018](https://aclanthology.org/P18-1208/) pp.2236-2246 | 正文只给数据 SDK（`A2Zadeh/CMU-MultimodalDataSDK`，**404**），无模型代码 | — |
 | mult | Multimodal Transformer for Unaligned Multimodal Language Sequences；Tsai, Bai, Liang, Kolter, Morency, Salakhutdinov；[ACL 2019](https://aclanthology.org/P19-1656/) pp.6558-6569 | [yaohungt/Multimodal-Transformer](https://github.com/yaohungt/Multimodal-Transformer) | 200 |
 | misa | MISA: Modality-Invariant and -Specific Representations for Multimodal Sentiment Analysis；Hazarika, Zimmermann, Poria；**ACM MM '20** pp.1122-1131（[arXiv:2005.03545](https://arxiv.org/pdf/2005.03545)） | [declare-lab/MISA](https://github.com/declare-lab/MISA) | 200 |
@@ -85,26 +85,27 @@ curl -sL "https://aclanthology.org/volumes/<卷号>/" -o vol.html   # 每卷一�
 | mfm | Learning Factorized Multimodal Representations；Tsai, Liang, Zadeh, Morency, Salakhutdinov；**ICLR 2019** | [pliang279/factorized](https://github.com/pliang279/factorized/) | 200 |
 | mmim | Improving Multimodal Fusion with Hierarchical Mutual Information Maximization for Multimodal Sentiment Analysis；Wei Han, Hui Chen, Soujanya Poria；[EMNLP 2021](https://aclanthology.org/2021.emnlp-main.723/) pp.9180-9192 | [declare-lab/Multimodal-Infomax](https://github.com/declare-lab/Multimodal-Infomax)（论文正文） | 200 |
 | almt | Learning Language-guided Adaptive Hyper-modality Representation for Multimodal Sentiment Analysis；Haoyu Zhang, Yu Wang, Guanghao Yin, Kejun Liu, Yuanyuan Liu, Tianshu Yu；[EMNLP 2023](https://aclanthology.org/2023.emnlp-main.49/) pp.756-767 | **论文正文与 ACL 页面均无代码链接**；`Haoyu-ha/ALMT`（200）出自 **MMSA 的 docstring**，非论文 | 见左 |
-| cenet | Cross-modal enhancement network for multimodal sentiment analysis；Di Wang, Shuai Liu, Quan Wang, Yumin Tian, Lihuo He, Xinbo Gao；**IEEE TMM 2022** pp.4909-4921 | **未核**（IEEE 全文需订阅） | — |
-| tetfn | TETFN: A text enhanced transformer fusion network for multimodal sentiment analysis；Wang 等；**Pattern Recognition 2023**, vol.136, 109259 | **未核**（ScienceDirect 返回 403） | — |
+| cenet | Cross-Modal Enhancement Network for Multimodal Sentiment Analysis；Di Wang, Shuai Liu, Quan Wang, Yumin Tian, Lihuo He, Xinbo Gao；**IEEE TMM vol.25, 2023**, p.4909 起（**不是 2022**，见下） | [Say2L/**CENet**](https://github.com/Say2L/CENet)（论文正文；注意拼写是 CENet） | 200 |
+| tetfn | TETFN: A text enhanced transformer fusion network for multimodal sentiment analysis；**Di Wang, Xutong Guo, Yumin Tian, Jinhui Liu, LiHuo He, Xuemei Luo**（西安电子科技大学）；**Pattern Recognition 136 (2023) 109259** | **正文无代码链接** | — |
 
 **四条值得单记的事实：**
 
 1. **TFN 原论文没有放代码。** 领域内普遍使用的 `Justin1904/TensorFusionNetworks` 出现在 **MISA 论文的引用里**（作为其复现 TFN 所用的实现），不是 TFN 作者发布的。所以 TFN 这一支的"参照实现"从一开始就是第三方的。
-2. **MFN 与 Graph-MFN 的作者代码链接都已失效**（`A2Zadeh/MFN`、`A2Zadeh/CMU-MultimodalDataSDK` 均 404）。MFN 目前只能以 MMSA 为参照，**这解释了为什么 `#mfn` 那轮"对原作者实现核对"只能止于无发现**。数据 SDK 已迁至 [CMU-MultiComp-Lab/CMU-MultimodalSDK](https://github.com/CMU-MultiComp-Lab/CMU-MultimodalSDK)（200）。
+2. **论文里印的作者链接失效，不等于没有作者实现。** `A2Zadeh/MFN` 与 `A2Zadeh/CMU-MultimodalDataSDK` 均 404，但 MFN 的逐行核对（`investigations.md#mfn`，2026-07-31）用的是 **[pliang279/MFN](https://github.com/pliang279/MFN)（200）——Paul Pu Liang 是 MFN 论文的合著者**，那是一份合著者实现。**本台账初版据此把 MFN 记成"无作者实现可核"，是错的，已订正。** 教训：论文正文的链接是起点不是终点，作者名单里每个人的仓库都该查一遍。数据 SDK 已迁至 [CMU-MultiComp-Lab/CMU-MultimodalSDK](https://github.com/CMU-MultiComp-Lab/CMU-MultimodalSDK)（200）。
 3. **Graph-MFN 的原论文同时是 CMU-MOSEI 的发布论文。** 路线图里"主数据集换 MOSEI"要引的，和 Graph-MFN 是同一篇。
 4. **MISA 论文引用了 `pliang279/MFN` 与 `pliang279/factorized`** 作为其基线来源——后者正是 MFM 的官方实现，两条线在这里交汇。
 5. **ALMT 的论文里唯一的 GitHub 链接是 MMSA 的 `result-stat.md`**——和 ConFEDE 一样，**它的对照基线就是那张我们已证"MMSA 自己的代码在 9/11 个模型上都够不到"的表**。已发现两篇顶会论文以该表为基线，这不再是孤例。
-6. **两篇期刊论文（CENET / TETFN）的全文拿不到**：ScienceDirect 返回 403，IEEE 需订阅。出处以出版商元数据为准，**代码链接一栏记"未核"而不是"无"**——这两者不能混。
+6. **CENET 的年份此前记错了。** 仓库 docstring 与检索摘要都写 "TMM 2022"，但正式版页眉是 **IEEE TRANSACTIONS ON MULTIMEDIA, VOL. 25, 2023, p.4909**——2022 是 early access 的年份，**卷期年是 2023**。这正是当初标记"期刊出处比会议更易记错"的那一类错误，也是**只有拿到全文才能发现**的一类：出版商元数据与检索结果都在传播 2022。
+7. **TETFN 的论文正文没有代码链接**，且第一作者与 CENET 同为 Di Wang（西安电子科技大学）。两篇同组工作，一篇给了代码一篇没给。
+8. 两篇期刊全文由用户下载提供（ScienceDirect 403 / IEEE 需订阅，脚本取不到）。**这条留作规程的一部分：付费墙论文需要人工介入，不是"核不到"就记"无"。**
 
-### 分档汇总（12 个已核模型）
+### 分档汇总（14 个已核模型，全部已核）
 
-- **原作者代码可用**（论文正文所载且实测 200）：lmf、mult、misa、self_mm、bert_mag、mmim、mctn、mfm —— **8 个**
-- **原论文未给代码**：tfn、almt —— **2 个**
-- **作者链接已失效**：mfn、graph_mfn —— **2 个**
-- **全文不可获取，未核**：cenet、tetfn —— **2 个**
+- **作者代码可用**：lmf、mult、misa、self_mm、bert_mag、mmim、mctn、mfm、cenet（论文正文所载）+ **mfn**（合著者仓库，论文链接已失效）—— **10 个**
+- **原论文未给代码**：tfn、almt、tetfn —— **3 个**
+- **仅数据 SDK，无模型代码**：graph_mfn —— **1 个**
 
-也就是说，**我们对照表里 12 个已核模型中，有 6 个拿不到可验证归属的作者实现**。这与近三年新论文的比例（11 篇中 8 篇有代码）方向一致：**领域整体的可复现基础设施，比论文数量增长得慢。**
+也就是说，**14 个已核模型中有 4 个拿不到可验证归属的作者实现**。这与近三年新论文的比例（11 篇中 8 篇有代码）方向一致：**领域整体的可复现基础设施，比论文数量增长得慢。**
 
 ## 台账 A：已在对照表中
 
@@ -173,8 +174,6 @@ curl -sL "https://aclanthology.org/volumes/<卷号>/" -o vol.html   # 每卷一�
 
 **不许当已知事实引用。**
 
-- **cenet / tetfn 的论文全文**：两家出版商都挡住了（403 / 需订阅）。需要机构访问权限才能核代码链接与实验设定。**在拿到之前，这两条的代码栏保持"未核"。**
-- **tetfn 的完整作者名单**：只确认到 "Wang 等"，出版商元数据未给全。
 - ef_lstm / lf_dnn 在 MMSA 中是通用基线，**是否有可指认的原始论文尚未确认**——若无，应在故事线里明说"出自 MMSA 的基线实现"，不要虚构出处
 - DMD 使用谁家的预处理特征（决定其数字能否与我们直接比；README 未写）
 - DEAR / MER-CLIP 的论文完整性：能否只凭正文写出全部公式、超参、初始化与调度 → 决定 `reimpl` 还是 `reimpl-partial`
