@@ -46,6 +46,31 @@ curl -s -o /dev/null -w "%{http_code}" <repo URL>     # 每个链接实地请求
 
 两条铁律：**比参照『更好』先当 bug 信号排查**（`#almt-better-than-reference` 的教训）；**无参照时**用消融方向一致性 + 参数量对表 + 逐公式退化测试替代等价测试——其中消融方向最有力，因为它是内部对照，不依赖绝对标定。
 
+## 台账 A0：原始论文出处与作者代码（核实于 2026-08-02）
+
+仓库各处（模型 docstring、storyline）声称的引用，逐条对权威出处核实。**代码列一律取自论文正文**，不是搜索猜测——猜出来的 URL 即使返回 200 也不能证明归属。
+
+| 模型 | 论文与出处（已核） | 作者代码（论文正文所载） | 实测 |
+|---|---|---|---|
+| tfn | Tensor Fusion Network for Multimodal Sentiment Analysis；Zadeh, Chen, Poria, Cambria, Morency；[EMNLP 2017](https://aclanthology.org/D17-1115/) pp.1103-1114 | **正文无代码链接** | — |
+| lmf | Efficient Low-rank Multimodal Fusion With Modality-Specific Factors；Liu, Shen, Lakshminarasimhan, Liang, Bagher Zadeh, Morency；[ACL 2018](https://aclanthology.org/P18-1209/) pp.2247-2256 | [Justin1904/Low-rank-Multimodal-Fusion](https://github.com/Justin1904/Low-rank-Multimodal-Fusion) | 200 |
+| mfn | Memory Fusion Network for Multi-view Sequential Learning；Zadeh, Liang, Mazumder, Poria, Cambria, Morency；[AAAI-18](https://ojs.aaai.org/index.php/AAAI/article/view/12021) | 正文给 `A2Zadeh/MFN` | **404，已失效** |
+| graph_mfn | Multimodal Language Analysis in the Wild: **CMU-MOSEI Dataset** and Interpretable Dynamic Fusion Graph；Bagher Zadeh, Liang, Poria, Cambria, Morency；[ACL 2018](https://aclanthology.org/P18-1208/) pp.2236-2246 | 正文只给数据 SDK（`A2Zadeh/CMU-MultimodalDataSDK`，**404**），无模型代码 | — |
+| mult | Multimodal Transformer for Unaligned Multimodal Language Sequences；Tsai, Bai, Liang, Kolter, Morency, Salakhutdinov；[ACL 2019](https://aclanthology.org/P19-1656/) pp.6558-6569 | [yaohungt/Multimodal-Transformer](https://github.com/yaohungt/Multimodal-Transformer) | 200 |
+| misa | MISA: Modality-Invariant and -Specific Representations for Multimodal Sentiment Analysis；Hazarika, Zimmermann, Poria；**ACM MM '20** pp.1122-1131（[arXiv:2005.03545](https://arxiv.org/pdf/2005.03545)） | [declare-lab/MISA](https://github.com/declare-lab/MISA) | 200 |
+| self_mm | Learning Modality-Specific Representations with Self-Supervised Multi-Task Learning for Multimodal Sentiment Analysis；Yu, Xu, Yuan, Wu；[AAAI 2021](https://ojs.aaai.org/index.php/AAAI/article/view/17289) vol.35 pp.10790-10797 | [thuiar/Self-MM](https://github.com/thuiar/Self-MM) | 200 |
+| bert_mag | Integrating Multimodal Information in Large Pretrained Transformers；Rahman, Hasan, Lee, Bagher Zadeh, Mao, Morency, Hoque；[ACL 2020](https://aclanthology.org/2020.acl-main.214/) pp.2359-2369 | [WasifurRahman/BERT_multimodal_transformer](https://github.com/WasifurRahman/BERT_multimodal_transformer) | 200 |
+| mctn | Found in Translation: Learning Robust Joint Representations by Cyclic Translations Between Modalities；Pham, Liang, Manzini, Morency, Póczos；**AAAI 2019** vol.33 pp.6892-6899 | [hainow/MCTN](https://github.com/hainow/MCTN) | 200 |
+| mfm | Learning Factorized Multimodal Representations；Tsai, Liang, Zadeh, Morency, Salakhutdinov；**ICLR 2019** | [pliang279/factorized](https://github.com/pliang279/factorized/) | 200 |
+| almt / cenet / tetfn / mmim | 待核（见「待核实」） | | |
+
+**四条值得单记的事实：**
+
+1. **TFN 原论文没有放代码。** 领域内普遍使用的 `Justin1904/TensorFusionNetworks` 出现在 **MISA 论文的引用里**（作为其复现 TFN 所用的实现），不是 TFN 作者发布的。所以 TFN 这一支的"参照实现"从一开始就是第三方的。
+2. **MFN 与 Graph-MFN 的作者代码链接都已失效**（`A2Zadeh/MFN`、`A2Zadeh/CMU-MultimodalDataSDK` 均 404）。MFN 目前只能以 MMSA 为参照，**这解释了为什么 `#mfn` 那轮"对原作者实现核对"只能止于无发现**。数据 SDK 已迁至 [CMU-MultiComp-Lab/CMU-MultimodalSDK](https://github.com/CMU-MultiComp-Lab/CMU-MultimodalSDK)（200）。
+3. **Graph-MFN 的原论文同时是 CMU-MOSEI 的发布论文。** 路线图里"主数据集换 MOSEI"要引的，和 Graph-MFN 是同一篇。
+4. **MISA 论文引用了 `pliang279/MFN` 与 `pliang279/factorized`** 作为其基线来源——后者正是 MFM 的官方实现，两条线在这里交汇。
+
 ## 台账 A：已在对照表中
 
 | 模型 | 参照来源 | 实现出处 | 备注 |
@@ -113,6 +138,8 @@ curl -s -o /dev/null -w "%{http_code}" <repo URL>     # 每个链接实地请求
 
 **不许当已知事实引用。**
 
+- **台账 A0 尚缺四条**：almt（记为 Zhang et al., EMNLP 2023）、cenet（Wang et al., TMM 2022）、tetfn（Wang et al., PR 2023）、mmim（Han et al., EMNLP 2021）。**期刊出处（TMM / Pattern Recognition）比会议更易记错，须重点核。**
+- ef_lstm / lf_dnn 在 MMSA 中是通用基线，**是否有可指认的原始论文尚未确认**——若无，应在故事线里明说"出自 MMSA 的基线实现"，不要虚构出处
 - DMD 使用谁家的预处理特征（决定其数字能否与我们直接比；README 未写）
 - DEAR / MER-CLIP 的论文完整性：能否只凭正文写出全部公式、超参、初始化与调度 → 决定 `reimpl` 还是 `reimpl-partial`
 - EBMC / MoLAN / MMA / DPDF-LQ 各自的特征与划分是否与本仓库一致
