@@ -51,6 +51,7 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     tfn_mosi_ablation_masked
     lmf_mosi_ablation_masked
     mfn_mosi_ablation_realseq
+    mfn_mosi_ablation_reallenmean
     graph_mfn_mosi_ablation_frozen
     tfn_mosi_ablation_mmsaselect
     mfn_mosi_ablation_mmsaselect
@@ -94,6 +95,14 @@ args_for() {
         echo "--model mfn --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 2e-3 --weight-decay 0 --batch-size 128 --grad-clip 0 --epochs 200" ;;
     mfn_mosi_ablation_realseq)
         echo "--model mfn --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 2e-3 --weight-decay 0 --batch-size 128 --grad-clip 0 --epochs 200 --model-arg collapse_av_to_mean=False" ;;
+    # The third cell of a 2x2. mfn_mosi (MMSA's config) and the realseq ablation
+    # differ in two ways at once -- constant-over-time streams, and the
+    # valid_len/padded_width scaling that averaging over the padded width
+    # imposes. This keeps the streams constant and removes only the scaling, so
+    # the cross-machine instability of mfn_mosi can be attributed to one or the
+    # other. See docs/investigations.md#mfn-rebaseline.
+    mfn_mosi_ablation_reallenmean)
+        echo "--model mfn --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 2e-3 --weight-decay 0 --batch-size 128 --grad-clip 0 --epochs 200 --model-arg collapse_over_real_length=True" ;;
     # MulT: MMSA hyper-parameters for MOSI. First model here that clips (by
     # value, 0.6) and decays its learning rate on plateau (factor 0.1,
     # patience 5); early stopping still uses patience 8.

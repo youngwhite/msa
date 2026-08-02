@@ -62,9 +62,11 @@ class MemoryFusionNetwork(MSAModel):
         out_hidden: int = 128,
         out_dropout: float = 0.0,
         collapse_av_to_mean: bool = True,
+        collapse_over_real_length: bool = False,
     ) -> None:
         super().__init__()
         self.collapse_av_to_mean = collapse_av_to_mean
+        self.collapse_over_real_length = collapse_over_real_length
         total_hidden = text_hidden + audio_hidden + vision_hidden
         attention_in = total_hidden * window   # the cells before and after the step
 
@@ -90,9 +92,17 @@ class MemoryFusionNetwork(MSAModel):
         if self.collapse_av_to_mean:
             # MMSA's need_normalized + need_model_aligned in one step: average
             # over the padded width, then repeat across the text timeline.
+            #
+            # collapse_over_real_length divides by the valid length instead. It
+            # exists to separate the two things that change at once between the
+            # acceptance group and the collapse_av_to_mean=False ablation: the
+            # streams stop being constant over time, AND the valid_len/padded
+            # scaling disappears. This is the cell that isolates the scaling.
             steps = text.shape[1]
-            audio = masked_mean(audio, None).unsqueeze(1).expand(-1, steps, -1)
-            vision = masked_mean(vision, None).unsqueeze(1).expand(-1, steps, -1)
+            a_len = batch["audio_length"] if self.collapse_over_real_length else None
+            v_len = batch["vision_length"] if self.collapse_over_real_length else None
+            audio = masked_mean(audio, a_len).unsqueeze(1).expand(-1, steps, -1)
+            vision = masked_mean(vision, v_len).unsqueeze(1).expand(-1, steps, -1)
         return text, audio, vision
 
     def forward(self, batch: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
