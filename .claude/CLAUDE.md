@@ -2,7 +2,9 @@
 
 多模态情感分析研究项目。**开工前先读 `docs/storyline.md`**——它是复盘与审计的主文档，按技术演进逐个模型记录"解决了什么问题 / 复现结果 / 判定 / 实现差异"。
 
-其余：`docs/roadmap.md`（方向、验收标准、下一步）、`docs/investigations.md`（**排查记录，避免重复试错**）、`docs/decisions.md`（为什么这样做）、`docs/experiments.md`（全部数字）。
+其余：`docs/roadmap.md`（方向、验收标准、下一步）、`docs/investigations.md`（**排查记录，避免重复试错**）、`docs/decisions.md`（为什么这样做）、`docs/experiments.md`（全部数字）、`docs/survey.md`（**调研台账：扫了哪里、证据强度、排除了什么**）。
+
+**调研某个方法有没有官方代码时，先读 `docs/survey.md` 的「核实规矩」**——会议页面的元数据不显示正文里的代码链接，据此判断已经误判过四篇。
 
 参考实现在 `/workspace/MMSA`（MIT，THUIAR）。我们移植它的模型定义，但训练循环、评测协议、复现性基础设施自己实现——原因见 roadmap「与 MMSA 的关系」。
 
