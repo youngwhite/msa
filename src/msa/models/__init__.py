@@ -5,6 +5,7 @@ from .base import MSAModel
 from .bert import TextOnlyBert
 from .bert_mag import BertMAG
 from .cenet import CENet
+from .dpdf_lq import DualPathDynamicFusion
 from .graph_mfn import GraphMemoryFusionNetwork
 from .lf_lstm import LateFusionLSTM
 from .lmf import LowRankFusion
@@ -21,6 +22,7 @@ from .tfn import TensorFusionNetwork
 
 __all__ = [
     "MSAModel",
+    "DualPathDynamicFusion",
     "BertMAG",
     "ALMT",
     "CENet",

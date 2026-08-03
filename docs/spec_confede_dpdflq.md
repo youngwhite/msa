@@ -117,7 +117,34 @@ L = (1/N) Σ ||y_n − ŷ_n||²
 2. **都进 `reproduce_all.sh`**，10 seed（42-51），参照用它们自己的官方代码在本机跑 10 seed——不用它们论文里的数字（那是 5 seed 或单值，且对照基线是那张不可达的表）
 3. **ConFEDE 的 `L_uni` 在 MOSI 上退化**这一点必须进 storyline，否则读者会以为我们漏实现了
 
-## 待确认
+## 已确认（2026-08-02）
 
-1. ConFEDE 的对比损失同时含**样本内**与**样本间**两种，NT-Xent 的温度与负样本采样策略论文正文未给全 → 取作者实现，若作者实现与正文不一致则按约定 5 记录
-2. 两者是否都建"论文版 / MMSA 可比版"双组？**我倾向不建**——它们的数据本来就与我们同源，不存在 MCTN/MFM 那种"参照偏离论文"的问题，建双组是多余的
+- **不建双组**：两者数据与本仓库同源，不存在 MCTN/MFM 那种"参照偏离论文"的问题
+- **NT-Xent 按作者实现取**
+
+## 读作者代码后补入的两条（ConFEDE）
+
+**一、它的 NT-Xent 是被改过的。** `util/metrics.py` 的 `cont_NTXentLoss` 继承 `pytorch_metric_learning.NTXentLoss`，但重写了 `_compute_loss`：
+
+```python
+weight = abs(self.label[a2] - self.label[n])     # 锚点与负样本的标签距离
+neg_pairs = neg_pairs * weight / 2               # 负样本按标签距离加权
+```
+
+即**标签越接近的负样本被压得越轻**——这是把回归标签的连续性注入对比损失，**论文正文没有明说**。温度取 `sds_heat = const_heat = 0.5`（不是 NT-Xent 常见的 0.07）。按约定 5，这属于"参照实现的行为与正文不一致"，必须记录并照行为实现。
+
+**二、它是分阶段训练的，不是端到端。** 作者代码分四步：`Ttrain.py` / `Vtrain.py` / `Atrain.py` 各自预训练单模态编码器（epoch 200 / 100 / 100，bs 128，lr 1e-4），再由 `main-fusion.py` 训练融合（epoch 25，**bs 16**）。
+
+**本仓库的单一 trainer 不支持多阶段。** 这比 MMIM 当初那个"每 epoch 先跑一遍 MMILB"更重——那是 epoch 内的两段，这是四个独立训练过程。三条路：
+
+- **A. 扩展 trainer 支持阶段化训练**（新增 `stages` 契约）。忠实，但属训练循环的结构性改动，影响所有模型
+- **B. 端到端训练**，把分阶段作为已知协议差异记录。成本最低，但**不是论文/作者跑的东西**，数字含义会变
+- **C. 把单模态预训练做成一次性产物**（类似特征提取），融合阶段读它。介于两者之间
+
+**这一条需要拍板后才能动 ConFEDE。** DPDF-LQ 不受影响——单损失、单阶段。
+
+### 其余已核实的 ConFEDE 超参（作者 `MOSI/config.py`）
+
+`raw_data_path = data/MOSI/Processed/**unaligned_50.pkl**`（**unaligned，不是 aligned**）、`text_fea_dim 768 / vision_fea_dim 20 / audio_fea_dim 5`、`video_seq_len 500 / audio_seq_len 375`、`proj_fea_dim 256`、三路 dropout 0.5、`vision_nhead = audio_nhead = 8`、`lr 1e-4`。**维度与序列长度与本仓库的 unaligned pkl 逐项一致。**
+
+作者用的 seed 是 `[1, 12, 123, 1234, 12345]`（5 个）；我们用注册的 42-51（10 个）。

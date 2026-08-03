@@ -181,11 +181,15 @@ class _TokenTransformer(nn.Module):
         self.extra_token = nn.Parameter(torch.zeros(1, token_len, dim))
         self.encoder = _Encoder(dim, depth, heads, dim_head, mlp_dim, dropout)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, keep_all: bool = False) -> torch.Tensor:
         b, n, _ = x.shape
         tokens = self.extra_token.expand(b, -1, -1)
         x = torch.cat((tokens, x), dim=1) + self.position[:, : n + self.token_len]
-        return self.encoder(x)[:, : self.token_len]
+        encoded = self.encoder(x)
+        # ALMT always wants just the summary tokens. DPDF-LQ's local path wants
+        # the whole sequence -- the reference returns everything and only its
+        # *global* path slices, which is where its hard-coded 58 comes from.
+        return encoded if keep_all else encoded[:, : self.token_len]
 
 
 class _PositionalEncoder(nn.Module):
@@ -224,12 +228,19 @@ class _CrossTransformer(nn.Module):
         self.cls_token = nn.Parameter(torch.zeros(1, 1, dim))
         self.encoder = _CrossEncoder(dim, depth, heads, dim_head, mlp_dim, dropout)
 
-    def forward(self, source: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+    def forward(self, source: torch.Tensor, target: torch.Tensor,
+                additional: torch.Tensor | None = None) -> torch.Tensor:
         cls = self.cls_token.expand(source.size(0), -1, -1)
         source = torch.cat((cls, source), dim=1)
         source = source + self.position_source[:, : source.size(1)]
         target = torch.cat((cls, target), dim=1)
         target = target + self.position_target[:, : target.size(1)]
+        # `additional` is appended AFTER the positional embedding is applied, so
+        # it carries no position information at all. DPDF-LQ's local path relies
+        # on this: it passes vision as the third positional argument, which the
+        # reference's signature silently routes here.
+        if additional is not None:
+            target = torch.cat((target, additional), dim=1)
         return self.encoder(source, target)
 
 

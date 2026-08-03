@@ -54,6 +54,7 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     mctn_mosi_paper
     mfm_mosi
     mfm_mosi_paper
+    dpdf_lq_mosi
     mfn_mosi_ablation_realseq
     mfn_mosi_ablation_reallenmean
     graph_mfn_mosi_ablation_frozen
@@ -106,6 +107,14 @@ args_for() {
         echo "--model mctn --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-4 --weight-decay 0 --batch-size 32 --grad-clip 1.0 --epochs 200 --patience 8" ;;
     mctn_mosi_paper)
         echo "--model mctn --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-4 --weight-decay 0 --batch-size 32 --grad-clip 1.0 --epochs 200 --patience 8 --model-arg paper_faithful=True" ;;
+    # DPDF-LQ: hyper-parameters from the PAPER's Table 3, not from the authors'
+    # code -- EMNLP 2025 states them in full (query length 8 / width 128, DGLQA
+    # depth 3, both cross-attention depths 2, hidden 256, lr 1e-4, wd 1e-4,
+    # bs 64), which is rare enough in this literature to be worth noting. Its
+    # loss is a single MSE term (eq. 36); ALIGNED data with BERT features, the
+    # same tensors every other aligned group here reads.
+    dpdf_lq_mosi)
+        echo "--model dpdf_lq --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --lr 1e-4 --weight-decay 1e-4 --batch-size 64 --grad-clip 0 --epochs 200 --patience 8" ;;
     # MFM: MMSA hyper-parameters for MOSI (bs 64, the factor/latent widths and
     # four dropouts from its config, lda_mmd 100, lda_xl/xa/xv 0.5/0.01/0.5).
     # lr 1e-3, not the 0.002 in MMSA's config: its MFM trainer builds Adam
