@@ -287,8 +287,12 @@ class DualPathDynamicFusion(MSAModel):
         # The local target is audio and vision concatenated, so it is twice the
         # token length -- the reference hard-codes 58 here and would break on any
         # other sequence length.
+        # The local path keeps whole sequences, so these are token_len + the
+        # stream length -- the reference hard-codes both to 58 (8 + 50). Vision
+        # is appended after the positional embedding and needs no size here.
         self.local_fusion = _CrossTransformer(
-            local_source_len or token_len, local_target_len or token_len * 2,
+            local_source_len or token_len + text_length,
+            local_target_len or token_len + audio_length,
             width, local_depth, fusion_heads, dim_head, width, dropout)
 
         # --- between paths ---------------------------------------------------
