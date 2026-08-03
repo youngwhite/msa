@@ -81,11 +81,13 @@ def machine_fingerprint() -> dict[str, object]:
             ("device_description", "cpu", "cpu_capability", "torch", "python")}
 
 
-#: Refuse to start below this. A release that checkpoints on every improvement
-#: can write tens of GB before anyone notices, and a full disk on this kind of
-#: instance takes SSH down with it -- which is exactly how this runner filled a
-#: 16GB disk on its first ten-seed batch.
-MIN_FREE_GB = 8
+#: Refuse to start below this. Sized from the measured peak, not from caution:
+#: DPDF-LQ's release deletes the superseded checkpoint before writing the next
+#: (train.py:92-93), so one seed holds at most one -- about 800MB for a model
+#: with a BERT per path -- and this runner clears it between seeds. Three
+#: gigabytes is roughly three times the peak. The first batch still filled a
+#: 16GB disk, because nothing deleted anything at all.
+MIN_FREE_GB = 3
 
 
 def free_gigabytes(path: Path) -> float:
