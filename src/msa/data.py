@@ -123,6 +123,11 @@ class MMSADataset(Dataset):
             "audio": self.audio[idx],
             "vision": self.vision[idx],
             "text_bert": self.text_bert[idx],
+            # The raw sentence. Only ConFEDE reads it: its release tokenises at
+            # run time with max_length 256 rather than using the pickle's
+            # pre-tokenised 50-token `text_bert`, so reproducing it means giving
+            # it the string. The trainer passes non-tensors through untouched.
+            "raw_text": self.raw_text[idx],
             "text_length": self.text_lengths[idx],
             "audio_length": self.audio_lengths[idx],
             "vision_length": self.vision_lengths[idx],
