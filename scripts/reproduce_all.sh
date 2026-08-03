@@ -263,6 +263,8 @@ jobs_for() {
     case "$1" in
     mult_mosi|mult_mosi_posenc) echo 2 ;;      # ~5.6 GB each
     misa_mosi|self_mm_mosi|text_bert_mosi|cenet_mosi|tetfn_mosi|bert_mag_mosi|mmim_mosi|almt_mosi) echo 2 ;;   # fine-tuned BERT
+    # DPDF-LQ builds a BERT per path, so one seed is ~5GB: it runs alone.
+    dpdf_lq_mosi) echo 1 ;;
     *) echo 4 ;;                                # the frozen-feature models are small
     esac
 }
