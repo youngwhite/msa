@@ -160,6 +160,7 @@ curl -sL "https://aclanthology.org/volumes/<卷号>/" -o vol.html   # 每卷一�
 | almt | 我们跑 MMSA 的代码 | `reimpl+equiv` | 权重复制等价测试，最大绝对差 `0.000e+00` |
 | text_bert | 无（对照组） | 自建 | 故事线的关键对照 |
 | lf_lstm | 无（自建基线） | 自建 | 方差标尺（seed 间 MAE sd 0.039） |
+| **dpdf_lq** | 我们跑**作者代码** 10 seed（`docs/author_code_runs_mosi.json`），按验证集选轮 | `reimpl+equiv` | 权重复制等价测试 `0.000e+00`；结构与协议均取自作者实现，超参取自论文 Table 3 |
 
 ## 台账 B：第 1 阶段收口的两个
 

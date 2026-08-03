@@ -65,6 +65,10 @@ REFERENCE_PATH = PROJECT_ROOT / "docs" / "mmsa_reference_mosi.json"
 #: mean and spread are computed here with this project's ddof=1 rather than read
 #: off MMSA's CSV, which summarises with np.std (ddof=0).
 CODE_REFERENCE_PATH = PROJECT_ROOT / "docs" / "mmsa_code_runs_mosi.json"
+#: Methods published after MMSA stopped adding models have only their authors'
+#: releases as a reference. Separate file because the provenance differs: one is
+#: a third-party reimplementation, the other is the authors' own code.
+AUTHOR_REFERENCE_PATH = PROJECT_ROOT / "docs" / "author_code_runs_mosi.json"
 ADJUDICATION_PATH = PROJECT_ROOT / "docs" / "acceptance_status.json"
 LOWER_IS_BETTER = {"mae"}
 #: This dataset's own seed noise, measured on the LF-LSTM baseline over seeds
@@ -105,13 +109,18 @@ def load_reference() -> dict:
     if CODE_REFERENCE_PATH.exists():
         for model, entry in json.loads(CODE_REFERENCE_PATH.read_text())["models"].items():
             reference.setdefault(model, {"_source": "mmsa_code"} | summarise(entry))
+    if AUTHOR_REFERENCE_PATH.exists():
+        for model, entry in json.loads(AUTHOR_REFERENCE_PATH.read_text())["models"].items():
+            reference.setdefault(model, {"_source": "author_code"} | summarise(entry))
     return reference
 
 
 def summarise(entry: dict) -> dict:
     """Per-seed reference runs -> the mean/sd/n shape the rest of this file wants."""
     runs = list(entry["runs"].values())
-    stats = {"data_setting": entry["data_setting"], "n": len(runs),
+    # Author releases record no data_setting; the check that uses it treats
+    # None as "not stated" and skips, which is the honest reading.
+    stats = {"data_setting": entry.get("data_setting"), "n": len(runs),
              "seeds": entry["seeds"]}
     for metric in {key for run in runs for key in run}:
         values = [run[metric] for run in runs if metric in run]
@@ -177,6 +186,10 @@ def judge(group: str, model: str, reference: dict, verbose: bool = True) -> bool
     if ref.get("_source") == "mmsa_code":
         print(f"\n  reference for {model} is our own 10-seed run of MMSA's code, not "
               f"MMSA's table — it publishes no number for this model.")
+    elif ref.get("_source") == "author_code":
+        print(f"\n  reference for {model} is our own 10-seed run of the AUTHORS' "
+              f"release, selected on validation as we select — not the number the "
+              f"paper reports, which selects on the test set.")
 
     n = stats["mae"]["n"]
     setting = "unaligned" if not summary.get("aligned", True) else "aligned"
