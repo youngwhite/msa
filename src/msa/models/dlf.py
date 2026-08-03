@@ -139,8 +139,7 @@ class DisentangledLanguageFocused(MSAModel):
         lengths = {"text": text_length, "audio": audio_length, "vision": vision_length}
         self.spans = {m: n - kernel_size + 1 for m, n in lengths.items()}
         dims = {"text": 768, "audio": audio_dim, "vision": vision_dim}
-        self.project = nn.ModuleDict(
-            {m: nn.Conv1d(dims[m], width, kernel_size, bias=False) for m in dims})
+        drops = {"text": attn_dropout, "audio": attn_dropout_a, "vision": attn_dropout_v}
 
         def encoder_for(dropout: float, layers: int) -> TransformerEncoder:
             # position_embedding=True: the release's transformer always adds
@@ -150,36 +149,49 @@ class DisentangledLanguageFocused(MSAModel):
                 res_dropout=res_dropout, embed_dropout=embed_dropout,
                 attn_mask=attn_mask, position_embedding=True)
 
-        drops = {"text": attn_dropout, "audio": attn_dropout_a, "vision": attn_dropout_v}
-        self.specific = nn.ModuleDict({m: encoder_for(drops[m], levels) for m in dims})
+        # Modules are declared in the reference's registration order -- proj_*,
+        # encoder_s_*, encoder_c, decoder_*, align_c_*, ... -- so the weight-copy
+        # equivalence test can walk both parameter lists positionally. Grouping
+        # them by modality reads better and made the copy misalign.
+        ORDER = ("text", "vision", "audio")
+        self.project = nn.ModuleDict()
+        for m in ("text", "audio", "vision"):        # proj_l, proj_a, proj_v
+            self.project[m] = nn.Conv1d(dims[m], width, kernel_size, bias=False)
+        self.specific = nn.ModuleDict()
+        for m in ORDER:                              # encoder_s_l, _v, _a
+            self.specific[m] = encoder_for(drops[m], levels)
         #: One instance for all three modalities -- that sharing is the point.
         self.shared = encoder_for(attn_dropout, levels)
-        self.decode = nn.ModuleDict(
-            {m: nn.Conv1d(width * 2, width, 1, bias=False) for m in dims})
-
-        self.align = nn.ModuleDict(
-            {m: nn.Linear(width * self.spans[m], width) for m in dims})
-        self.shared_attention = nn.ModuleDict(
-            {m: encoder_for(drops[m], levels) for m in dims})
-
-        # Language-focused cross attention: audio and vision into language only.
-        self.into_language = nn.ModuleDict({
-            "audio": encoder_for(attn_dropout_a, levels),
-            "vision": encoder_for(attn_dropout_v, levels),
-        })
-        self.memory = nn.ModuleDict({
-            "text": encoder_for(attn_dropout, levels),
-            "audio": encoder_for(attn_dropout, memory_levels),
-            "vision": encoder_for(attn_dropout, memory_levels),
-        })
-
-        self.low_head = nn.ModuleDict(
-            {m: _residual_head(width * self.spans[m], width, output_dropout) for m in dims})
-        self.high_head = nn.ModuleDict(
-            {m: _residual_head(width, width, output_dropout) for m in dims})
+        self.decode = nn.ModuleDict()
+        for m in ("text", "vision", "audio"):        # decoder_l, _v, _a
+            self.decode[m] = nn.Conv1d(width * 2, width, 1, bias=False)
+        self.align = nn.ModuleDict()
+        for m in ORDER:                              # align_c_l, _v, _a
+            self.align[m] = nn.Linear(width * self.spans[m], width)
+        self.shared_attention = nn.ModuleDict()
+        for m in ORDER:                              # self_attentions_c_l, _v, _a
+            self.shared_attention[m] = encoder_for(drops[m], levels)
         self.shared_head = _residual_head(width * 3, width * 3, output_dropout)
 
-        self.gate = nn.ModuleDict({m: nn.Linear(width, width) for m in dims})
+        # Language-focused cross attention: audio and vision into language only.
+        self.into_language = nn.ModuleDict()
+        self.into_language["audio"] = encoder_for(attn_dropout_a, levels)   # trans_l_with_a
+        self.into_language["vision"] = encoder_for(attn_dropout_v, levels)  # trans_l_with_v
+        self.memory = nn.ModuleDict()
+        self.memory["text"] = encoder_for(attn_dropout, levels)             # trans_l_mem
+        self.memory["audio"] = encoder_for(attn_dropout, memory_levels)     # trans_a_mem
+        self.memory["vision"] = encoder_for(attn_dropout, memory_levels)    # trans_v_mem
+
+        self.low_head = nn.ModuleDict()
+        for m in ORDER:
+            self.low_head[m] = _residual_head(width * self.spans[m], width, output_dropout)
+        self.high_head = nn.ModuleDict()
+        for m in ORDER:
+            self.high_head[m] = _residual_head(width, width, output_dropout)
+
+        self.gate = nn.ModuleDict()
+        for m in ORDER:                              # projector_l, _v, _a
+            self.gate[m] = nn.Linear(width, width)
         self.gate_shared = nn.Linear(width * 3, width * 3)
         combined = width * 3 + width * 3
         self.fusion_head = _residual_head(combined, combined, output_dropout)
