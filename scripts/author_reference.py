@@ -33,6 +33,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -80,11 +81,47 @@ def machine_fingerprint() -> dict[str, object]:
             ("device_description", "cpu", "cpu_capability", "torch", "python")}
 
 
+#: Refuse to start below this. A release that checkpoints on every improvement
+#: can write tens of GB before anyone notices, and a full disk on this kind of
+#: instance takes SSH down with it -- which is exactly how this runner filled a
+#: 16GB disk on its first ten-seed batch.
+MIN_FREE_GB = 8
+
+
+def free_gigabytes(path: Path) -> float:
+    usage = shutil.disk_usage(path)
+    return usage.free / 1024 ** 3
+
+
+def drop_checkpoints(directory: Path) -> None:
+    """Delete a release's checkpoints, keeping its logs.
+
+    `mmsa_reference.py` has done this from the start -- its comment records that
+    eleven BERT-sized models once filled the disk mid-batch. This runner was
+    written without that discipline and repeated the failure at the first
+    opportunity: DPDF-LQ builds a BERT per path, so one checkpoint is ~800MB and
+    it saves one on every improvement.
+    """
+    freed = 0
+    for pattern in ("*.pth", "*.pt", "*.ckpt", "*.bin"):
+        for checkpoint in directory.rglob(pattern):
+            freed += checkpoint.stat().st_size
+            checkpoint.unlink()
+    if freed:
+        print(f"  removed {freed / 1e9:.1f}GB of checkpoints", flush=True)
+
+
 def run(method: str, seeds: list[int], out_root: Path) -> None:
     spec = METHODS[method]
     repo = spec["repo"]
     if not repo.exists():
         raise SystemExit(f"no checkout at {repo}; clone the release first")
+    free = free_gigabytes(repo)
+    if free < MIN_FREE_GB:
+        raise SystemExit(
+            f"{free:.1f}GB free, need {MIN_FREE_GB}GB. A release that checkpoints "
+            f"every improvement will fill this before the batch ends; clear space "
+            f"first rather than discovering it at seed 7.")
 
     out = out_root / method
     out.mkdir(parents=True, exist_ok=True)
@@ -105,6 +142,13 @@ def run(method: str, seeds: list[int], out_root: Path) -> None:
         with log.open("w") as handle:
             subprocess.run(command, cwd=repo, env=environment,
                            stdout=handle, stderr=subprocess.STDOUT, check=False)
+        # After every seed, not after the batch: the point is to never hold more
+        # than one seed's checkpoints at a time.
+        drop_checkpoints(repo)
+        if free_gigabytes(repo) < 2:
+            raise SystemExit(
+                f"under 2GB free after seed {seed}; stopping before the disk "
+                f"fills. Logs so far are in {out}.")
     (out / "machine.json").write_text(
         json.dumps(machine_fingerprint(), indent=2) + "\n")
 
