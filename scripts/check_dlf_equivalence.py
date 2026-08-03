@@ -5,10 +5,16 @@ same" is a claim until something checks it. This is that check, in the shape
 convention 5 requires: construct both models, copy every weight across, feed one
 input, compare the outputs.
 
-The comparison is on the prediction only. The release returns nineteen tensors
-from `forward`, most of them intermediates the loss consumes; if the final
-prediction agrees to 1e-5 after a full weight copy, every stage that feeds it
-agrees too, and the intermediates are checked implicitly.
+The comparison covers all five prediction heads. It began as the final
+prediction alone, reasoning that anything feeding it is checked implicitly --
+true, but the release has four *auxiliary* heads whose outputs reach the loss
+and never reach the prediction, so they sat outside the argument entirely. That
+blind spot is how a missing loss term survived a passing test: the port dropped
+four of the five task terms, and nothing on the prediction path could tell.
+
+The lesson is narrow and worth keeping: "everything upstream is implied" only
+covers what is upstream *of the tensor being compared*. Heads that exist solely
+to be supervised have to be named.
 
 **Seven modules the release builds and never calls** are excluded rather than
 reproduced, per convention 5. Three are `proj_cosine_l/v/a`, commented "for
@@ -39,6 +45,12 @@ import torch
 import torch.nn as nn
 
 ORIGIN = Path(os.environ.get("DLF_ORIGIN", "/workspace/DLF"))
+#: The release imports pynvml, which lives in the reference environment rather
+#: than ours. Without this the test SKIPs -- and a SKIP exits 0, so check_all.sh
+#: would record a silent PASS. That is precisely how check_almt_equivalence.py
+#: went unnoticed-dead for months, so the path is resolved here rather than left
+#: to whoever remembers to export it.
+SHIM = Path(os.environ.get("MMSA_SHIM", "/workspace/mmsa_env/shim"))
 BATCH, LENGTH, BERT_DIM, AUDIO_DIM, VISION_DIM = 4, 50, 768, 5, 20
 TOLERANCE = 1e-5
 
@@ -56,6 +68,18 @@ MODEL_ARGS = dict(
 )
 
 
+#: Their head name -> ours. All five are supervised by the task loss, with the
+#: language head weighted 3 and the rest 1 -- so all five have to agree, not just
+#: the one the model finally predicts with.
+HEADS = {
+    "output_logit": "M",
+    "logits_c": "shared_logit",
+    "logits_l_hetero": "high_text",
+    "logits_v_hetero": "high_vision",
+    "logits_a_hetero": "high_audio",
+}
+
+
 class _StubBert(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return x
@@ -69,7 +93,9 @@ def _skip(reason: str) -> int:
 def main() -> int:
     if not (ORIGIN / "trains").exists():
         return _skip(f"no DLF checkout at {ORIGIN}")
-    sys.path.insert(0, str(ORIGIN))
+    for path in (SHIM, ORIGIN):
+        if path.exists():
+            sys.path.insert(0, str(path))
     try:
         from trains.singleTask.model.DLF import DLF as TheirDLF
     except ImportError as exc:
@@ -116,15 +142,20 @@ def main() -> int:
     theirs.eval()
     ours.eval()
     with torch.no_grad():
-        their_out = theirs(text, audio, vision)["output_logit"].view(-1)
-        our_out = ours({"text_bert": text, "audio": audio, "vision": vision})["M"]
+        their_out = theirs(text, audio, vision)
+        our_out = ours({"text_bert": text, "audio": audio, "vision": vision})
 
-    difference = float((their_out - our_out).abs().max())
     print(f"{len(their_params)} parameter tensors matched and copied")
-    print(f"reference: {[round(float(v), 6) for v in their_out]}")
-    print(f"ours:      {[round(float(v), 6) for v in our_out]}")
-    print(f"max abs difference: {difference:.3e}")
-    if difference > TOLERANCE:
+    worst = 0.0
+    for their_key, our_key in HEADS.items():
+        a = their_out[their_key].view(-1)
+        b = our_out[our_key].view(-1)
+        difference = float((a - b).abs().max())
+        worst = max(worst, difference)
+        print(f"  {their_key:18s} {difference:.3e}"
+              f"   {[round(float(v), 6) for v in a[:2]]} vs {[round(float(v), 6) for v in b[:2]]}")
+    print(f"max abs difference: {worst:.3e}")
+    if worst > TOLERANCE:
         print(f"FAIL: above tolerance {TOLERANCE:.0e}")
         return 1
     print("EQUIVALENT")

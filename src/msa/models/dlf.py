@@ -268,7 +268,28 @@ class DisentangledLanguageFocused(MSAModel):
     ) -> torch.Tensor:
         label = batch["label"]
         modalities = ("text", "audio", "vision")
-        task = F.l1_loss(outputs["M"], label)
+
+        # Five supervised heads, not one. The fused prediction is scored, and so
+        # are the shared branch and each of the three language-focused branches
+        # -- the last of which carries weight 3 while everything else carries 1.
+        # That asymmetry is the second half of "language-focused": the first is
+        # architectural (only language acts as a query), this one is in the
+        # objective, and the paper states neither. From the release's
+        # trains/singleTask/DLF.py:89.
+        #
+        # This port originally scored the fused prediction alone. The weight-copy
+        # test passed anyway -- it compared the prediction, and three of the four
+        # missing heads never reach it -- and ten seeds came out 2-4 SE behind
+        # the authors' own code on every metric at once. Uniform, same-signed
+        # deficits are a protocol difference, not noise, which is what sent us
+        # back to the trainer. See docs/investigations.md#dlf-task-heads.
+        task = (
+            F.l1_loss(outputs["M"], label)
+            + F.l1_loss(outputs["shared_logit"], label)
+            + 3 * F.l1_loss(outputs["high_text"], label)
+            + F.l1_loss(outputs["high_vision"], label)
+            + F.l1_loss(outputs["high_audio"], label)
+        )
 
         reconstruction = sum(
             F.mse_loss(outputs[f"recon_{m}"], outputs[f"origin_{m}"]) for m in modalities)
