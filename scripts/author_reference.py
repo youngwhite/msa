@@ -36,6 +36,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -110,6 +111,11 @@ def drop_checkpoints(directory: Path) -> None:
             freed += checkpoint.stat().st_size
             checkpoint.unlink()
     if freed:
+        # The deleted bytes are not free until the writer's handles close, and
+        # checking too soon reads a stale figure -- the first batch tripped its
+        # own 2GB abort immediately after freeing 2.7GB.
+        os.sync()
+        time.sleep(2)
         print(f"  removed {freed / 1e9:.1f}GB of checkpoints", flush=True)
 
 
