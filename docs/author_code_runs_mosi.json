@@ -1,0 +1,127 @@
+{
+  "source": "our own runs of each method's unmodified author release",
+  "why": "Methods published after MMSA stopped adding models have no third-party reference. Running the authors' own code on our data, our seeds and our machine is the only way to tell an implementation gap from a protocol gap.",
+  "how": "scripts/author_reference.py run <method> <seeds>, then collect. Nothing inside a release is edited; the only adjustment is the dataset path, applied through the release's own config file.",
+  "models": {
+    "dpdf_lq": {
+      "paper": "Dual-Path Dynamic Fusion with Learnable Query, EMNLP 2025",
+      "licence": "MIT",
+      "machine": "cuda:0 NVIDIA GeForce RTX 5080 (sm_120)",
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51
+      ],
+      "n": 10,
+      "runs": {
+        "42": {
+          "mae": 0.7685,
+          "corr": 0.7694,
+          "acc2_non0": 0.8369,
+          "f1_non0": 0.8376,
+          "acc2_has0": 0.8251,
+          "f1_has0": 0.8253,
+          "acc5": 0.5117,
+          "acc7": 0.4431
+        },
+        "43": {
+          "mae": 0.7443,
+          "corr": 0.7723,
+          "acc2_non0": 0.8232,
+          "f1_non0": 0.8239,
+          "acc2_has0": 0.8076,
+          "f1_has0": 0.8077,
+          "acc5": 0.5073,
+          "acc7": 0.4417
+        },
+        "44": {
+          "mae": 0.7233,
+          "corr": 0.7854,
+          "acc2_non0": 0.8323,
+          "f1_non0": 0.8325,
+          "acc2_has0": 0.8163,
+          "f1_has0": 0.8159,
+          "acc5": 0.519,
+          "acc7": 0.4621
+        },
+        "45": {
+          "mae": 0.738,
+          "corr": 0.7843,
+          "acc2_non0": 0.8232,
+          "f1_non0": 0.824,
+          "acc2_has0": 0.8149,
+          "f1_has0": 0.8152,
+          "acc5": 0.5175,
+          "acc7": 0.4636
+        },
+        "46": {
+          "mae": 0.7428,
+          "corr": 0.7774,
+          "acc2_non0": 0.8201,
+          "f1_non0": 0.8207,
+          "acc2_has0": 0.809,
+          "f1_has0": 0.8091,
+          "acc5": 0.5262,
+          "acc7": 0.4708
+        },
+        "47": {
+          "mae": 0.7328,
+          "corr": 0.7911,
+          "acc2_non0": 0.8323,
+          "f1_non0": 0.8331,
+          "acc2_has0": 0.8192,
+          "f1_has0": 0.8195,
+          "acc5": 0.5204,
+          "acc7": 0.4694
+        },
+        "48": {
+          "mae": 0.7372,
+          "corr": 0.7833,
+          "acc2_non0": 0.8338,
+          "f1_non0": 0.8346,
+          "acc2_has0": 0.8251,
+          "f1_has0": 0.8253,
+          "acc5": 0.5335,
+          "acc7": 0.465
+        },
+        "49": {
+          "mae": 0.7603,
+          "corr": 0.7784,
+          "acc2_non0": 0.8232,
+          "f1_non0": 0.8237,
+          "acc2_has0": 0.809,
+          "f1_has0": 0.809,
+          "acc5": 0.5233,
+          "acc7": 0.4548
+        },
+        "50": {
+          "mae": 0.7364,
+          "corr": 0.7794,
+          "acc2_non0": 0.8354,
+          "f1_non0": 0.8356,
+          "acc2_has0": 0.8178,
+          "f1_has0": 0.8174,
+          "acc5": 0.5364,
+          "acc7": 0.4708
+        },
+        "51": {
+          "mae": 0.7439,
+          "corr": 0.779,
+          "acc2_non0": 0.8201,
+          "f1_non0": 0.8207,
+          "acc2_has0": 0.809,
+          "f1_has0": 0.8091,
+          "acc5": 0.5248,
+          "acc7": 0.4519
+        }
+      }
+    }
+  }
+}

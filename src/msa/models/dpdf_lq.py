@@ -25,6 +25,13 @@ are only visible in the code, and the first two change what is being measured:
   two weights.
 * The learnable queries are initialised to **ones**, not to a truncated normal.
 
+Its training protocol is equally specific and equally invisible from the paper:
+AdamW over **one** parameter group -- BERT included, at the same rate as
+everything else -- with linear warmup into cosine annealing over the epoch
+budget, and **no early stopping**. Giving the pretrained encoder the smaller
+rate this repository uses elsewhere is the obvious move and the wrong one here;
+it cost 2.7 SE of MAE before the protocol was checked against `train.py`.
+
 The transformer blocks are ALMT's, reused rather than rewritten: the authors
 build both models from the same `Transformer` / `CrossTransformer` classes, and
 this repository's copies already passed a weight-copy equivalence test against
@@ -339,17 +346,6 @@ class DualPathDynamicFusion(MSAModel):
         gate = self.path_gate(torch.cat([global_feature, local_feature], dim=1))
         fused = gate[:, 0:1] * global_feature + gate[:, 1:2] * local_feature
         return {"M": self.head(fused).squeeze(-1)}
-
-    def param_groups(self, lr: float, weight_decay: float) -> list[dict]:
-        # Both paths fine-tune their own BERT; the usual smaller rate for a
-        # pretrained encoder, as every other fine-tuning model here does.
-        bert, rest = [], []
-        for name, parameter in self.named_parameters():
-            (bert if ".encoder.bert." in name else rest).append(parameter)
-        return [
-            {"params": bert, "lr": lr * 0.1, "weight_decay": weight_decay},
-            {"params": rest, "lr": lr, "weight_decay": weight_decay},
-        ]
 
     def compute_loss(
         self, outputs: dict[str, torch.Tensor], batch: dict[str, torch.Tensor]
