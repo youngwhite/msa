@@ -141,7 +141,14 @@ def main() -> None:
 
     batch = next(iter(DataLoader(datasets["train"], batch_size=4, shuffle=False)))
     for k, v in batch.items():
-        print(f"  {k:14s} {tuple(v.shape)} {v.dtype}")
+        # Not everything in a batch is a tensor: raw_text collates to a list of
+        # strings. Printing assumed otherwise and this gate crashed silently for
+        # a whole session -- it is only ever run by check_all.sh, which nobody
+        # ran between adding the key and now.
+        if hasattr(v, "shape"):
+            print(f"  {k:14s} {tuple(v.shape)} {v.dtype}")
+        else:
+            print(f"  {k:14s} {type(v).__name__} of {len(v)}, e.g. {v[0]!r:.40}")
     print(f"\n  sample id   {datasets['train'].ids[0]}")
     print(f"  raw text    {datasets['train'].raw_text[0][:80]!r}")
     print(f"  label       {batch['label'][0].item():.2f} "
