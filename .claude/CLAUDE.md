@@ -49,6 +49,8 @@ bash scripts/check_all.sh                      # 一条命令跑完所有闸门
 | `verify_runs.py` | 已落盘的指标能否由落盘预测重算出来？ |
 | `check_reproduction.py` | **重新训练**得到的预测，与 git 里committed 的是否一致？ |
 
+**得到新结果后重跑 `python scripts/model_table.py`**——它生成 `docs/model_table.md`（年份/思路/数据设定/全部指标/参照来源/判定），是对外汇报与论文用的那张表。数字与判定都从落盘结果读取，不手抄。
+
 `bash scripts/reproduce_all.sh` 重跑 `docs/experiments.md` 里的全部实验（约 25 分钟）并自动做最后一项比对。**新实验进入文档时，必须同时在这个脚本里加一条**，否则下一个人无法重现它。
 
 ## 尽早同步到远端（不要攒）

@@ -1900,19 +1900,21 @@ PyTorch 删掉了 `ReduceLROnPlateau` 的 `verbose`，release 还在传。**该�
 
 DMD 同样**每 epoch 存一次 checkpoint 且从不删**（`trains/singleTask/DMD.py:212`）。`author_reference.py` 的清理线程直接复用（`"reap": "pt"`），不必再踩一次 DLF 那个 22.5GB 的坑。
 
-## <a id="dirty-flag-timing"></a>`dirty` 标记查不出跑批中途的改动（2026-08-04）
+## <a id="dirty-flag-timing"></a>`dirty` 标记的采集时机——我先判断错了，此处订正（2026-08-04）
 
-约定 3 靠 `result.json` 的 `env.git.dirty` 兜底。**但 `collect_env` 是在训练结束之后才调用的**（`src/msa/trainer.py:362`），所以这个标记记录的是**「跑完那一刻」的树状态**，中途改了源码、跑完前提交，它照样是 `False`。
+**结论：仪器本来就是对的，本条最初的判断是错的。**
 
-**发现经过**：DMD 10 seed 起跑后我改了 `scripts/author_reference.py`，随即提交。seed 43 横跨这次改动，而它记录的是 `dirty=False`——这个 `False` 什么也不证明。
+我一度认为 `env.git.dirty` 是训练结束后才采集的，因此查不出跑批中途的源码改动，并据此把「采集时机前移」列为待办。**这是错的。**
 
-**处理**：没有靠推理放过。本仓库运行逐比特可复现，所以直接重跑 seed 43 比对预测哈希：
+`snapshot_git_revision()` 在包被 import 时就调用了（`src/msa/__init__.py:19-21`），结果缓存下来。所以：
 
-```
-committed: 99e3ccacc25e085e
-rerun:     99e3ccacc25e085e   完全一致
-```
+- `env.git.dirty` = **进程启动那一刻**的状态，正是应有的语义
+- `env.git.at_save` = 结果落盘时的状态，**仅在与启动时不同时才记录**——也就是说，「有人在跑批中途改了代码」这件事本身就是被记录的，且 `verify_runs.py` 会报出来
 
-十个 seed 全部有效。（事后看原因也清楚：改的是独立脚本 `author_reference.py`，训练路径不 import 它。**但"事后看"不是证据，哈希才是。**）
+实例：`outputs/dmd_mosi/seed42/result.json` 里 `dirty: false` 而 `at_save.dirty: true`——seed 42 在干净的树上启动，而我在它跑的过程中改了 `scripts/author_reference.py`。**仪器把这件事完整地记下来了。**
 
-**待办（不追溯）**：把捕获时机移到训练开始之前，或首尾各记一次。这不改变任何已有数字，只是让标记名副其实。列在此处，与判据类改动一样不回填。
+**因此不存在「待办」，也不需要改采集时机。**
+
+**仍然成立的部分**：当时对 seed 43 做的重跑与哈希比对（两次都是 `99e3ccacc25e085e`）是有效的验证，只是它证明的是「那次改动没有影响训练路径」，而不是「弥补了仪器的缺陷」。
+
+**教训**：怀疑一件仪器之前先读它的实现。我当时看到 `collect_env` 在训练之后被调用就下了结论，没有往下看一层——而那一层正好推翻了结论。这与本项目一贯要求「查了才敢说」是同一条，只是这次栽在自己身上。
