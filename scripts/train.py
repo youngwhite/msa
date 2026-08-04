@@ -134,6 +134,8 @@ def main() -> None:
             device=device,
         )
         model = build_model(args.model, spec, **model_kwargs).to(device)
+        # No-op for every model but ConFEDE; see MSAModel.on_run_start.
+        model.on_run_start(seed)
 
         if group_dir is None:  # one name for the whole sweep, computed once
             group_dir = OUTPUT_ROOT / (

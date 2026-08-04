@@ -63,6 +63,16 @@ class MSAModel(nn.Module):
     def on_train_epoch_start(self, epoch: int) -> None:
         """Called before each training epoch."""
 
+    def on_run_start(self, seed: int) -> None:
+        """Called once after construction, before training, with this run's seed.
+
+        For models whose weights depend on a stage this repository runs
+        separately: ConFEDE pretrains three unimodal encoders per seed and its
+        text encoder is 418MB, more than ten of which will not fit on this disk,
+        so it produces the current seed's stage one here and drops the previous
+        seed's. No-op by default, so the loop is identical for every other
+        model."""
+
     def auxiliary_optimizer(
         self, lr: float, weight_decay: float
     ) -> torch.optim.Optimizer | None:

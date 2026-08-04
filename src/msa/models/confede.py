@@ -233,6 +233,7 @@ class ConFEDE(MSAModel):
         temperature: float = 0.5,
         pretrained: str = "bert-base-uncased",
         rebuild_every: int = 2,
+        pretrain_seed: int | None = None,
     ) -> None:
         super().__init__()
         from pytorch_metric_learning.losses import NTXentLoss
@@ -261,10 +262,68 @@ class ConFEDE(MSAModel):
         for parameter in self.text_encoder.extractor.parameters():
             parameter.requires_grad = False
 
+        if pretrain_seed is not None:
+            self.load_pretrained_encoders(pretrain_seed)
+
         self.pools: SimilarityPools | None = None
         self._train_tensors: dict[str, object] | None = None
         self._rng = random.Random(0)
         self._indices: torch.Tensor | None = None
+
+    def on_run_start(self, seed: int) -> None:
+        """Produce this seed's stage one if absent, load it, and drop the rest.
+
+        The release pretrains and fuses under one seed, so a seed here means a
+        whole pipeline and stage one is part of what varies -- sharing one
+        pretraining across ten fusion runs would report a spread narrower than
+        the method actually has. Ten text encoders at 418MB do not fit on this
+        disk, so they are made and discarded one at a time instead.
+        """
+        import subprocess
+        import sys
+        from pathlib import Path as _Path
+
+        from msa.config import OUTPUT_ROOT
+
+        root = OUTPUT_ROOT / "confede_pretrain"
+        current = root / f"seed{seed}"
+        needed = [current / f"{m}_encoder.pt" for m in ("text", "vision", "audio")]
+        if not all(path.exists() for path in needed):
+            script = _Path(__file__).resolve().parents[3] / "scripts" / "pretrain_confede.py"
+            print(f"  stage one for seed {seed} is missing; running {script.name}",
+                  flush=True)
+            subprocess.run([sys.executable, str(script), "--seed", str(seed)], check=True)
+        self.load_pretrained_encoders(seed)
+        # Bound the disk at one seed's worth: the previous seed's weights are
+        # reproducible from the script and nothing downstream reads them again.
+        for other in sorted(root.glob("seed*")):
+            if other != current:
+                for stale in other.glob("*.pt"):
+                    stale.unlink()
+
+    def load_pretrained_encoders(self, seed: int) -> None:
+        """Load stage one, which is the release's `load_pretrain=True`.
+
+        Refuses rather than warns when the weights are absent. Skipping stage one
+        is not a small degradation to shrug at: without it the ten-seed run came
+        out at MAE 1.1549, worse than this repository's LSTM baseline, because
+        the vision and audio transformers never leave their random
+        initialisation. A missing file must stop the run, not quietly produce a
+        number that looks like ConFEDE and is not.
+        """
+        from msa.config import OUTPUT_ROOT
+
+        root = OUTPUT_ROOT / "confede_pretrain" / f"seed{seed}"
+        for modality, module in (("text", self.text_encoder),
+                                 ("vision", self.vision_encoder),
+                                 ("audio", self.audio_encoder)):
+            path = root / f"{modality}_encoder.pt"
+            if not path.exists():
+                raise FileNotFoundError(
+                    f"no pretrained {modality} encoder at {path}. Run\n"
+                    f"    python scripts/pretrain_confede.py --seed {seed}\n"
+                    f"first -- ConFEDE without stage one is not ConFEDE.")
+            module.load_state_dict(torch.load(path, map_location="cpu"))
 
     @classmethod
     def build(cls, spec: DatasetSpec, **kwargs) -> MSAModel:
