@@ -70,6 +70,7 @@ run "almt equivalence"     $PY scripts/check_almt_equivalence.py
 # Same rule: skips itself when the reference is not checked out.
 run "dpdf-lq equivalence"  $PY scripts/check_dpdf_equivalence.py
 run "dlf equivalence"      $PY scripts/check_dlf_equivalence.py
+run "dmd equivalence"      $PY scripts/check_dmd_equivalence.py
 if [ "$FAST" != "--fast" ]; then
     run "reproducibility (lf_lstm)" $PY scripts/check_repro.py --epochs 1
     run "reproducibility (tfn)"     $PY scripts/check_repro.py --model tfn --epochs 1

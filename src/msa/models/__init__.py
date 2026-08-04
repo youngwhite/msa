@@ -6,6 +6,7 @@ from .bert import TextOnlyBert
 from .bert_mag import BertMAG
 from .cenet import CENet
 from .dlf import DisentangledLanguageFocused
+from .dmd import DecoupledMultimodalDistillation
 from .dpdf_lq import DualPathDynamicFusion
 from .graph_mfn import GraphMemoryFusionNetwork
 from .lf_lstm import LateFusionLSTM
@@ -24,6 +25,7 @@ from .tfn import TensorFusionNetwork
 __all__ = [
     "MSAModel",
     "DisentangledLanguageFocused",
+    "DecoupledMultimodalDistillation",
     "DualPathDynamicFusion",
     "BertMAG",
     "ALMT",

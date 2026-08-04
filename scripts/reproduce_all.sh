@@ -56,6 +56,7 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     mfm_mosi_paper
     dpdf_lq_mosi
     dlf_mosi
+    dmd_mosi
     mfn_mosi_ablation_realseq
     mfn_mosi_ablation_reallenmean
     graph_mfn_mosi_ablation_frozen
@@ -120,6 +121,14 @@ args_for() {
     # around epoch 31 and that early stopping is left unimplemented.
     dpdf_lq_mosi)
         echo "--model dpdf_lq --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --optimizer adamw --lr 1e-4 --weight-decay 1e-4 --batch-size 64 --grad-clip 0 --epochs 200 --patience 200 --lr-schedule warmup_cosine" ;;
+    # DMD: protocol from the release's trains/singleTask/DMD.py, read before any
+    # model code. Identical in shape to DLF's -- DLF was forked from it -- with
+    # ONE optimiser over three modules (the backbone plus both distillation
+    # kernels, BERT at the full rate, not this repository's usual tenth).
+    # Hyper-parameters from its config/config.json; note nlevels 4, not DLF's 2.
+    # See docs/spec_dmd.md.
+    dmd_mosi)
+        echo "--model dmd --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --optimizer adam --lr 1e-4 --weight-decay 0.005 --batch-size 16 --grad-clip 0.6 --clip-mode value --accumulate-steps 10 --lr-schedule plateau --lr-schedule-factor 0.5 --lr-schedule-patience 5 --patience 10 --epochs 200" ;;
     # DLF: protocol from the release's trains/singleTask/DLF.py, checked before
     # any model code this time -- Adam over ONE parameter group (BERT at the full
     # rate, not this repository's usual tenth), ReduceLROnPlateau at factor 0.5
