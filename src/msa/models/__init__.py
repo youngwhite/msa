@@ -5,6 +5,7 @@ from .base import MSAModel
 from .bert import TextOnlyBert
 from .bert_mag import BertMAG
 from .cenet import CENet
+from .confede import ConFEDE
 from .dlf import DisentangledLanguageFocused
 from .dmd import DecoupledMultimodalDistillation
 from .dpdf_lq import DualPathDynamicFusion
@@ -26,6 +27,7 @@ __all__ = [
     "MSAModel",
     "DisentangledLanguageFocused",
     "DecoupledMultimodalDistillation",
+    "ConFEDE",
     "DualPathDynamicFusion",
     "BertMAG",
     "ALMT",

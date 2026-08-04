@@ -15,6 +15,7 @@
 - 数据集 `datasets/CMU-MOSI/`（不入库，879MB，sha256 记在 `DatasetSpec.file_sha256`）。MOSEI 尚未下载
 - **换机器**：`bash scripts/setup.sh` 建环境 + 校验数据 + 跑闸门；完整步骤见 `docs/migration.md`
 - **参照环境**：`bash scripts/setup_mmsa_reference.sh` 重建 `/workspace/MMSA` 与 `/workspace/mmsa_env`（都不入库，换机器必丢）。**不重建的代价是约定 5 的等价检查静默失效**——它 SKIP 时也记 PASS
+- **`pytorch-metric-learning` 会拖来 `torchvision`，而它编译用的 CUDA 与本环境的 torch 不符**（实测 torchvision 0.26 是 cu130，torch 是 cu128）。`transformers` 会惰性 import torchvision，于是**八个 BERT 系模型全部起不来**。torchvision 本仓库不需要，直接 `pip uninstall torchvision` 即可。**装任何新依赖后先跑 `check_all.sh`。**
 - `transformers` **钉死 5.14.1**（8 个 BERT 系模型要它）。跨大版本会改输出契约，`cenet.py` / `bert.py` 里的兼容分支就是证据；升级前先跑八个模型各一个 epoch 冒烟。理由见 `docs/decisions.md` 2026-08-01 那条
 
 ## 不可违背的约定
