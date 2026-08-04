@@ -133,9 +133,13 @@ def main() -> None:
             seed=seed,
             device=device,
         )
-        model = build_model(args.model, spec, **model_kwargs).to(device)
+        model = build_model(args.model, spec, **model_kwargs)
+        # Before .to(device), not after: the hook may start a subprocess that
+        # needs the GPU (ConFEDE's stage one), and holding this model there
+        # while that runs is what made seed 43 die of an out-of-memory error.
         # No-op for every model but ConFEDE; see MSAModel.on_run_start.
         model.on_run_start(seed)
+        model = model.to(device)
 
         if group_dir is None:  # one name for the whole sweep, computed once
             group_dir = OUTPUT_ROOT / (

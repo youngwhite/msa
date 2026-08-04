@@ -279,6 +279,7 @@ class ConFEDE(MSAModel):
         the method actually has. Ten text encoders at 418MB do not fit on this
         disk, so they are made and discarded one at a time instead.
         """
+        import gc
         import subprocess
         import sys
         from pathlib import Path as _Path
@@ -292,6 +293,13 @@ class ConFEDE(MSAModel):
             script = _Path(__file__).resolve().parents[3] / "scripts" / "pretrain_confede.py"
             print(f"  stage one for seed {seed} is missing; running {script.name}",
                   flush=True)
+            # The caller has just finished a seed and its freed tensors are still
+            # held in this process's caching allocator, invisible to the child.
+            # Without this the child gets whatever is left and dies at the first
+            # attention block.
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
             subprocess.run([sys.executable, str(script), "--seed", str(seed)], check=True)
         self.load_pretrained_encoders(seed)
         # Bound the disk at one seed's worth: the previous seed's weights are
