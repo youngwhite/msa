@@ -1861,3 +1861,58 @@ loss_task = 1 * loss_task_all + 1 * loss_task_c \
 
 1. **这个 release 会把盘写满。** `trains/singleTask/DLF.py:169` 每个 epoch 存一次 checkpoint 且一个都不删；实测**单个 seed 最高清出 22.5GB**，超过本机整块盘。`author_reference.py` 因此加了跑批过程中的清理线程——seed 之间清理救不了。
 2. **它带两份指标实现，trainer 用的是 `trains/utils/metricsTop.py`**（不是先看到的 `utils/metricsTop.py`，那份是死代码）。活的那份里 `acc_2`/`F1_score` 是 **non-zero** 变体。读错文件会把 non-zero 存成 has-zero，**下游无法察觉**。露馅点：死代码那份没有 Corr 也没有 acc_5，而日志两个都打。
+
+## <a id="dmd-reference-patches"></a>DMD 的作者代码跑不起来：三个补丁，只有一个改数值（2026-08-04）
+
+DMD 的 release 在当前 PyTorch 上**无法启动**。要拿到作者代码参照，只能打补丁。**补丁分两类，混为一谈就等于放弃了参照的意义**，故逐条记录。
+
+补丁全部写在 `scripts/author_reference.py` 的 `DMD_DRIVER` 里——**release 目录保持只读**，与 DLF 同一处理。
+
+### 补丁 1：改了「算什么」——无法回避，必须声明
+
+`trains/singleTask/DMD.py` 把 3-D 张量喂给 `nn.CosineEmbeddingLoss`，当前 PyTorch 直接报 `1D target tensor expects 2D input tensors`。**不打这个补丁，一个 epoch 都跑不了。**
+
+重建的是旧版 ATen 的语义：无条件沿 **dim 1** 求和，`EPS` 加在平方和上、开方之前。2-D 调用一律转交给库本身，因此 release 里其它用到该损失的地方（`min_cosine`，2-D）行为不变。
+
+**为什么敢说这是旧语义而不是我编的**：
+
+1. `scripts/check_dmd_equivalence.py` 断言我们的重建在 **2-D 输入上与 `nn.CosineEmbeddingLoss` 逐位相等**（实测 `0.000e+00`）。这钉死了公式。
+2. 只剩「沿哪个轴」，**而这个轴是被迫的**——正是「无条件沿 dim 1 求和」才让 release 的 3-D 形状当年合法。
+3. `EPS` 的位置有独立证据：放在开方之后（clamp）会给出**相同的损失值和全 NaN 的梯度**，因为 MOSI 的补零帧让约 750 个切片是零向量、而 `sqrt` 在 0 处导数无穷。我们的第一版就是这么写的，第一次优化步就把模型打废。
+
+**后果（必须写进台账）**：DMD 的参照来源不能标成「未经修改的作者代码」，而是 **「作者代码 + 兼容性重建，已独立验证」**。这比 DPDF-LQ 和 DLF 的参照弱一档。
+
+**这个损失本身还有问题**：release 的张量是 `(time, batch, channel)`，所以 dim 1 是**批次轴**——被比较的向量是「批次长度」的，损失值取决于哪些样本恰好同批。与 `#mctn-batch-axis` 同一缺陷类。同一批作者后来的 DLF 在完全相同的这一行改成了 `reshape(-1, 50)`。
+
+### 补丁 2：不改数值（同 DLF）
+
+PyTorch 删掉了 `ReduceLROnPlateau` 的 `verbose`，release 还在传。**该参数只控制降学习率时是否打印一行字，碰不到任何张量。**
+
+### 补丁 3：只加观测量，不改优化
+
+这个 release 的指标字典**没有 Corr**，而 Corr 是本仓库两个主指标之一。补丁在它已经算完的预测上补算 Corr。
+
+**选轮用的是验证集 Loss，完全未动**；这是往日志里多加一个数，不是改训练。
+
+> 判断标准：**补丁是否进入梯度或选轮**。进了就是补丁 1 那一档，必须降级标注；没进就是 2、3 那一档，照实记录即可。
+
+### 顺带确认的第四件事
+
+DMD 同样**每 epoch 存一次 checkpoint 且从不删**（`trains/singleTask/DMD.py:212`）。`author_reference.py` 的清理线程直接复用（`"reap": "pt"`），不必再踩一次 DLF 那个 22.5GB 的坑。
+
+## <a id="dirty-flag-timing"></a>`dirty` 标记查不出跑批中途的改动（2026-08-04）
+
+约定 3 靠 `result.json` 的 `env.git.dirty` 兜底。**但 `collect_env` 是在训练结束之后才调用的**（`src/msa/trainer.py:362`），所以这个标记记录的是**「跑完那一刻」的树状态**，中途改了源码、跑完前提交，它照样是 `False`。
+
+**发现经过**：DMD 10 seed 起跑后我改了 `scripts/author_reference.py`，随即提交。seed 43 横跨这次改动，而它记录的是 `dirty=False`——这个 `False` 什么也不证明。
+
+**处理**：没有靠推理放过。本仓库运行逐比特可复现，所以直接重跑 seed 43 比对预测哈希：
+
+```
+committed: 99e3ccacc25e085e
+rerun:     99e3ccacc25e085e   完全一致
+```
+
+十个 seed 全部有效。（事后看原因也清楚：改的是独立脚本 `author_reference.py`，训练路径不 import 它。**但"事后看"不是证据，哈希才是。**）
+
+**待办（不追溯）**：把捕获时机移到训练开始之前，或首尾各记一次。这不改变任何已有数字，只是让标记名副其实。列在此处，与判据类改动一样不回填。
