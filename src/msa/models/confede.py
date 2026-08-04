@@ -68,28 +68,27 @@ def padding_mask(features: torch.Tensor) -> torch.Tensor:
     return torch.cat((mask[:, 0:1], mask), dim=-1)
 
 
-class FeatureProjector(nn.Module):
-    """Half a feed-forward, half a three-layer MLP, layer-normed and concatenated."""
+class Projector(nn.Module):
+    """LayerNorm, one linear, tanh, dropout.
 
-    def __init__(self, input_dim: int, output_dim: int, num_layers: int = 3,
-                 dropout: float = 0.1) -> None:
+    The release defines this locally inside `TVA_fusion.py` and *also* ships a
+    much larger `FeatureProjector` in `model/projector.py`. Only the local one is
+    used by the fusion stage; the larger one belongs to the unimodal pretraining
+    encoders. Reading the wrong one costs 54 parameter tensors, which is how this
+    was caught.
+    """
+
+    def __init__(self, input_dim: int, output_dim: int, dropout: float = 0.5) -> None:
         super().__init__()
-        feed_forward = output_dim // 2
-        project = output_dim - feed_forward
-        self.proj1 = nn.Linear(input_dim, feed_forward, bias=True)
-        layers: list[nn.Module] = []
-        for i in range(num_layers):
-            layers.append(nn.Linear(input_dim if i == 0 else project, project, bias=False))
-            layers.append(nn.GELU())
-        self.layernorm_ff = nn.LayerNorm(feed_forward)
-        self.layernorm = nn.LayerNorm(project)
-        self.MLP = nn.Sequential(*layers)
-        self.drop = nn.Dropout(p=dropout)
+        self.fc = nn.Sequential(
+            nn.LayerNorm(input_dim),
+            nn.Linear(input_dim, output_dim),
+            nn.Tanh(),
+            nn.Dropout(dropout),
+        )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        dropped = self.drop(x)
-        return torch.cat([self.layernorm(self.MLP(dropped)),
-                          self.layernorm_ff(self.proj1(dropped))], dim=-1)
+        return self.fc(x)
 
 
 class BaseClassifier(nn.Module):
@@ -246,12 +245,12 @@ class ConFEDE(MSAModel):
             audio_dim, encoder_dim, audio_length, heads, layers, dropout)
 
         width = encoder_dim // 2
-        self.T_simi_proj = FeatureProjector(encoder_dim, width)
-        self.V_simi_proj = FeatureProjector(encoder_dim, width)
-        self.A_simi_proj = FeatureProjector(encoder_dim, width)
-        self.T_dissimi_proj = FeatureProjector(encoder_dim, width)
-        self.V_dissimi_proj = FeatureProjector(encoder_dim, width)
-        self.A_dissimi_proj = FeatureProjector(encoder_dim, width)
+        self.T_simi_proj = Projector(encoder_dim, width)
+        self.V_simi_proj = Projector(encoder_dim, width)
+        self.A_simi_proj = Projector(encoder_dim, width)
+        self.T_dissimi_proj = Projector(encoder_dim, width)
+        self.V_dissimi_proj = Projector(encoder_dim, width)
+        self.A_dissimi_proj = Projector(encoder_dim, width)
 
         hidden = [width * 2, width, width // 2, width // 4]
         self.TVA_decoder = BaseClassifier(width * 6, hidden, 1)
@@ -350,6 +349,22 @@ class ConFEDE(MSAModel):
         return [self.T_simi_proj(text), self.V_simi_proj(vision), self.A_simi_proj(audio),
                 self.T_dissimi_proj(text), self.V_dissimi_proj(vision),
                 self.A_dissimi_proj(audio)]
+
+    def param_groups(self, lr: float, weight_decay: float) -> list[dict]:
+        """Two groups, as the release's AdamW has: no decay on bias or LayerNorm.
+
+        Only parameters that require a gradient are handed over -- BERT is frozen
+        here, and passing frozen tensors to an optimiser with weight decay would
+        decay them anyway.
+        """
+        no_decay = ("bias", "LayerNorm.weight")
+        decayed, plain = [], []
+        for name, parameter in self.named_parameters():
+            if not parameter.requires_grad:
+                continue
+            (plain if any(n in name for n in no_decay) else decayed).append(parameter)
+        return [{"params": decayed, "lr": lr, "weight_decay": weight_decay},
+                {"params": plain, "lr": lr, "weight_decay": 0.0}]
 
     def forward(self, batch: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
         vision, audio = batch["vision"].float(), batch["audio"].float()

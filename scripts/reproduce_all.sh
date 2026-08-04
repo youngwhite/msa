@@ -57,6 +57,7 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     dpdf_lq_mosi
     dlf_mosi
     dmd_mosi
+    confede_mosi
     mfn_mosi_ablation_realseq
     mfn_mosi_ablation_reallenmean
     graph_mfn_mosi_ablation_frozen
@@ -121,6 +122,15 @@ args_for() {
     # around epoch 31 and that early stopping is left unimplemented.
     dpdf_lq_mosi)
         echo "--model dpdf_lq --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --optimizer adamw --lr 1e-4 --weight-decay 1e-4 --batch-size 64 --grad-clip 0 --epochs 200 --patience 200 --lr-schedule warmup_cosine" ;;
+    # ConFEDE: protocol from the release's train/constrastive/TVA_fusion_train.py.
+    # UNALIGNED features -- alone among the recent methods -- and AdamW over two
+    # groups with no decay on bias/LayerNorm (the model's param_groups does that
+    # split). Linear warmup then linear decay, one epoch of warmup, 25 epochs.
+    # BERT is FROZEN throughout: the release's unfreeze is gated on epoch 200 in
+    # a 25-epoch run, so it never fires. Patience is set above the epoch cap
+    # because the release early-stops on nothing. See docs/spec_confede.md.
+    confede_mosi)
+        echo "--model confede --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --optimizer adamw --lr 1e-4 --weight-decay 1e-3 --batch-size 16 --lr-schedule warmup_linear --lr-warmup-epochs 1 --epochs 25 --patience 25" ;;
     # DMD: protocol from the release's trains/singleTask/DMD.py, read before any
     # model code. Identical in shape to DLF's -- DLF was forked from it -- with
     # ONE optimiser over three modules (the backbone plus both distillation

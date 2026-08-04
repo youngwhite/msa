@@ -47,9 +47,11 @@ class TrainConfig:
     #: Optional ReduceLROnPlateau on the validation selection metric, as MulT and
     #: MMIM use, or ALMT's linear warmup into cosine annealing. "none" leaves the
     #: learning rate alone.
-    lr_schedule: str = "none"        # "none" | "plateau" | "warmup_cosine"
+    lr_schedule: str = "none"        # "none" | "plateau" | "warmup_cosine" | "warmup_linear"
     lr_schedule_factor: float = 0.1
     lr_schedule_patience: int = 5
+    #: Only read by warmup_linear.
+    lr_warmup_epochs: int = 1
     #: Optimiser steps once per this many batches. MMSA calls it `update_epochs`
     #: and uses it for MulT (8), Self-MM (4) and MISA (2); a partial window at
     #: the end of an epoch is discarded, as there.
@@ -83,8 +85,9 @@ class TrainConfig:
     def __post_init__(self) -> None:
         if self.clip_mode not in ("norm", "value"):
             raise ValueError(f"clip_mode must be 'norm' or 'value', got {self.clip_mode!r}")
-        if self.lr_schedule not in ("none", "plateau", "warmup_cosine"):
-            raise ValueError("lr_schedule must be 'none', 'plateau' or 'warmup_cosine', "
+        if self.lr_schedule not in ("none", "plateau", "warmup_cosine", "warmup_linear"):
+            raise ValueError("lr_schedule must be 'none', 'plateau', 'warmup_cosine' or "
+                             "'warmup_linear', "
                              f"got {self.lr_schedule!r}")
         if self.optimizer not in ("adam", "adamw"):
             raise ValueError(f"optimizer must be 'adam' or 'adamw', got {self.optimizer!r}")
@@ -177,6 +180,27 @@ class Trainer:
                 self.optimizer, mode=direction,
                 factor=cfg.lr_schedule_factor, patience=cfg.lr_schedule_patience,
             )
+        elif cfg.lr_schedule == "warmup_linear":
+            # ConFEDE: transformers' get_linear_schedule_with_warmup -- the rate
+            # climbs linearly for `lr_warmup_epochs` worth of epochs and then
+            # decays linearly to zero at the epoch cap. Reimplemented from that
+            # function's own definition rather than imported, so the schedule
+            # does not move when transformers does.
+            #
+            # A NEW option, deliberately: no existing group names it, so every
+            # stored number is byte-identical either way. Approximating it with
+            # warmup_cosine instead would have been a protocol guess, and
+            # guessing a protocol cost 2.7 SE on DPDF-LQ.
+            warmup = max(1, cfg.lr_warmup_epochs)
+            total = max(cfg.epochs, warmup + 1)
+
+            def linear(epoch: int, w: int = warmup, t: int = total) -> float:
+                if epoch < w:
+                    return epoch / max(1, w)
+                return max(0.0, (t - epoch) / max(1, t - w))
+
+            self.scheduler = torch.optim.lr_scheduler.LambdaLR(
+                self.optimizer, lr_lambda=linear)
         elif cfg.lr_schedule == "warmup_cosine":
             # ALMT: the rate climbs linearly over the first tenth of the epoch
             # budget, then anneals by cosine over the remaining nine tenths. Both

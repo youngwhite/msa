@@ -71,10 +71,12 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--optimizer", default="adam", choices=("adam", "adamw"),
                     help="AdamW decouples weight decay; ALMT's reference uses it")
     ap.add_argument("--lr-schedule", default="none",
-                    choices=("none", "plateau", "warmup_cosine"),
+                    choices=("none", "plateau", "warmup_cosine", "warmup_linear"),
                     help="ReduceLROnPlateau on the validation selection metric")
     ap.add_argument("--lr-schedule-factor", type=float, default=0.1)
     ap.add_argument("--lr-schedule-patience", type=int, default=5)
+    ap.add_argument("--lr-warmup-epochs", type=int, default=1,
+                    help="warmup_linear only: epochs spent climbing to the full rate")
     ap.add_argument("--accumulate-steps", type=int, default=1,
                     help="optimiser step once per N batches (MMSA's update_epochs)")
     ap.add_argument("--patience", type=int, default=8)
@@ -157,6 +159,7 @@ def main() -> None:
             lr_schedule=args.lr_schedule,
             lr_schedule_factor=args.lr_schedule_factor,
             lr_schedule_patience=args.lr_schedule_patience,
+            lr_warmup_epochs=args.lr_warmup_epochs,
             accumulate_steps=args.accumulate_steps,
             patience=args.patience,
             select_on=args.select_on,
