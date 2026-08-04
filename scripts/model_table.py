@@ -41,6 +41,15 @@ from msa.config import OUTPUT_ROOT, PROJECT_ROOT
 
 OUT_PATH = PROJECT_ROOT / "docs" / "model_table.md"
 
+#: A row whose number does not yet mean what the model is capable of. Rendered as
+#: a footnote and marked in the verdict column, because a table that shows 1.1549
+#: next to 0.7290 without saying why invites exactly the wrong conclusion.
+CAVEATS = {
+    "confede_mosi": "**未跑作者的单模态预训练阶段**，相当于其 `load_pretrain=False`："
+                    "视觉/音频编码器随机初始化、BERT 冻结、仅 25 epoch。"
+                    "**此数字不代表 ConFEDE 的能力**，补上预训练前不可用于任何比较。",
+}
+
 #: group -> (year, one-line idea, reference tier). Order is the story's, which is
 #: chronological except that the two controls sit at the end where they belong.
 #:
@@ -140,8 +149,15 @@ def build() -> str:
                "aligned" if payload.get("aligned") else "unaligned",
                str(len(payload.get("seeds", []))),
                *[cell(stats[key], key) if key in stats else "—" for key, _ in METRICS],
-               REFERENCE_LABEL[tier], judged.get(group, "—")]
+               REFERENCE_LABEL[tier],
+               "⚠️ 见脚注" if group in CAVEATS else judged.get(group, "—")]
         lines.append("| " + " | ".join(row) + " |")
+
+    shown = [g for g, *_ in MODELS if g in CAVEATS and (OUTPUT_ROOT / g / "summary.json").exists()]
+    if shown:
+        lines.append("")
+        for group in shown:
+            lines.append(f"⚠️ **{group.rsplit('_', 1)[0]}**：{CAVEATS[group]}")
     return "\n".join(lines), missing
 
 
