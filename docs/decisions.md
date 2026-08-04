@@ -380,3 +380,32 @@ SE = sqrt( cap(σ_ours)² / n_ours  +  cap(σ_ref)² / n_ref )
 **代价，明确记下来**：历史数字与新数字会混在一起，且旧机器已不可用、无法回头验证。缓解手段是**保留 git 历史**——旧数字仍在 commit 里，`outputs/**/result.json` 的 `env.device_description` 记着它们出自 5070 Ti。
 
 **复查条件**：下一次换机器时**不要默认重复这个动作**。先问一句：此刻是否有跨机器的配对需要维持？若两侧都能一起重跑，重立；若只能重跑一侧，宁可维持现状。
+
+## 2026-08-04 — ConFEDE 的基础设施：模型内自持，训练循环不动
+
+**背景**：ConFEDE 需要三样前四个近年方法都不需要的东西——每步第二个 batch（每锚 6 个伙伴）、训练中周期性重建 n×n 相似度矩阵、负样本按标签距离加权的 NT-Xent。前四个模型训练循环一行未改，这个必须先决定改不改。
+
+**选项**：
+- A. 改训练循环，让它支持「一步两个 batch」与「epoch 开始时的全集前向」
+- B. 改 DataLoader/collate，让一个 batch 里就带上伙伴
+- C. **模型内自持**：模型持训练集引用，在既有钩子 `on_train_epoch_start` 与 `forward` 里自己完成取伙伴与重建
+
+**裁定：C。**
+
+**依据**：训练循环是全部 20 个组共用的路径，改它意味着此前所有数字的可比性都需重新论证——代价与收益完全不成比例。而现有钩子恰好够用：`on_train_epoch_start(epoch)` 承载重建，`forward` 内用 `batch["index"]` 取伙伴，`self.training` 区分训练与评测。**`batch["index"]` 本仓库已经在提供，作者实现也正是按样本下标查候选池**，故这条路径与作者一致，不是我们的发明。内存代价已量：训练集张量引用约 200MB，不复制。
+
+**已否决**：B 会把「取伙伴」埋进 DataLoader，使得同一份 loader 对不同模型行为不同——比改训练循环更难追踪。A 的问题是收益只对一个模型成立。
+
+**复查条件**：若后续再有两个以上模型需要「一步多 batch」，则 C 的重复成本超过 A，届时重新评估。
+
+## 2026-08-04 — NT-Xent 走 `pytorch-metric-learning`，钉 0.9.99
+
+**背景**：作者的 `cont_NTXentLoss` 继承 `pytorch_metric_learning.losses.NTXentLoss`，只重写 `_compute_loss` 给负样本对乘 `|label 差| / 2`。
+
+**裁定**：装该依赖并照作者方式继承，版本钉死 `0.9.99`（作者 `requirements.txt` 的版本）。
+
+**依据**：参照层级是「作者代码 > 自实现」。自己重写 `NTXentLoss` + `convert_to_pairs` 会引入一份可能出错的代码，且等价测试将无法直接对比损失值。库为 MIT、纯 Python、约 1MB。钉版本的理由同 `transformers` 5.14.1：会跨版本改行为的库不能浮动。
+
+**已否决**：自实现 NT-Xent。除非该依赖在本环境装不上，否则不走这条。
+
+**复查条件**：若 `0.9.99` 与当前 torch 不兼容，按 `investigations.md#dmd-reference-patches` 的分档规矩处理，并在台账标注。
