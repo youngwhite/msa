@@ -37,12 +37,22 @@ def parse_model_args(pairs: list[str]) -> dict:
 
     Anything that is not a literal stays a string, so `modalities=tav` works
     without quoting while `use_lengths=False` becomes a real bool.
+
+    **Lower-case booleans are handled explicitly**, and that is not cosmetic.
+    `ast.literal_eval("false")` raises, so the value fell through to the string
+    `"false"` -- which is truthy, so `--model-arg switch=false` silently turned
+    the switch ON. An ablation run this way produced results identical to its
+    baseline to four decimals, including the standard deviation; the exact zero
+    was the only sign. A flag that cannot be set to false is worse than no flag.
     """
     parsed = {}
     for pair in pairs:
         if "=" not in pair:
             raise SystemExit(f"--model-arg expects key=value, got {pair!r}")
         key, _, raw = pair.partition("=")
+        if raw.strip().lower() in ("true", "false"):
+            parsed[key.strip()] = raw.strip().lower() == "true"
+            continue
         try:
             parsed[key.strip()] = ast.literal_eval(raw)
         except (ValueError, SyntaxError):

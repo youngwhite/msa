@@ -141,9 +141,9 @@ args_for() {
     # by one switch and nothing else -- both baselines pass weight-copy
     # equivalence, so everything but the switch is controlled.
     clgsi_mosi_ablation_unweighted)
-        echo "$(args_for clgsi_mosi) --model-arg intensity_weighting=false" ;;
+        echo "$(args_for clgsi_mosi) --model-arg intensity_weighting=False" ;;
     confede_mosi_ablation_weighted)
-        echo "$(args_for confede_mosi) --model-arg weight_negatives_by_label=true" ;;
+        echo "$(args_for confede_mosi) --model-arg weight_negatives_by_label=True" ;;
     # ConFEDE: protocol from the release's train/constrastive/TVA_fusion_train.py.
     # UNALIGNED features -- alone among the recent methods -- and AdamW over two
     # groups with no decay on bias/LayerNorm (the model's param_groups does that
