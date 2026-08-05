@@ -36,7 +36,12 @@ import torch.nn as nn
 
 ORIGIN = Path(os.environ.get("CLGSI_ORIGIN", "/workspace/CLGSI"))
 SHIM = Path(os.environ.get("MMSA_SHIM", "/workspace/mmsa_env/shim"))
+#: UNALIGNED lengths, because that is what the release reads and what our
+#: model now pools down. Testing at 50/50/50 would test a path the trained
+#: model never takes -- the DPDF-LQ lesson, where a passing test covered
+#: shapes training never used.
 BATCH, LENGTH, TEXT_DIM, AUDIO_DIM, VISION_DIM = 8, 50, 768, 5, 20
+AUDIO_LEN, VISION_LEN = 375, 500
 TOLERANCE = 1e-5
 
 UNUSED = ("post_fusion_layer_1.", "post_text_layer_2.", "post_audio_layer_2.",
@@ -52,6 +57,7 @@ UNUSED = ("post_fusion_layer_1.", "post_text_layer_2.", "post_audio_layer_2.",
 ARGS = dict(
     need_data_aligned=True, language="en", use_finetune=True,
     feature_dims=(768, 5, 20), seq_lens=(50, 50, 50),
+    need_model_aligned=True, modelName="clgsi",
     a_encoder_heads=1, v_encoder_heads=4, a_encoder_layers=2, v_encoder_layers=2,
     text_out=768, audio_out=5, video_out=20, t_bert_dropout=0.1,
     post_fusion_dim=128, post_text_dim=64, post_audio_dim=64, post_video_dim=64,
@@ -117,13 +123,16 @@ def main() -> int:
         for (_, x), (_, y) in zip(their_params, our_params, strict=True):
             y.copy_(x)
 
-    audio = torch.randn(BATCH, LENGTH, AUDIO_DIM)
-    vision = torch.randn(BATCH, LENGTH, VISION_DIM)
+    audio = torch.randn(BATCH, AUDIO_LEN, AUDIO_DIM)
+    vision = torch.randn(BATCH, VISION_LEN, VISION_DIM)
     label = torch.randn(BATCH) * 3
     theirs.eval()
     ours.eval()
     with torch.no_grad():
-        their_out = theirs(text, (audio, None), (vision, None))
+        from models.subNets.AlignNets import AlignSubNet
+        aligner = AlignSubNet(types.SimpleNamespace(**ARGS), 'avg_pool')
+        _, their_audio, their_vision = aligner(text, audio, vision)
+        their_out = theirs(text, (their_audio, None), (their_vision, None))
         our_out = ours({"text_bert": text, "audio": audio, "vision": vision, "label": label})
 
     worst, worst_name = 0.0, ""

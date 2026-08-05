@@ -123,14 +123,17 @@ args_for() {
     # around epoch 31 and that early stopping is left unimplemented.
     dpdf_lq_mosi)
         echo "--model dpdf_lq --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --optimizer adamw --lr 1e-4 --weight-decay 1e-4 --batch-size 64 --grad-clip 0 --epochs 200 --patience 200 --lr-schedule warmup_cosine" ;;
-    # CLGSI: protocol from the release's trains/multiTask/CLGSI.py. Five
+    # CLGSI: UNALIGNED features. need_data_aligned is False and AMIO pools audio
+    # (375) and vision (500) down to the text length inside forward, so the
+    # word-aligned pickle is the wrong input -- a first run used it and was
+    # discarded. Protocol from the release's trains/multiTask/CLGSI.py. Five
     # parameter groups at four rates (BERT 5e-5, audio 5e-3, video 1e-3, rest
     # 1e-2) come from the model's param_groups, so --lr and --weight-decay here
     # are placeholders it ignores. Cosine schedule stepped per optimiser step
     # over a 75-epoch horizon that early stopping never reaches. See
     # docs/spec_clgsi.md.
     clgsi_mosi)
-        echo "--model clgsi --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --optimizer adamw --lr 1e-2 --weight-decay 0.001 --batch-size 64 --lr-schedule warmup_cosine_steps --lr-horizon-epochs 75 --patience 8 --epochs 200" ;;
+        echo "--model clgsi --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --optimizer adamw --lr 1e-2 --weight-decay 0.001 --batch-size 64 --lr-schedule warmup_cosine_steps --lr-horizon-epochs 75 --patience 8 --epochs 200" ;;
     # ConFEDE: protocol from the release's train/constrastive/TVA_fusion_train.py.
     # UNALIGNED features -- alone among the recent methods -- and AdamW over two
     # groups with no decay on bias/LayerNorm (the model's param_groups does that

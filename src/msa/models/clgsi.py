@@ -73,6 +73,33 @@ def intensity_mask(labels: torch.Tensor, positive: bool) -> torch.Tensor:
     return mask
 
 
+def align_avg_pool(x: torch.Tensor, dst_len: int) -> torch.Tensor:
+    """The release's `AlignSubNet('avg_pool')`, applied before the model proper.
+
+    CLGSI reads the **unaligned** pickle -- audio 375 frames, vision 500 -- and
+    pools both down to the text length inside `AMIO.forward`. It does NOT read
+    the word-aligned pickle, which is a different set of features entirely; a
+    first run here used the aligned one and had to be discarded.
+
+    The pooling is **strided, not blocked**. After padding with the last frame
+    repeated, it views as (batch, pool, dst, dim) and averages over `pool`, so
+    output position j is the mean of input positions j, j+dst, j+2·dst, ... --
+    not of a contiguous window. Reproduced as written; it reads like block
+    pooling at a glance.
+    """
+    raw_len = x.size(1)
+    if raw_len == dst_len:
+        return x
+    if raw_len % dst_len == 0:
+        pad_len, pool = 0, raw_len // dst_len
+    else:
+        pad_len, pool = dst_len - raw_len % dst_len, raw_len // dst_len + 1
+    if pad_len:
+        pad = x[:, -1, :].unsqueeze(1).expand(x.size(0), pad_len, x.size(-1))
+        x = torch.cat([x, pad], dim=1)
+    return x.view(x.size(0), pool, dst_len, -1).mean(dim=1)
+
+
 class PositionalEncoding(nn.Module):
     """Sinusoidal positions, sized to the release's own max length."""
 
@@ -222,8 +249,9 @@ class CLGSI(MSAModel):
 
     def forward(self, batch: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
         text = self.text_model(batch["text_bert"])
-        audio = self.audio_model(batch["audio"].float())
-        video = self.video_model(batch["vision"].float())
+        # Align first, exactly where AMIO does it -- before the model proper.
+        audio = self.audio_model(align_avg_pool(batch["audio"].float(), text.size(1)))
+        video = self.video_model(align_avg_pool(batch["vision"].float(), text.size(1)))
 
         # Text takes BERT's [CLS]; audio and vision take the LAST position of
         # their transformer, not the first. The asymmetry is the release's.
