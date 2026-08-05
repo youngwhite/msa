@@ -49,6 +49,10 @@ bash scripts/check_all.sh                      # 一条命令跑完所有闸门
 | `verify_runs.py` | 已落盘的指标能否由落盘预测重算出来？ |
 | `check_reproduction.py` | **重新训练**得到的预测，与 git 里committed 的是否一致？ |
 
+**调研清单由 `python scripts/survey_checklist.py` 生成**（`check_all.sh` 每次自动重跑），
+状态只在 `docs/papers.tsv` 里声明。新扫到的论文用 `--import-enumerated` 入册；空的「作者代码」列
+意思是**没查过**，不是「没有代码」——两者必须分开数。它报出的不一致是**待办清单，不是闸门**。
+
 **得到新结果后重跑 `python scripts/model_table.py`**——它生成 `docs/model_table.md`（年份/思路/数据设定/全部指标/参照来源/判定），是对外汇报与论文用的那张表。数字与判定都从落盘结果读取，不手抄。
 
 `bash scripts/reproduce_all.sh` 重跑 `docs/experiments.md` 里的全部实验（约 25 分钟）并自动做最后一项比对。**新实验进入文档时，必须同时在这个脚本里加一条**，否则下一个人无法重现它。

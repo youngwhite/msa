@@ -55,6 +55,14 @@ disk_note() {
 }
 disk_note
 
+# Regenerated every run so the checklist cannot go stale, and reported rather
+# than gated. Its drift count is a to-do list (papers filed but never verified),
+# and no code change can clear it -- only triage can. A gate that is red by
+# design teaches people to ignore gates, which is the same reason the disk
+# warning is a warning.
+printf '\n'
+$PY scripts/survey_checklist.py | sed 's/^/survey: /'
+
 run "lint"                 $PY -m ruff check src scripts --select E,F,W,B,SIM,I,UP --line-length 100
 run "data integrity"       $PY scripts/check_data.py
 run "invariants"           $PY scripts/check_invariants.py

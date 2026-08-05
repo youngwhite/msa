@@ -31,3 +31,100 @@ tetfn	TETFN: A text enhanced transformer fusion network for multimodal sentiment
 tf_mamba**_text_enhanced_fusion_mamba,_missing_modalities	TF-Mamba** Text-enhanced Fusion Mamba, Missing Modalities	Findings of EMNLP 2025		https://github.com/codemous/TF-Mamba	candidate
 tfn	Tensor Fusion Network for Multimodal Sentiment Analysis	EMNLP 2017			reproduced
 uncertainty_calibrated_elastic_alignment**,_missing_modalities	Uncertainty-Calibrated Elastic Alignment**, Missing Modalities	Findings of ACL 2026			candidate
+active_perceptual_inference_a_corticotha	Active Perceptual Inference: A Corticothalamic-Inspired Dynamic Nested Recurrent Network for Multimodal Sentiment Analysis with Incomplete Data	CVPR2026			candidate
+cica_coupling_confidence_aware_pretraini	CICA: Coupling Confidence-Aware Pretraining with Confidence-Informed Attention for Robust Multimodal Sentiment Analysis	CVPR2026			candidate
+conflict_aware_adaptive_cross_reconstruc	Conflict-Aware Adaptive Cross-Reconstruction for Multimodal Sentiment Analysis	CVPR2026			candidate
+enhance_then_balance_modality_collaborat	Enhance-then-Balance Modality Collaboration for Robust Multimodal Sentiment Analysis	CVPR2026			candidate
+factorize_reconstruct_enhance_a_unified	Factorize, Reconstruct, Enhance: A Unified Framework for Multimodal Sentiment Analysis	CVPR2026			candidate
+multi_metric_representation_learning_str	Multi-Metric Representation Learning Strategy Based on Clustering for Fine-Grained Multimodal Sentiment Analysis	CVPR2026			candidate
+prototype_as_prompt_multimodal_sentiment	Prototype-as-Prompt: Multimodal Sentiment Prototypes Endowing Large Language Models the Capability to Perform Multimodal Sentiment Analysis	CVPR2026			candidate
+tri_subspaces_disentanglement_for_multim	Tri-Subspaces Disentanglement for Multimodal Sentiment Analysis	CVPR2026			candidate
+cmad_correlation_aware_and_modalities_aw	CMAD: Correlation-Aware and Modalities-Aware Distillation for Multimodal Sentiment Analysis with Missing Modalities	ICCV2025			candidate
+multi_interactive_memory_network_for_asp	Multi-Interactive Memory Network for Aspect Based Multimodal Sentiment Analysis	aaai2019			candidate
+vistanet_visual_aspect_attention_network	VistaNet: Visual Aspect Attention Network for Multimodal Sentiment Analysis	aaai2019			candidate
+trimodal_attention_module_for_multimodal	Trimodal Attention Module for Multimodal Sentiment Analysis (Student Abstract)	aaai2020			candidate
+robust_msa_understanding_the_impact_of_m	Robust-MSA: Understanding the Impact of Modality Noise on Multimodal Sentiment Analysis	aaai2023			candidate
+a_unified_self_distillation_framework_fo	A Unified Self-Distillation Framework for Multimodal Sentiment Analysis with Uncertain Missing Modalities	aaai2024			candidate
+a_multi_focus_driven_multi_branch_networ	A Multi-Focus-Driven Multi-Branch Network for Robust Multimodal Sentiment Analysis	aaai2025			candidate
+bridging_the_gap_for_test_time_multimoda	Bridging the Gap for Test-Time Multimodal Sentiment Analysis	aaai2025			candidate
+dlf_disentangled_language_focused_multim	DLF: Disentangled-Language-Focused Multimodal Sentiment Analysis	aaai2025			candidate
+enriching_multimodal_sentiment_analysis	Enriching Multimodal Sentiment Analysis Through Textual Emotional Descriptions of Visual-Audio Content	aaai2025			candidate
+msamba_exploring_multimodal_sentiment_an	MSAmba: Exploring Multimodal Sentiment Analysis with State Space Models	aaai2025			candidate
+mse_adapter_a_lightweight_plugin_endowin	MSE-Adapter: A Lightweight Plugin Endowing LLMs with the Capability to Perform Multimodal Sentiment Analysis and Emotion Recognition	aaai2025			candidate
+semi_iin_semi_supervised_intra_inter_mod	Semi-IIN: Semi-Supervised Intra-Inter Modal Interaction Learning Network for Multimodal Sentiment Analysis	aaai2025			candidate
+towards_multimodal_sentiment_analysis_vi	Towards Multimodal Sentiment Analysis via Hierarchical Correlation Modeling with Semantic Distribution Constraints	aaai2025			candidate
+a_text_routed_sparse_mixture_of_experts	A Text-Routed Sparse Mixture-of-Experts Model with Explanation and Temporal Alignment for Multi-Modal Sentiment Analysis	aaai2026			candidate
+fine_factorized_multimodal_sentiment_ana	FINE: Factorized Multimodal Sentiment Analysis via Mutual INformation Estimation	aaai2026			candidate
+group_aware_multiscale_ensemble_learning	Group-aware Multiscale Ensemble Learning for Test-Time Multimodal Sentiment Analysis	aaai2026			candidate
+mdf_a_modality_aware_disentanglement_and	MDF: A Modality-Aware Disentanglement and Fusion Framework for Multimodal Sentiment Analysis	aaai2026			candidate
+psa_mf_personality_sentiment_aligned_mul	PSA-MF: Personality-Sentiment Aligned Multi-Level Fusion for Multimodal Sentiment Analysis	aaai2026			candidate
+pase_prototype_aligned_calibration_and_s	PaSE: Prototype-aligned Calibration and Shapley-based Equilibrium for Multimodal Sentiment Analysis	aaai2026			candidate
+recovering_coherent_affective_patterns_a	Recovering Coherent Affective Patterns: Addressing Modality Missing in Multimodal Sentiment Analysis	aaai2026			candidate
+tmdc_a_two_stage_modality_denoising_and	TMDC: A Two-Stage Modality Denoising and Complementation Framework for Multimodal Sentiment Analysis with Missing and Noisy Modalities	aaai2026			candidate
+multimodal_language_analysis_in_the_wild	Multimodal Language Analysis in the Wild: CMU-MOSEI Dataset and Interpretable Dynamic Fusion Graph	acl2018-1			candidate
+ch_sims_a_chinese_multimodal_sentiment_a	CH-SIMS: A Chinese Multimodal Sentiment Analysis Dataset with Fine-grained Annotation of Modality	acl2020			candidate
+ctfn_hierarchical_learning_for_multimoda	CTFN: Hierarchical Learning for Multimodal Sentiment Analysis Using Coupled-Translation Fusion Network	acl2021-1			candidate
+multimodal_sentiment_detection_based_on	Multimodal Sentiment Detection Based on Multi-channel Graph Neural Networks	acl2021-1			candidate
+a_text_centered_shared_private_framework	A Text-Centered Shared-Private Framework via Cross-Modal Prediction for Multimodal Sentiment Analysis	acl2021f			candidate
+msctd_a_multimodal_sentiment_chat_transl	MSCTD: A Multimodal Sentiment Chat Translation Dataset	acl2022-1			candidate
+m_sena_an_integrated_platform_for_multim	M-SENA: An Integrated Platform for Multimodal Sentiment Analysis	acl2022-d			candidate
+sentiment_word_aware_multimodal_refineme	Sentiment Word Aware Multimodal Refinement for Multimodal Sentiment Analysis with ASR Errors	acl2022f			candidate
+confede_contrastive_feature_decompositio	ConFEDE: Contrastive Feature Decomposition for Multimodal Sentiment Analysis	acl2023-1	contrastive		candidate
+tackling_modality_heterogeneity_with_mul	Tackling Modality Heterogeneity with Multi-View Calibration Network for Multimodal Sentiment Detection	acl2023-1			candidate
+conki_contrastive_knowledge_injection_fo	ConKI: Contrastive Knowledge Injection for Multimodal Sentiment Analysis	acl2023f	contrastive		candidate
+sentiment_knowledge_enhanced_self_superv	Sentiment Knowledge Enhanced Self-supervised Learning for Multimodal Sentiment Analysis	acl2023f			candidate
+proxy_driven_robust_multimodal_sentiment	Proxy-Driven Robust Multimodal Sentiment Analysis with Incomplete Data	acl2025-1			candidate
+cross_lingual_multimodal_sentiment_analy	Cross-lingual Multimodal Sentiment Analysis for Low-Resource Languages via Language Family Disentanglement and Rethinking Transfer	acl2025f			candidate
+beyond_static_alignment_adaptive_arbitra	Beyond Static Alignment: Adaptive Arbitration for Semantic Incongruence in Semi-Supervised Multimodal Sentiment Analysis	acl2026-1			candidate
+qa_moe_towards_a_continuous_reliability	QA-MoE: Towards a Continuous Reliability Spectrum with Quality-Aware Mixture of Experts for Robust Multimodal Sentiment Analysis	acl2026-1			candidate
+dear_distributional_error_aware_reliabil	DEAR: Distributional Error-Aware Reliability for Robust Multimodal Sentiment Analysis with Missing Modalities	acl2026f			candidate
+fast_retrieval_and_slow_reasoning_for_ex	Fast Retrieval and Slow Reasoning for Explainable Multimodal Sentiment Analysis	acl2026f			candidate
+molan_a_unified_modality_aware_noise_dyn	MoLAN: A Unified Modality-Aware Noise Dynamic Editing Framework for Multimodal Sentiment Analysis	acl2026f			candidate
+resource_limited_joint_multimodal_sentim	Resource-Limited Joint Multimodal Sentiment Reasoning and Classification via Chain-of-Thought Enhancement and Distillation	acl2026f			candidate
+uncertainty_calibrated_elastic_alignment	Uncertainty-Calibrated Elastic Alignment for Multimodal Sentiment Analysis with Missing Modalities	acl2026f			candidate
+correlation_decoupled_knowledge_distilla	Correlation-Decoupled Knowledge Distillation for Multimodal Sentiment Analysis with Incomplete Modalities	cvpr2024			candidate
+contextual_inter_modal_attention_for_mul	Contextual Inter-modal Attention for Multi-modal Sentiment Analysis	emnlp2018			candidate
+context_aware_interactive_attention_for	Context-aware Interactive Attention for Multi-modal Sentiment and Emotion Analysis	emnlp2019-1			candidate
+which_is_making_the_contribution_modulat	Which is Making the Contribution: Modulating Unimodal and Cross-modal Dynamics for Multimodal Sentiment Analysis	emnlp2021f			candidate
+mitigating_inconsistencies_in_multimodal	Mitigating Inconsistencies in Multimodal Sentiment Analysis under Uncertain Missing Modalities	emnlp2022			candidate
+unimse_towards_unified_multimodal_sentim	UniMSE: Towards Unified Multimodal Sentiment Analysis and Emotion Recognition	emnlp2022			candidate
+multimodal_contrastive_learning_via_uni	Multimodal Contrastive Learning via Uni-Modal Coding and Cross-Modal Prediction for Multimodal Sentiment Analysis	emnlp2022f	contrastive		candidate
+descriptive_prompt_paraphrasing_for_targ	Descriptive Prompt Paraphrasing for Target-Oriented Multimodal Sentiment Classification	emnlp2023f			candidate
+improving_multimodal_sentiment_analysis	Improving Multimodal Sentiment Analysis: Supervised Angular margin-based Contrastive Learning for Enhanced Fusion Representation	emnlp2023f	contrastive		candidate
+rethinkingtmsc_an_empirical_study_for_ta	RethinkingTMSC: An Empirical Study for Target-Oriented Multimodal Sentiment Classification	emnlp2023f			candidate
+visual_elements_mining_as_prompts_for_in	Visual Elements Mining as Prompts for Instruction Learning for Target-Oriented Multimodal Sentiment Classification	emnlp2023f			candidate
+d2r_dual_branch_dynamic_routing_network	D2R: Dual-Branch Dynamic Routing Network for Multimodal Sentiment Detection	emnlp2024			candidate
+knowledge_guided_dynamic_modality_attent	Knowledge-Guided Dynamic Modality Attention Fusion Framework for Multimodal Sentiment Analysis	emnlp2024f			candidate
+dual_path_dynamic_fusion_with_learnable	Dual-Path Dynamic Fusion with Learnable Query for Multimodal Sentiment Analysis	emnlp2025			candidate
+tf_mamba_text_enhanced_fusion_mamba_with	TF-Mamba: Text-enhanced Fusion Mamba with Missing Modalities for Robust Multimodal Sentiment Analysis	emnlp2025f			candidate
+adapting_bert_for_target_oriented_multim	Adapting BERT for Target-Oriented Multimodal Sentiment Classification	ijcai2019			candidate
+deepcu_integrating_both_common_and_uniqu	DeepCU: Integrating both Common and Unique Latent Information for Multimodal Sentiment Analysis	ijcai2019			candidate
+targeted_multimodal_sentiment_classifica	Targeted Multimodal Sentiment Classification based on Coarse-to-Fine Grained Image-Target Matching	ijcai2022			candidate
+hydiscgan_a_hybrid_distributed_cgan_for	HyDiscGAN: A Hybrid Distributed cGAN for Audio-Visual Privacy Preservation in Multimodal Sentiment Analysis	ijcai2024			candidate
+dfmu_distribution_based_framework_for_mo	DFMU: Distribution-based Framework for Modeling Aleatoric Uncertainty in Multimodal Sentiment Analysis	ijcai2025			candidate
+decoupling_and_reconstructing_a_multimod	Decoupling and Reconstructing: A Multimodal Sentiment Analysis Framework Towards Robustness	ijcai2025			candidate
+effective_sentiment_relevant_word_select	Effective Sentiment-relevant Word Selection for Multi-modal Sentiment Analysis in Spoken Language	mm2019			candidate
+summary_of_muse_2020_multimodal_sentimen	Summary of MuSe 2020: Multimodal Sentiment Analysis, Emotion-target Engagement and Trustworthiness Detection in Real-life Media	mm2020			candidate
+transformer_based_feature_reconstruction	Transformer-based Feature Reconstruction Network for Robust Multimodal Sentiment Analysis	mm2021			candidate
+counterfactual_reasoning_for_out_of_dist	Counterfactual Reasoning for Out-of-distribution Multimodal Sentiment Analysis	mm2022			candidate
+cubemlp_an_mlp_based_model_for_multimoda	CubeMLP: An MLP-based Model for Multimodal Sentiment Analysis and Depression Estimation	mm2022			candidate
+acformer_an_aligned_and_compact_transfor	AcFormer: An Aligned and Compact Transformer for Multimodal Sentiment Analysis	mm2023			candidate
+building_robust_multimodal_sentiment_rec	Building Robust Multimodal Sentiment Recognition via a Simple yet Effective Multimodal Transformer	mm2023			candidate
+cross_modality_representation_interactiv	Cross-modality Representation Interactive Learning for Multimodal Sentiment Analysis	mm2023			candidate
+few_shot_multimodal_sentiment_analysis_b	Few-shot Multimodal Sentiment Analysis Based on Multimodal Probabilistic Fusion Prompts	mm2023			candidate
+general_debiasing_for_multimodal_sentime	General Debiasing for Multimodal Sentiment Analysis	mm2023			candidate
+enhanced_experts_with_uncertainty_aware	Enhanced Experts with Uncertainty-Aware Routing for Multimodal Sentiment Analysis	mm2024			candidate
+glomo_global_local_modal_fusion_for_mult	GLoMo: Global-Local Modal Fusion for Multimodal Sentiment Analysis	mm2024			candidate
+grace_gradient_based_active_learning_wit	GRACE: GRadient-based Active Learning with Curriculum Enhancement for Multimodal Sentiment Analysis	mm2024			candidate
+kebr_knowledge_enhanced_self_supervised	KEBR: Knowledge Enhanced Self-Supervised Balanced Representation for Multimodal Sentiment Analysis	mm2024			candidate
+learning_in_order_a_sequential_strategy	Learning in Order! A Sequential Strategy to Learn Invariant Features for Multimodal Sentiment Analysis	mm2024			candidate
+robust_multimodal_sentiment_analysis_of	Robust Multimodal Sentiment Analysis of Image-Text Pairs by Distribution-Based Feature Recovery and Fusion	mm2024			candidate
+wisdom_improving_multimodal_sentiment_an	WisdoM: Improving Multimodal Sentiment Analysis by Fusing Contextual World Knowledge	mm2024			candidate
+ddse_a_decoupled_dual_stream_enhanced_fr	DDSE: A Decoupled Dual-Stream Enhanced Framework for Multimodal Sentiment Analysis with Text-Centric SSM	mm2025			candidate
+diffufuse_diffusion_driven_dual_stream_f	DiffuFuse: Diffusion-Driven Dual-Stream Fusion Framework for Multimodal Sentiment Analysis	mm2025			candidate
+impact_of_stickers_on_multimodal_sentime	Impact of Stickers on Multimodal Sentiment and Intent in Social Media: A New Task, Dataset and Baseline	mm2025			candidate
+ldw_label_divergence_weighting_for_multi	LDW: Label Divergence Weighting for Multimodal Sentiment Analysis	mm2025			candidate
+towards_explainable_fusion_and_balanced	Towards Explainable Fusion and Balanced Learning in Multimodal Sentiment Analysis	mm2025			candidate
+analyzing_modality_robustness_in_multimo	Analyzing Modality Robustness in Multimodal Sentiment Analysis	naacl2022			candidate
+clmlf_a_contrastive_learning_and_multi_l	CLMLF: A Contrastive Learning and Multi-Layer Fusion Method for Multimodal Sentiment Detection	naacl2022f	contrastive		candidate
+clgsi_a_multimodal_sentiment_analysis_fr	CLGSI: A Multimodal Sentiment Analysis Framework based on Contrastive Learning Guided by Sentiment Intensity	naacl2024f	contrastive		candidate

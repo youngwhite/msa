@@ -11,6 +11,13 @@ script is the only place the checklist is *rendered*:
 
     python scripts/survey_checklist.py            # write docs/survey_checklist.md
     python scripts/survey_checklist.py --check    # exit non-zero on any drift
+    python scripts/survey_checklist.py --import-enumerated   # file new sweep hits
+
+`--import-enumerated` is what keeps this current as the sweep grows: every
+IN_SCOPE title the enumerator found that is not yet in papers.tsv is added as
+`candidate` with an empty code column, which reads as **not yet verified** --
+never as "no code exists". Filing a paper is not the same as checking it, and
+the checklist counts the two separately so the difference stays visible.
 
 The rendering is the smaller half. The point is the cross-check: every claim in
 papers.tsv is tested against evidence that lives elsewhere, so the two cannot
@@ -35,6 +42,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import re
 import sys
 
 from msa.config import OUTPUT_ROOT, PROJECT_ROOT
@@ -107,6 +115,7 @@ def build(papers: list[dict], problems: list[str]) -> str:
                          f"{row['class'] or '—'} | {row['title'][:70]} | {code} | {pdf} |")
 
     contrastive = [r for r in papers if r["class"] == "contrastive"]
+    unverified = [r for r in papers if not r["code"] and r["status"] != "excluded"]
     header = f"""# 调研清单（唯一权威视图）
 
 **由 `python scripts/survey_checklist.py` 生成，不要手抄。**
@@ -114,6 +123,8 @@ def build(papers: list[dict], problems: list[str]) -> str:
 
 - 共 **{len(papers)}** 条；已复现 **{len(by_status.get('reproduced', []))}** 条
 - 对比学习一类 **{len(contrastive)}** 条（导师指定方向，见 `decisions.md` 2026-08-04）
+- **尚未核实作者代码 {len(unverified)}** 条——空的「作者代码」列意思是**没查过**，
+  不是「没有代码」。这两件事必须分开数，否则"没查"会慢慢被读成"没有"。
 
 **「作者代码」一列的链接一律取自论文正文**，不取会议页面元数据——后者不显示正文里的代码链接，
 据此判断已误判过四篇（规矩见 `survey.md`「核实规矩」）。
@@ -126,13 +137,55 @@ def build(papers: list[dict], problems: list[str]) -> str:
     return header + "\n".join(lines) + "\n"
 
 
+def import_enumerated(papers: list[dict]) -> int:
+    """File every IN_SCOPE title not yet in papers.tsv, as an unverified candidate.
+
+    Deliberately does NOT invent a code link or a verdict. It records that the
+    enumerator found the paper and that nobody has looked at it yet, which is
+    exactly the state those ~70 were in while being invisible.
+    """
+    known = {row["title"].strip().lower() for row in papers}
+    if not SWEEP.exists():
+        return 0
+    with SWEEP.open() as handle:
+        rows = [r for r in csv.DictReader(handle, delimiter="\t")
+                if r.get("tier") == "IN_SCOPE" and r.get("title")]
+
+    added = []
+    seen = set()
+    for row in rows:
+        title = row["title"].strip()
+        if title.lower() in known or title.lower() in seen:
+            continue
+        seen.add(title.lower())
+        key = re.sub(r"[^a-z0-9]+", "_", title.lower())[:40].strip("_")
+        added.append({"key": key, "title": title, "venue": row.get("venue", ""),
+                      "class": "contrastive" if "contrast" in title.lower() else "",
+                      "code": "", "status": "candidate"})
+    if not added:
+        return 0
+    with PAPERS.open("a") as handle:
+        writer = csv.DictWriter(handle, delimiter="\t",
+                                fieldnames=["key", "title", "venue", "class", "code", "status"],
+                                lineterminator="\n")
+        for row in added:
+            writer.writerow(row)
+    return len(added)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--check", action="store_true",
                     help="exit non-zero if any claim disagrees with the evidence")
+    ap.add_argument("--import-enumerated", action="store_true",
+                    help="file IN_SCOPE sweep hits that are not yet in papers.tsv")
     args = ap.parse_args()
 
     papers = load_papers()
+    if args.import_enumerated:
+        added = import_enumerated(papers)
+        print(f"filed {added} newly enumerated paper(s) as unverified candidates")
+        papers = load_papers()
     problems = drift(papers)
     OUT_PATH.write_text(build(papers, problems))
     print(f"wrote {OUT_PATH.relative_to(PROJECT_ROOT)}  ({len(papers)} papers)")

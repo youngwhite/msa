@@ -3,111 +3,15 @@
 **由 `python scripts/survey_checklist.py` 生成，不要手抄。**
 论文状态只在 `docs/papers.tsv` 里声明；本文件只是渲染，且**每条声明都与别处的证据对过**。
 
-- 共 **32** 条；已复现 **17** 条
-- 对比学习一类 **2** 条（导师指定方向，见 `decisions.md` 2026-08-04）
+- 共 **129** 条；已复现 **17** 条
+- 对比学习一类 **8** 条（导师指定方向，见 `decisions.md` 2026-08-04）
+- **尚未核实作者代码 107** 条——空的「作者代码」列意思是**没查过**，
+  不是「没有代码」。这两件事必须分开数，否则"没查"会慢慢被读成"没有"。
 
 **「作者代码」一列的链接一律取自论文正文**，不取会议页面元数据——后者不显示正文里的代码链接，
 据此判断已误判过四篇（规矩见 `survey.md`「核实规矩」）。
 
-## ⚠️ 与证据不一致（须处理）
-
-- 枚举为 IN_SCOPE 但未进 papers.tsv：a multi-focus-driven multi-branch network for robust multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：a text-centered shared-private framework via cross-modal prediction for multimodal sentime
-- 枚举为 IN_SCOPE 但未进 papers.tsv：a text-routed sparse mixture-of-experts model with explanation and temporal alignment for 
-- 枚举为 IN_SCOPE 但未进 papers.tsv：a unified self-distillation framework for multimodal sentiment analysis with uncertain mis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：acformer: an aligned and compact transformer for multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：active perceptual inference: a corticothalamic-inspired dynamic nested recurrent network f
-- 枚举为 IN_SCOPE 但未进 papers.tsv：adapting bert for target-oriented multimodal sentiment classification
-- 枚举为 IN_SCOPE 但未进 papers.tsv：analyzing modality robustness in multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：beyond static alignment: adaptive arbitration for semantic incongruence in semi-supervised
-- 枚举为 IN_SCOPE 但未进 papers.tsv：bridging the gap for test-time multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：building robust multimodal sentiment recognition via a simple yet effective multimodal tra
-- 枚举为 IN_SCOPE 但未进 papers.tsv：ch-sims: a chinese multimodal sentiment analysis dataset with fine-grained annotation of m
-- 枚举为 IN_SCOPE 但未进 papers.tsv：cica: coupling confidence-aware pretraining with confidence-informed attention for robust 
-- 枚举为 IN_SCOPE 但未进 papers.tsv：clgsi: a multimodal sentiment analysis framework based on contrastive learning guided by s
-- 枚举为 IN_SCOPE 但未进 papers.tsv：clmlf: a contrastive learning and multi-layer fusion method for multimodal sentiment detec
-- 枚举为 IN_SCOPE 但未进 papers.tsv：cmad: correlation-aware and modalities-aware distillation for multimodal sentiment analysi
-- 枚举为 IN_SCOPE 但未进 papers.tsv：confede: contrastive feature decomposition for multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：conflict-aware adaptive cross-reconstruction for multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：conki: contrastive knowledge injection for multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：context-aware interactive attention for multi-modal sentiment and emotion analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：contextual inter-modal attention for multi-modal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：correlation-decoupled knowledge distillation for multimodal sentiment analysis with incomp
-- 枚举为 IN_SCOPE 但未进 papers.tsv：counterfactual reasoning for out-of-distribution multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：cross-lingual multimodal sentiment analysis for low-resource languages via language family
-- 枚举为 IN_SCOPE 但未进 papers.tsv：cross-modality representation interactive learning for multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：ctfn: hierarchical learning for multimodal sentiment analysis using coupled-translation fu
-- 枚举为 IN_SCOPE 但未进 papers.tsv：cubemlp: an mlp-based model for multimodal sentiment analysis and depression estimation
-- 枚举为 IN_SCOPE 但未进 papers.tsv：d2r: dual-branch dynamic routing network for multimodal sentiment detection
-- 枚举为 IN_SCOPE 但未进 papers.tsv：ddse: a decoupled dual-stream enhanced framework for multimodal sentiment analysis with te
-- 枚举为 IN_SCOPE 但未进 papers.tsv：dear: distributional error-aware reliability for robust multimodal sentiment analysis with
-- 枚举为 IN_SCOPE 但未进 papers.tsv：decoupling and reconstructing: a multimodal sentiment analysis framework towards robustnes
-- 枚举为 IN_SCOPE 但未进 papers.tsv：deepcu: integrating both common and unique latent information for multimodal sentiment ana
-- 枚举为 IN_SCOPE 但未进 papers.tsv：descriptive prompt paraphrasing for target-oriented multimodal sentiment classification
-- 枚举为 IN_SCOPE 但未进 papers.tsv：dfmu: distribution-based framework for modeling aleatoric uncertainty in multimodal sentim
-- 枚举为 IN_SCOPE 但未进 papers.tsv：diffufuse: diffusion-driven dual-stream fusion framework for multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：dlf: disentangled-language-focused multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：dual-path dynamic fusion with learnable query for multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：effective sentiment-relevant word selection for multi-modal sentiment analysis in spoken l
-- 枚举为 IN_SCOPE 但未进 papers.tsv：enhance-then-balance modality collaboration for robust multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：enhanced experts with uncertainty-aware routing for multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：enriching multimodal sentiment analysis through textual emotional descriptions of visual-a
-- 枚举为 IN_SCOPE 但未进 papers.tsv：factorize, reconstruct, enhance: a unified framework for multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：fast retrieval and slow reasoning for explainable multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：few-shot multimodal sentiment analysis based on multimodal probabilistic fusion prompts
-- 枚举为 IN_SCOPE 但未进 papers.tsv：fine: factorized multimodal sentiment analysis via mutual information estimation
-- 枚举为 IN_SCOPE 但未进 papers.tsv：general debiasing for multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：glomo: global-local modal fusion for multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：grace: gradient-based active learning with curriculum enhancement for multimodal sentiment
-- 枚举为 IN_SCOPE 但未进 papers.tsv：group-aware multiscale ensemble learning for test-time multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：hydiscgan: a hybrid distributed cgan for audio-visual privacy preservation in multimodal s
-- 枚举为 IN_SCOPE 但未进 papers.tsv：impact of stickers on multimodal sentiment and intent in social media: a new task, dataset
-- 枚举为 IN_SCOPE 但未进 papers.tsv：improving multimodal sentiment analysis: supervised angular margin-based contrastive learn
-- 枚举为 IN_SCOPE 但未进 papers.tsv：kebr: knowledge enhanced self-supervised balanced representation for multimodal sentiment 
-- 枚举为 IN_SCOPE 但未进 papers.tsv：knowledge-guided dynamic modality attention fusion framework for multimodal sentiment anal
-- 枚举为 IN_SCOPE 但未进 papers.tsv：ldw: label divergence weighting for multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：learning in order! a sequential strategy to learn invariant features for multimodal sentim
-- 枚举为 IN_SCOPE 但未进 papers.tsv：m-sena: an integrated platform for multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：mdf: a modality-aware disentanglement and fusion framework for multimodal sentiment analys
-- 枚举为 IN_SCOPE 但未进 papers.tsv：mitigating inconsistencies in multimodal sentiment analysis under uncertain missing modali
-- 枚举为 IN_SCOPE 但未进 papers.tsv：molan: a unified modality-aware noise dynamic editing framework for multimodal sentiment a
-- 枚举为 IN_SCOPE 但未进 papers.tsv：msamba: exploring multimodal sentiment analysis with state space models
-- 枚举为 IN_SCOPE 但未进 papers.tsv：msctd: a multimodal sentiment chat translation dataset
-- 枚举为 IN_SCOPE 但未进 papers.tsv：mse-adapter: a lightweight plugin endowing llms with the capability to perform multimodal 
-- 枚举为 IN_SCOPE 但未进 papers.tsv：multi-interactive memory network for aspect based multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：multi-metric representation learning strategy based on clustering for fine-grained multimo
-- 枚举为 IN_SCOPE 但未进 papers.tsv：multimodal contrastive learning via uni-modal coding and cross-modal prediction for multim
-- 枚举为 IN_SCOPE 但未进 papers.tsv：multimodal language analysis in the wild: cmu-mosei dataset and interpretable dynamic fusi
-- 枚举为 IN_SCOPE 但未进 papers.tsv：multimodal sentiment detection based on multi-channel graph neural networks
-- 枚举为 IN_SCOPE 但未进 papers.tsv：pase: prototype-aligned calibration and shapley-based equilibrium for multimodal sentiment
-- 枚举为 IN_SCOPE 但未进 papers.tsv：prototype-as-prompt: multimodal sentiment prototypes endowing large language models the ca
-- 枚举为 IN_SCOPE 但未进 papers.tsv：proxy-driven robust multimodal sentiment analysis with incomplete data
-- 枚举为 IN_SCOPE 但未进 papers.tsv：psa-mf: personality-sentiment aligned multi-level fusion for multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：qa-moe: towards a continuous reliability spectrum with quality-aware mixture of experts fo
-- 枚举为 IN_SCOPE 但未进 papers.tsv：recovering coherent affective patterns: addressing modality missing in multimodal sentimen
-- 枚举为 IN_SCOPE 但未进 papers.tsv：resource-limited joint multimodal sentiment reasoning and classification via chain-of-thou
-- 枚举为 IN_SCOPE 但未进 papers.tsv：rethinkingtmsc: an empirical study for target-oriented multimodal sentiment classification
-- 枚举为 IN_SCOPE 但未进 papers.tsv：robust multimodal sentiment analysis of image-text pairs by distribution-based feature rec
-- 枚举为 IN_SCOPE 但未进 papers.tsv：robust-msa: understanding the impact of modality noise on multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：semi-iin: semi-supervised intra-inter modal interaction learning network for multimodal se
-- 枚举为 IN_SCOPE 但未进 papers.tsv：sentiment knowledge enhanced self-supervised learning for multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：sentiment word aware multimodal refinement for multimodal sentiment analysis with asr erro
-- 枚举为 IN_SCOPE 但未进 papers.tsv：summary of muse 2020: multimodal sentiment analysis, emotion-target engagement and trustwo
-- 枚举为 IN_SCOPE 但未进 papers.tsv：tackling modality heterogeneity with multi-view calibration network for multimodal sentime
-- 枚举为 IN_SCOPE 但未进 papers.tsv：targeted multimodal sentiment classification based on coarse-to-fine grained image-target 
-- 枚举为 IN_SCOPE 但未进 papers.tsv：tf-mamba: text-enhanced fusion mamba with missing modalities for robust multimodal sentime
-- 枚举为 IN_SCOPE 但未进 papers.tsv：tmdc: a two-stage modality denoising and complementation framework for multimodal sentimen
-- 枚举为 IN_SCOPE 但未进 papers.tsv：towards explainable fusion and balanced learning in multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：towards multimodal sentiment analysis via hierarchical correlation modeling with semantic 
-- 枚举为 IN_SCOPE 但未进 papers.tsv：transformer-based feature reconstruction network for robust multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：tri-subspaces disentanglement for multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：trimodal attention module for multimodal sentiment analysis (student abstract)
-- 枚举为 IN_SCOPE 但未进 papers.tsv：uncertainty-calibrated elastic alignment for multimodal sentiment analysis with missing mo
-- 枚举为 IN_SCOPE 但未进 papers.tsv：unimse: towards unified multimodal sentiment analysis and emotion recognition
-- 枚举为 IN_SCOPE 但未进 papers.tsv：vistanet: visual aspect attention network for multimodal sentiment analysis
-- 枚举为 IN_SCOPE 但未进 papers.tsv：visual elements mining as prompts for instruction learning for target-oriented multimodal 
-- 枚举为 IN_SCOPE 但未进 papers.tsv：which is making the contribution: modulating unimodal and cross-modal dynamics for multimo
-- 枚举为 IN_SCOPE 但未进 papers.tsv：wisdom: improving multimodal sentiment analysis by fusing contextual world knowledge
+**一致性检查通过**：无声明与证据冲突。
 
 ## ✅ 已复现（17）
 
@@ -131,13 +35,21 @@
 | `dpdf_lq` | EMNLP 2025 主会 | — | DPDF-LQ | [链接](https://github.com/ZhouMiaoGX/DPDF-LQ) | — |
 | `misa` | arXiv:2005.03545 | — | MISA: Modality-Invariant and -Specific Representations for Multimodal  | [链接](https://github.com/declare-lab/MISA) | ✓ |
 
-## ◻ 候选（15）
+## ◻ 候选（112）
 
 | key | 出处 | 类别 | 标题 | 作者代码 | PDF |
 |---|---|---|---|---|---|
 | `p_rmf` | ACL 2025 长文 | — | P-RMF | — | — |
 | `qa_moe**_quality_aware_mixture_of_experts,_robust_msa` | ACL 2026 长文 | — | QA-MoE** Quality-Aware Mixture of Experts, Robust MSA | — | — |
 | `ebmc` | CVPR 2026, pp.30183-30193 | — | EBMC | [链接](https://github.com/kangverse/EBMC) | ✓ |
+| `active_perceptual_inference_a_corticotha` | CVPR2026 | — | Active Perceptual Inference: A Corticothalamic-Inspired Dynamic Nested | — | — |
+| `cica_coupling_confidence_aware_pretraini` | CVPR2026 | — | CICA: Coupling Confidence-Aware Pretraining with Confidence-Informed A | — | — |
+| `conflict_aware_adaptive_cross_reconstruc` | CVPR2026 | — | Conflict-Aware Adaptive Cross-Reconstruction for Multimodal Sentiment  | — | — |
+| `enhance_then_balance_modality_collaborat` | CVPR2026 | — | Enhance-then-Balance Modality Collaboration for Robust Multimodal Sent | — | — |
+| `factorize_reconstruct_enhance_a_unified` | CVPR2026 | — | Factorize, Reconstruct, Enhance: A Unified Framework for Multimodal Se | — | — |
+| `multi_metric_representation_learning_str` | CVPR2026 | — | Multi-Metric Representation Learning Strategy Based on Clustering for  | — | — |
+| `prototype_as_prompt_multimodal_sentiment` | CVPR2026 | — | Prototype-as-Prompt: Multimodal Sentiment Prototypes Endowing Large La | — | — |
+| `tri_subspaces_disentanglement_for_multim` | CVPR2026 | — | Tri-Subspaces Disentanglement for Multimodal Sentiment Analysis | — | — |
 | `lfd_rt**_cross_lingual_msa,_language_family_disentanglement` | Findings of ACL 2025 | — | LFD-RT** Cross-lingual MSA, Language Family Disentanglement | [链接](https://github.com/ShuoyuGuan/LFD-RT) | — |
 | `dear` | Findings of ACL 2026 | — | DEAR | — | ✓ |
 | `fast_retrieval_and_slow_reasoning**_explainable_msa` | Findings of ACL 2026 | — | Fast Retrieval and Slow Reasoning** Explainable MSA | — | — |
@@ -147,6 +59,95 @@
 | `kuda**_knowledge_guided_dynamic_modality_attention_fusion` | Findings of EMNLP 2024 | — | KuDA** Knowledge-Guided Dynamic Modality Attention Fusion | [链接](https://github.com/MKMaS-GUET/KuDA) | — |
 | `tf_mamba**_text_enhanced_fusion_mamba,_missing_modalities` | Findings of EMNLP 2025 | — | TF-Mamba** Text-enhanced Fusion Mamba, Missing Modalities | [链接](https://github.com/codemous/TF-Mamba) | — |
 | `cmad` | ICCV 2025, pp.4626-4636 | — | CMAD | [链接](https://github.com/YetZzzzzz/CMAD) | ✓ |
+| `cmad_correlation_aware_and_modalities_aw` | ICCV2025 | — | CMAD: Correlation-Aware and Modalities-Aware Distillation for Multimod | — | — |
 | `feada` | IJCNLP-AACL 2025 | — | FeaDA | [链接](https://github.com/PowerLittleYin/FeaDA-main) | — |
 | `mma` | NAACL 2025 长文 | — | MMA | [链接](https://github.com/MMA4MSA/MMA) | — |
 | `mer_clip` | WACV 2025, pp.6115-6124 | — | MER-CLIP | — | — |
+| `multi_interactive_memory_network_for_asp` | aaai2019 | — | Multi-Interactive Memory Network for Aspect Based Multimodal Sentiment | — | — |
+| `vistanet_visual_aspect_attention_network` | aaai2019 | — | VistaNet: Visual Aspect Attention Network for Multimodal Sentiment Ana | — | — |
+| `trimodal_attention_module_for_multimodal` | aaai2020 | — | Trimodal Attention Module for Multimodal Sentiment Analysis (Student A | — | — |
+| `robust_msa_understanding_the_impact_of_m` | aaai2023 | — | Robust-MSA: Understanding the Impact of Modality Noise on Multimodal S | — | — |
+| `a_unified_self_distillation_framework_fo` | aaai2024 | — | A Unified Self-Distillation Framework for Multimodal Sentiment Analysi | — | — |
+| `a_multi_focus_driven_multi_branch_networ` | aaai2025 | — | A Multi-Focus-Driven Multi-Branch Network for Robust Multimodal Sentim | — | — |
+| `bridging_the_gap_for_test_time_multimoda` | aaai2025 | — | Bridging the Gap for Test-Time Multimodal Sentiment Analysis | — | — |
+| `dlf_disentangled_language_focused_multim` | aaai2025 | — | DLF: Disentangled-Language-Focused Multimodal Sentiment Analysis | — | — |
+| `enriching_multimodal_sentiment_analysis` | aaai2025 | — | Enriching Multimodal Sentiment Analysis Through Textual Emotional Desc | — | — |
+| `msamba_exploring_multimodal_sentiment_an` | aaai2025 | — | MSAmba: Exploring Multimodal Sentiment Analysis with State Space Model | — | — |
+| `mse_adapter_a_lightweight_plugin_endowin` | aaai2025 | — | MSE-Adapter: A Lightweight Plugin Endowing LLMs with the Capability to | — | — |
+| `semi_iin_semi_supervised_intra_inter_mod` | aaai2025 | — | Semi-IIN: Semi-Supervised Intra-Inter Modal Interaction Learning Netwo | — | — |
+| `towards_multimodal_sentiment_analysis_vi` | aaai2025 | — | Towards Multimodal Sentiment Analysis via Hierarchical Correlation Mod | — | — |
+| `a_text_routed_sparse_mixture_of_experts` | aaai2026 | — | A Text-Routed Sparse Mixture-of-Experts Model with Explanation and Tem | — | — |
+| `fine_factorized_multimodal_sentiment_ana` | aaai2026 | — | FINE: Factorized Multimodal Sentiment Analysis via Mutual INformation  | — | — |
+| `group_aware_multiscale_ensemble_learning` | aaai2026 | — | Group-aware Multiscale Ensemble Learning for Test-Time Multimodal Sent | — | — |
+| `mdf_a_modality_aware_disentanglement_and` | aaai2026 | — | MDF: A Modality-Aware Disentanglement and Fusion Framework for Multimo | — | — |
+| `pase_prototype_aligned_calibration_and_s` | aaai2026 | — | PaSE: Prototype-aligned Calibration and Shapley-based Equilibrium for  | — | — |
+| `psa_mf_personality_sentiment_aligned_mul` | aaai2026 | — | PSA-MF: Personality-Sentiment Aligned Multi-Level Fusion for Multimoda | — | — |
+| `recovering_coherent_affective_patterns_a` | aaai2026 | — | Recovering Coherent Affective Patterns: Addressing Modality Missing in | — | — |
+| `tmdc_a_two_stage_modality_denoising_and` | aaai2026 | — | TMDC: A Two-Stage Modality Denoising and Complementation Framework for | — | — |
+| `multimodal_language_analysis_in_the_wild` | acl2018-1 | — | Multimodal Language Analysis in the Wild: CMU-MOSEI Dataset and Interp | — | — |
+| `ch_sims_a_chinese_multimodal_sentiment_a` | acl2020 | — | CH-SIMS: A Chinese Multimodal Sentiment Analysis Dataset with Fine-gra | — | — |
+| `ctfn_hierarchical_learning_for_multimoda` | acl2021-1 | — | CTFN: Hierarchical Learning for Multimodal Sentiment Analysis Using Co | — | — |
+| `multimodal_sentiment_detection_based_on` | acl2021-1 | — | Multimodal Sentiment Detection Based on Multi-channel Graph Neural Net | — | — |
+| `a_text_centered_shared_private_framework` | acl2021f | — | A Text-Centered Shared-Private Framework via Cross-Modal Prediction fo | — | — |
+| `msctd_a_multimodal_sentiment_chat_transl` | acl2022-1 | — | MSCTD: A Multimodal Sentiment Chat Translation Dataset | — | — |
+| `m_sena_an_integrated_platform_for_multim` | acl2022-d | — | M-SENA: An Integrated Platform for Multimodal Sentiment Analysis | — | — |
+| `sentiment_word_aware_multimodal_refineme` | acl2022f | — | Sentiment Word Aware Multimodal Refinement for Multimodal Sentiment An | — | — |
+| `confede_contrastive_feature_decompositio` | acl2023-1 | contrastive | ConFEDE: Contrastive Feature Decomposition for Multimodal Sentiment An | — | — |
+| `tackling_modality_heterogeneity_with_mul` | acl2023-1 | — | Tackling Modality Heterogeneity with Multi-View Calibration Network fo | — | — |
+| `conki_contrastive_knowledge_injection_fo` | acl2023f | contrastive | ConKI: Contrastive Knowledge Injection for Multimodal Sentiment Analys | — | — |
+| `sentiment_knowledge_enhanced_self_superv` | acl2023f | — | Sentiment Knowledge Enhanced Self-supervised Learning for Multimodal S | — | — |
+| `proxy_driven_robust_multimodal_sentiment` | acl2025-1 | — | Proxy-Driven Robust Multimodal Sentiment Analysis with Incomplete Data | — | — |
+| `cross_lingual_multimodal_sentiment_analy` | acl2025f | — | Cross-lingual Multimodal Sentiment Analysis for Low-Resource Languages | — | — |
+| `beyond_static_alignment_adaptive_arbitra` | acl2026-1 | — | Beyond Static Alignment: Adaptive Arbitration for Semantic Incongruenc | — | — |
+| `qa_moe_towards_a_continuous_reliability` | acl2026-1 | — | QA-MoE: Towards a Continuous Reliability Spectrum with Quality-Aware M | — | — |
+| `dear_distributional_error_aware_reliabil` | acl2026f | — | DEAR: Distributional Error-Aware Reliability for Robust Multimodal Sen | — | — |
+| `fast_retrieval_and_slow_reasoning_for_ex` | acl2026f | — | Fast Retrieval and Slow Reasoning for Explainable Multimodal Sentiment | — | — |
+| `molan_a_unified_modality_aware_noise_dyn` | acl2026f | — | MoLAN: A Unified Modality-Aware Noise Dynamic Editing Framework for Mu | — | — |
+| `resource_limited_joint_multimodal_sentim` | acl2026f | — | Resource-Limited Joint Multimodal Sentiment Reasoning and Classificati | — | — |
+| `uncertainty_calibrated_elastic_alignment` | acl2026f | — | Uncertainty-Calibrated Elastic Alignment for Multimodal Sentiment Anal | — | — |
+| `correlation_decoupled_knowledge_distilla` | cvpr2024 | — | Correlation-Decoupled Knowledge Distillation for Multimodal Sentiment  | — | — |
+| `contextual_inter_modal_attention_for_mul` | emnlp2018 | — | Contextual Inter-modal Attention for Multi-modal Sentiment Analysis | — | — |
+| `context_aware_interactive_attention_for` | emnlp2019-1 | — | Context-aware Interactive Attention for Multi-modal Sentiment and Emot | — | — |
+| `which_is_making_the_contribution_modulat` | emnlp2021f | — | Which is Making the Contribution: Modulating Unimodal and Cross-modal  | — | — |
+| `mitigating_inconsistencies_in_multimodal` | emnlp2022 | — | Mitigating Inconsistencies in Multimodal Sentiment Analysis under Unce | — | — |
+| `unimse_towards_unified_multimodal_sentim` | emnlp2022 | — | UniMSE: Towards Unified Multimodal Sentiment Analysis and Emotion Reco | — | — |
+| `multimodal_contrastive_learning_via_uni` | emnlp2022f | contrastive | Multimodal Contrastive Learning via Uni-Modal Coding and Cross-Modal P | — | — |
+| `descriptive_prompt_paraphrasing_for_targ` | emnlp2023f | — | Descriptive Prompt Paraphrasing for Target-Oriented Multimodal Sentime | — | — |
+| `improving_multimodal_sentiment_analysis` | emnlp2023f | contrastive | Improving Multimodal Sentiment Analysis: Supervised Angular margin-bas | — | — |
+| `rethinkingtmsc_an_empirical_study_for_ta` | emnlp2023f | — | RethinkingTMSC: An Empirical Study for Target-Oriented Multimodal Sent | — | — |
+| `visual_elements_mining_as_prompts_for_in` | emnlp2023f | — | Visual Elements Mining as Prompts for Instruction Learning for Target- | — | — |
+| `d2r_dual_branch_dynamic_routing_network` | emnlp2024 | — | D2R: Dual-Branch Dynamic Routing Network for Multimodal Sentiment Dete | — | — |
+| `knowledge_guided_dynamic_modality_attent` | emnlp2024f | — | Knowledge-Guided Dynamic Modality Attention Fusion Framework for Multi | — | — |
+| `dual_path_dynamic_fusion_with_learnable` | emnlp2025 | — | Dual-Path Dynamic Fusion with Learnable Query for Multimodal Sentiment | — | — |
+| `tf_mamba_text_enhanced_fusion_mamba_with` | emnlp2025f | — | TF-Mamba: Text-enhanced Fusion Mamba with Missing Modalities for Robus | — | — |
+| `adapting_bert_for_target_oriented_multim` | ijcai2019 | — | Adapting BERT for Target-Oriented Multimodal Sentiment Classification | — | — |
+| `deepcu_integrating_both_common_and_uniqu` | ijcai2019 | — | DeepCU: Integrating both Common and Unique Latent Information for Mult | — | — |
+| `targeted_multimodal_sentiment_classifica` | ijcai2022 | — | Targeted Multimodal Sentiment Classification based on Coarse-to-Fine G | — | — |
+| `hydiscgan_a_hybrid_distributed_cgan_for` | ijcai2024 | — | HyDiscGAN: A Hybrid Distributed cGAN for Audio-Visual Privacy Preserva | — | — |
+| `decoupling_and_reconstructing_a_multimod` | ijcai2025 | — | Decoupling and Reconstructing: A Multimodal Sentiment Analysis Framewo | — | — |
+| `dfmu_distribution_based_framework_for_mo` | ijcai2025 | — | DFMU: Distribution-based Framework for Modeling Aleatoric Uncertainty  | — | — |
+| `effective_sentiment_relevant_word_select` | mm2019 | — | Effective Sentiment-relevant Word Selection for Multi-modal Sentiment  | — | — |
+| `summary_of_muse_2020_multimodal_sentimen` | mm2020 | — | Summary of MuSe 2020: Multimodal Sentiment Analysis, Emotion-target En | — | — |
+| `transformer_based_feature_reconstruction` | mm2021 | — | Transformer-based Feature Reconstruction Network for Robust Multimodal | — | — |
+| `counterfactual_reasoning_for_out_of_dist` | mm2022 | — | Counterfactual Reasoning for Out-of-distribution Multimodal Sentiment  | — | — |
+| `cubemlp_an_mlp_based_model_for_multimoda` | mm2022 | — | CubeMLP: An MLP-based Model for Multimodal Sentiment Analysis and Depr | — | — |
+| `acformer_an_aligned_and_compact_transfor` | mm2023 | — | AcFormer: An Aligned and Compact Transformer for Multimodal Sentiment  | — | — |
+| `building_robust_multimodal_sentiment_rec` | mm2023 | — | Building Robust Multimodal Sentiment Recognition via a Simple yet Effe | — | — |
+| `cross_modality_representation_interactiv` | mm2023 | — | Cross-modality Representation Interactive Learning for Multimodal Sent | — | — |
+| `few_shot_multimodal_sentiment_analysis_b` | mm2023 | — | Few-shot Multimodal Sentiment Analysis Based on Multimodal Probabilist | — | — |
+| `general_debiasing_for_multimodal_sentime` | mm2023 | — | General Debiasing for Multimodal Sentiment Analysis | — | — |
+| `enhanced_experts_with_uncertainty_aware` | mm2024 | — | Enhanced Experts with Uncertainty-Aware Routing for Multimodal Sentime | — | — |
+| `glomo_global_local_modal_fusion_for_mult` | mm2024 | — | GLoMo: Global-Local Modal Fusion for Multimodal Sentiment Analysis | — | — |
+| `grace_gradient_based_active_learning_wit` | mm2024 | — | GRACE: GRadient-based Active Learning with Curriculum Enhancement for  | — | — |
+| `kebr_knowledge_enhanced_self_supervised` | mm2024 | — | KEBR: Knowledge Enhanced Self-Supervised Balanced Representation for M | — | — |
+| `learning_in_order_a_sequential_strategy` | mm2024 | — | Learning in Order! A Sequential Strategy to Learn Invariant Features f | — | — |
+| `robust_multimodal_sentiment_analysis_of` | mm2024 | — | Robust Multimodal Sentiment Analysis of Image-Text Pairs by Distributi | — | — |
+| `wisdom_improving_multimodal_sentiment_an` | mm2024 | — | WisdoM: Improving Multimodal Sentiment Analysis by Fusing Contextual W | — | — |
+| `ddse_a_decoupled_dual_stream_enhanced_fr` | mm2025 | — | DDSE: A Decoupled Dual-Stream Enhanced Framework for Multimodal Sentim | — | — |
+| `diffufuse_diffusion_driven_dual_stream_f` | mm2025 | — | DiffuFuse: Diffusion-Driven Dual-Stream Fusion Framework for Multimoda | — | — |
+| `impact_of_stickers_on_multimodal_sentime` | mm2025 | — | Impact of Stickers on Multimodal Sentiment and Intent in Social Media: | — | — |
+| `ldw_label_divergence_weighting_for_multi` | mm2025 | — | LDW: Label Divergence Weighting for Multimodal Sentiment Analysis | — | — |
+| `towards_explainable_fusion_and_balanced` | mm2025 | — | Towards Explainable Fusion and Balanced Learning in Multimodal Sentime | — | — |
+| `analyzing_modality_robustness_in_multimo` | naacl2022 | — | Analyzing Modality Robustness in Multimodal Sentiment Analysis | — | — |
+| `clmlf_a_contrastive_learning_and_multi_l` | naacl2022f | contrastive | CLMLF: A Contrastive Learning and Multi-Layer Fusion Method for Multim | — | — |
+| `clgsi_a_multimodal_sentiment_analysis_fr` | naacl2024f | contrastive | CLGSI: A Multimodal Sentiment Analysis Framework based on Contrastive  | — | — |
