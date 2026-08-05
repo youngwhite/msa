@@ -127,4 +127,4 @@ ldw_label_divergence_weighting_for_multi	LDW: Label Divergence Weighting for Mul
 towards_explainable_fusion_and_balanced	Towards Explainable Fusion and Balanced Learning in Multimodal Sentiment Analysis	mm2025			candidate
 analyzing_modality_robustness_in_multimo	Analyzing Modality Robustness in Multimodal Sentiment Analysis	naacl2022			candidate
 clmlf_a_contrastive_learning_and_multi_l	CLMLF: A Contrastive Learning and Multi-Layer Fusion Method for Multimodal Sentiment Detection	naacl2022f	contrastive		candidate
-clgsi_a_multimodal_sentiment_analysis_fr	CLGSI: A Multimodal Sentiment Analysis Framework based on Contrastive Learning Guided by Sentiment Intensity	naacl2024f	contrastive	https://github.com/AZYoung233/CLGSI	planned
+clgsi	CLGSI: A Multimodal Sentiment Analysis Framework based on Contrastive Learning Guided by Sentiment Intensity	naacl2024f	contrastive	https://github.com/AZYoung233/CLGSI	reproduced

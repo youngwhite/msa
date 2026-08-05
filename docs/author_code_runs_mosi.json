@@ -3,6 +3,126 @@
   "why": "Methods published after MMSA stopped adding models have no third-party reference. Running the authors' own code on our data, our seeds and our machine is the only way to tell an implementation gap from a protocol gap.",
   "how": "scripts/author_reference.py run <method> <seeds>, then collect. Nothing inside a release is edited; the only adjustment is the dataset path, applied through the release's own config file.",
   "models": {
+    "clgsi": {
+      "paper": "CLGSI: Contrastive Learning Guided by Sentiment Intensity, NAACL 2024 Findings",
+      "licence": "MIT",
+      "machine": "cuda:0 NVIDIA GeForce RTX 5080 (sm_120)",
+      "seeds": [
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51
+      ],
+      "n": 10,
+      "runs": {
+        "42": {
+          "mae": 0.7528,
+          "corr": 0.7931,
+          "acc2_non0": 0.8308,
+          "f1_non0": 0.8316,
+          "acc2_has0": 0.8192,
+          "f1_has0": 0.8196,
+          "acc5": 0.5117,
+          "acc7": 0.4431
+        },
+        "43": {
+          "mae": 0.7555,
+          "corr": 0.7707,
+          "acc2_non0": 0.8293,
+          "f1_non0": 0.8299,
+          "acc2_has0": 0.8163,
+          "f1_has0": 0.8165,
+          "acc5": 0.5146,
+          "acc7": 0.4388
+        },
+        "44": {
+          "mae": 0.7344,
+          "corr": 0.7906,
+          "acc2_non0": 0.8308,
+          "f1_non0": 0.8314,
+          "acc2_has0": 0.812,
+          "f1_has0": 0.812,
+          "acc5": 0.5131,
+          "acc7": 0.4636
+        },
+        "45": {
+          "mae": 0.7818,
+          "corr": 0.7625,
+          "acc2_non0": 0.8308,
+          "f1_non0": 0.8315,
+          "acc2_has0": 0.8149,
+          "f1_has0": 0.815,
+          "acc5": 0.5219,
+          "acc7": 0.4373
+        },
+        "46": {
+          "mae": 0.8142,
+          "corr": 0.7575,
+          "acc2_non0": 0.814,
+          "f1_non0": 0.8151,
+          "acc2_has0": 0.8032,
+          "f1_has0": 0.8037,
+          "acc5": 0.4971,
+          "acc7": 0.4155
+        },
+        "47": {
+          "mae": 0.7918,
+          "corr": 0.7628,
+          "acc2_non0": 0.8247,
+          "f1_non0": 0.8255,
+          "acc2_has0": 0.8149,
+          "f1_has0": 0.8152,
+          "acc5": 0.4869,
+          "acc7": 0.4038
+        },
+        "48": {
+          "mae": 0.7284,
+          "corr": 0.7994,
+          "acc2_non0": 0.846,
+          "f1_non0": 0.8464,
+          "acc2_has0": 0.8353,
+          "f1_has0": 0.8353,
+          "acc5": 0.5248,
+          "acc7": 0.4577
+        },
+        "49": {
+          "mae": 0.7323,
+          "corr": 0.7822,
+          "acc2_non0": 0.8415,
+          "f1_non0": 0.8412,
+          "acc2_has0": 0.8207,
+          "f1_has0": 0.8198,
+          "acc5": 0.5379,
+          "acc7": 0.4606
+        },
+        "50": {
+          "mae": 0.7627,
+          "corr": 0.7801,
+          "acc2_non0": 0.8262,
+          "f1_non0": 0.8272,
+          "acc2_has0": 0.8163,
+          "f1_has0": 0.8168,
+          "acc5": 0.4913,
+          "acc7": 0.4213
+        },
+        "51": {
+          "mae": 0.7483,
+          "corr": 0.7856,
+          "acc2_non0": 0.843,
+          "f1_non0": 0.8436,
+          "acc2_has0": 0.8251,
+          "f1_has0": 0.8251,
+          "acc5": 0.5248,
+          "acc7": 0.4577
+        }
+      }
+    },
     "confede": {
       "paper": "ConFEDE: Contrastive Feature Decomposition, ACL 2023",
       "licence": "see repository",

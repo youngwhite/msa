@@ -3,7 +3,7 @@
 **由 `python scripts/survey_checklist.py` 生成，不要手抄。**
 论文状态只在 `docs/papers.tsv` 里声明；本文件只是渲染，且**每条声明都与别处的证据对过**。
 
-- 共 **129** 条；已复现 **17** 条
+- 共 **129** 条；已复现 **18** 条
 - 对比学习一类 **8** 条（导师指定方向，见 `decisions.md` 2026-08-04）
 - **尚未核实作者代码 106** 条——空的「作者代码」列意思是**没查过**，
   不是「没有代码」。这两件事必须分开数，否则"没查"会慢慢被读成"没有"。
@@ -13,7 +13,7 @@
 
 **一致性检查通过**：无声明与证据冲突。
 
-## ✅ 已复现（17）
+## ✅ 已复现（18）
 
 | key | 出处 | 类别 | 标题 | 作者代码 | PDF |
 |---|---|---|---|---|---|
@@ -34,12 +34,7 @@
 | `almt` | EMNLP 2023 | — | Learning Language-guided Adaptive Hyper-modality Representation for Mu | — | ✓ |
 | `dpdf_lq` | EMNLP 2025 主会 | — | DPDF-LQ | [链接](https://github.com/ZhouMiaoGX/DPDF-LQ) | — |
 | `misa` | arXiv:2005.03545 | — | MISA: Modality-Invariant and -Specific Representations for Multimodal  | [链接](https://github.com/declare-lab/MISA) | ✓ |
-
-## ▶ 计划中（1）
-
-| key | 出处 | 类别 | 标题 | 作者代码 | PDF |
-|---|---|---|---|---|---|
-| `clgsi_a_multimodal_sentiment_analysis_fr` | naacl2024f | contrastive | CLGSI: A Multimodal Sentiment Analysis Framework based on Contrastive  | [链接](https://github.com/AZYoung233/CLGSI) | — |
+| `clgsi` | naacl2024f | contrastive | CLGSI: A Multimodal Sentiment Analysis Framework based on Contrastive  | [链接](https://github.com/AZYoung233/CLGSI) | — |
 
 ## ◻ 候选（111）
 

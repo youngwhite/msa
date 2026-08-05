@@ -75,6 +75,7 @@ MODELS: list[tuple[str, str, str, str]] = [
     ("cenet_mosi", "2023", "音视频作为偏移注入 BERT 层间", "mmsa"),
     ("tetfn_mosi", "2023", "音视频交互经文本中介，不直接相见", "mmsa"),
     ("almt_mosi", "2023", "音视频只位移一个语言主导的超模态", "mmsa"),
+    ("clgsi_mosi", "2024", "正负对不按标签相等划分，按情感强度距离加权", "author"),
     ("confede_mosi", "2023", "每模态投影为相似/相异两支，与检索来的伙伴样本对比", "author"),
     ("dmd_mosi", "2023", "专属/共享解耦后在可学习的图上互相蒸馏，边权决定谁教谁", "author-patched"),
     ("dlf_mosi", "2025", "音视频只作为被查询方补充语言（语言聚焦）", "author"),

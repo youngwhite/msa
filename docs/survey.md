@@ -173,6 +173,7 @@ curl -sL "https://aclanthology.org/volumes/<卷号>/" -o vol.html   # 每卷一�
 | **dlf** | 我们跑**作者代码** 10 seed（`docs/author_code_runs_mosi.json`），按验证集选轮 | `reimpl+equiv` | 权重复制等价测试 `2.384e-07`，**五个监督头全部比较**；结构、协议、超参均取自作者实现。论文未写的两处（四条通路构造不接线、语言头权重 3）只在代码里 |
 | **dmd** | 我们跑**作者代码 + 已验证的兼容性重建** 10 seed（`docs/author_code_runs_mosi.json`），按验证集选轮 | `reimpl+equiv` | 权重复制等价测试 `9.537e-07`，**14 个输出全部比较**；release 在当前 PyTorch 上无法启动，参照因此低一档，补丁分档见 `investigations.md#dmd-reference-patches` |
 | **confede** | 我们跑**作者代码** 10 seed（`docs/author_code_runs_mosi.json`），其自身即按验证集 MAE 选轮、测试集只碰一次 | `reimpl+equiv` | 权重复制等价测试 `0.000e+00`，**两个编码器 + 六个视图全部比对**；三处补丁均为管道问题（不进梯度/选轮），故参照不降级 |
+| **clgsi** | 我们跑**作者代码** 10 seed，其自身即按验证集 MAE 选轮 | `reimpl+equiv` | 前向五个输出 `0.000e+00`，**对比损失单独对上作者模块 `1.863e-08`**；四处补丁均为管道问题（matplotlib 用桩不装、logger 绑定、数据路径、seed 注入），参照不降级 |
 
 ## 台账 B：第 1 阶段收口的两个
 
