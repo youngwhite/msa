@@ -55,21 +55,28 @@ DIVIDING_LINE, GAIN, TEMPERATURE, GAMMA = 0.4, 1.5, 0.03, 0.95
 NEGATIVE_SCALE = 0.8
 
 
-def intensity_mask(labels: torch.Tensor, positive: bool) -> torch.Tensor:
+def intensity_mask(labels: torch.Tensor, positive: bool,
+                   weighted: bool = True) -> torch.Tensor:
     """Pair weights from the distance between two samples' sentiment.
 
     Labels are first mapped to [-1, 1] the way the release does, `(y + 3)/3 - 1`,
     which for MOSI's [-3, 3] is `y/3`.
+
+    `weighted=False` is the release's own alternative, sitting commented out one
+    line below each weighted assignment: the same pairs selected, every weight 1.
+    The authors tried it and did not report it. See
+    `investigations.md#intensity-weighting`.
     """
     mapped = (labels + 3) / 3 - 1
     distance = (mapped.unsqueeze(0) - mapped.unsqueeze(1)).abs()
     mask = torch.zeros_like(distance)
     if positive:
         near = distance <= DIVIDING_LINE
-        mask[near] = -torch.tanh(distance[near] - DIVIDING_LINE * 2) * GAIN
+        mask[near] = (-torch.tanh(distance[near] - DIVIDING_LINE * 2) * GAIN
+                      if weighted else 1.0)
     else:
         far = distance > DIVIDING_LINE
-        mask[far] = torch.tanh(distance[far]) * GAIN
+        mask[far] = torch.tanh(distance[far]) * GAIN if weighted else 1.0
     return mask
 
 
@@ -196,8 +203,11 @@ class CLGSI(MSAModel):
         fusion_dropout: float = 0.2,
         pretrained: str = "bert-base-uncased",
         finetune_bert: bool = True,
+        intensity_weighting: bool = True,
     ) -> None:
         super().__init__()
+        #: False reproduces the release's own commented-out ablation.
+        self.intensity_weighting = intensity_weighting
         self.relu = nn.ReLU()
         self.text_model = BertTextEncoder(pretrained, finetune_bert)
         self.audio_model = SequenceEncoder(audio_dim, audio_heads, audio_layers, audio_length)
@@ -290,8 +300,8 @@ class CLGSI(MSAModel):
         A first pass here assumed all four views and six pairs, which is the kind
         of plausible guess this repository keeps paying for.
         """
-        self._masks = (intensity_mask(label, positive=True),
-                       intensity_mask(label, positive=False))
+        self._masks = (intensity_mask(label, True, self.intensity_weighting),
+                       intensity_mask(label, False, self.intensity_weighting))
         return (self._single(outputs["Feature_v"], outputs["Feature_a"])
                 + self._single(outputs["Feature_v"], outputs["Feature_t"])
                 + self._single(outputs["Feature_t"], outputs["Feature_a"]))

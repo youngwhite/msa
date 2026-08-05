@@ -59,6 +59,8 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     dmd_mosi
     confede_mosi
     clgsi_mosi
+    clgsi_mosi_ablation_unweighted
+    confede_mosi_ablation_weighted
     mfn_mosi_ablation_realseq
     mfn_mosi_ablation_reallenmean
     graph_mfn_mosi_ablation_frozen
@@ -134,6 +136,14 @@ args_for() {
     # docs/spec_clgsi.md.
     clgsi_mosi)
         echo "--model clgsi --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --optimizer adamw --lr 1e-2 --weight-decay 0.001 --batch-size 64 --lr-schedule warmup_cosine_steps --lr-horizon-epochs 75 --patience 8 --epochs 200" ;;
+    # The intensity-weighting ablation, pre-registered before it was run:
+    # investigations.md#intensity-weighting. Each group differs from its baseline
+    # by one switch and nothing else -- both baselines pass weight-copy
+    # equivalence, so everything but the switch is controlled.
+    clgsi_mosi_ablation_unweighted)
+        echo "$(args_for clgsi_mosi) --model-arg intensity_weighting=false" ;;
+    confede_mosi_ablation_weighted)
+        echo "$(args_for confede_mosi) --model-arg weight_negatives_by_label=true" ;;
     # ConFEDE: protocol from the release's train/constrastive/TVA_fusion_train.py.
     # UNALIGNED features -- alone among the recent methods -- and AdamW over two
     # groups with no decay on bias/LayerNorm (the model's param_groups does that

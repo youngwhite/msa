@@ -218,6 +218,53 @@ PAIR_LABELS = [0, 0, 0, 1, 2, 3, 4, 0, 0, 0, 1, 2, 3, 4, 0, 0, 0, 1, 2, 3, 4,
                5, 5, 5, 6, 7, 8, 9, 5, 5, 5, 6, 7, 8, 9, 5, 5, 5, 6, 7, 8, 9]
 
 
+def _label_weighted_class():
+    """The release's `cont_NTXentLoss._compute_loss`, transcribed.
+
+    Its one departure from the library is `neg_pairs = neg_pairs * weight / 2`
+    with `weight = |label[a2] - label[n]|`, applied before the temperature. Built
+    lazily so importing this module does not require the dependency.
+    """
+    from pytorch_metric_learning.losses import NTXentLoss
+    from pytorch_metric_learning.utils import common_functions as c_f
+
+    class _LabelWeighted(NTXentLoss):
+        def __init__(self, temperature: float = 0.07, **kwargs) -> None:
+            super().__init__(temperature=temperature, **kwargs)
+            self.label: torch.Tensor | None = None
+
+        def _compute_loss(self, pos_pairs, neg_pairs, indices_tuple):
+            a1, p, a2, n = indices_tuple
+            if len(a1) == 0 or len(a2) == 0:
+                return self.zero_losses()
+            dtype = neg_pairs.dtype
+            if not self.distance.is_inverted:
+                pos_pairs, neg_pairs = -pos_pairs, -neg_pairs
+            if self.label is not None:
+                neg_pairs = neg_pairs * (self.label[a2] - self.label[n]).abs() / 2
+            pos_pairs = pos_pairs.unsqueeze(1) / self.temperature
+            neg_pairs = neg_pairs / self.temperature
+            n_per_p = c_f.to_dtype(a2.unsqueeze(0) == a1.unsqueeze(1), dtype=dtype)
+            neg_pairs = neg_pairs * n_per_p
+            neg_pairs[n_per_p == 0] = c_f.neg_inf(dtype)
+            max_val = torch.max(
+                pos_pairs, torch.max(neg_pairs, dim=1, keepdim=True)[0]).detach()
+            numerator = torch.exp(pos_pairs - max_val).squeeze(1)
+            denominator = torch.sum(torch.exp(neg_pairs - max_val), dim=1) + numerator
+            log_exp = torch.log((numerator / denominator) + c_f.small_val(dtype))
+            return {"loss": {"losses": -log_exp, "indices": (a1, p),
+                             "reduction_type": "pos_pair"}}
+
+    return _LabelWeighted
+
+
+class _LabelWeightedNTXent:
+    """Thin factory so the subclass is built only when it is asked for."""
+
+    def __new__(cls, temperature: float = 0.07, **kwargs):
+        return _label_weighted_class()(temperature=temperature, **kwargs)
+
+
 @register_model("confede")
 class ConFEDE(MSAModel):
     def __init__(
@@ -231,12 +278,21 @@ class ConFEDE(MSAModel):
         layers: int = 2,
         dropout: float = 0.5,
         temperature: float = 0.5,
+        weight_negatives_by_label: bool = False,
         pretrained: str = "bert-base-uncased",
         rebuild_every: int = 2,
         pretrain_seed: int | None = None,
     ) -> None:
         super().__init__()
         from pytorch_metric_learning.losses import NTXentLoss
+
+        #: The release's `cont_NTXentLoss` weights negative pairs by label
+        #: distance -- but only once `update_label` has been called, and nothing
+        #: in the release calls it, so what it trains with is plain NT-Xent.
+        #: True switches the dormant branch on; see
+        #: investigations.md#intensity-weighting. Default False keeps the
+        #: verified reproduction exactly as it is.
+        self.weight_negatives_by_label = weight_negatives_by_label
 
         self.rebuild_every = rebuild_every
         self.text_encoder = TextEncoder(pretrained)
@@ -256,7 +312,9 @@ class ConFEDE(MSAModel):
         hidden = [width * 2, width, width // 2, width // 4]
         self.TVA_decoder = BaseClassifier(width * 6, hidden, 1)
         self.mono_decoder = BaseClassifier(width, hidden[2:], 1)
-        self.ntxent_loss = NTXentLoss(temperature=temperature)
+        self.ntxent_loss = (_LabelWeightedNTXent(temperature=temperature)
+                            if weight_negatives_by_label
+                            else NTXentLoss(temperature=temperature))
 
         # BERT is frozen for the entire fusion stage; see the module docstring.
         for parameter in self.text_encoder.extractor.parameters():
@@ -504,6 +562,12 @@ class ConFEDE(MSAModel):
                 torch.cat((views[v, i].unsqueeze(0),
                            companion_views[v, COMPANIONS * i:COMPANIONS * (i + 1)]), dim=0)
                 for v in range(views.size(0))], dim=0)
+            if self.weight_negatives_by_label:
+                # One sentiment value per row of the 42-row block: the anchor's
+                # own label, then its six companions', repeated for each view.
+                row_labels = torch.cat([label[i].reshape(1),
+                                        companion_label[COMPANIONS * i:COMPANIONS * (i + 1)]])
+                self.ntxent_loss.label = row_labels.repeat(views.size(0))
             contrastive = contrastive + self.ntxent_loss(
                 block, pair_labels, indices_tuple=indices_tuple)
         contrastive = contrastive / views.size(1)
