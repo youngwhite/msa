@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from time import perf_counter
@@ -47,11 +48,15 @@ class TrainConfig:
     #: Optional ReduceLROnPlateau on the validation selection metric, as MulT and
     #: MMIM use, or ALMT's linear warmup into cosine annealing. "none" leaves the
     #: learning rate alone.
-    lr_schedule: str = "none"        # "none" | "plateau" | "warmup_cosine" | "warmup_linear"
+    #: "none" | "plateau" | "warmup_cosine" | "warmup_linear" | "warmup_cosine_steps"
+    lr_schedule: str = "none"
     lr_schedule_factor: float = 0.1
     lr_schedule_patience: int = 5
     #: Only read by warmup_linear.
     lr_warmup_epochs: int = 1
+    #: Only read by warmup_cosine_steps: the cosine's horizon in epochs,
+    #: deliberately independent of how long the run actually lasts.
+    lr_horizon_epochs: int = 75
     #: Optimiser steps once per this many batches. MMSA calls it `update_epochs`
     #: and uses it for MulT (8), Self-MM (4) and MISA (2); a partial window at
     #: the end of an epoch is discarded, as there.
@@ -85,9 +90,10 @@ class TrainConfig:
     def __post_init__(self) -> None:
         if self.clip_mode not in ("norm", "value"):
             raise ValueError(f"clip_mode must be 'norm' or 'value', got {self.clip_mode!r}")
-        if self.lr_schedule not in ("none", "plateau", "warmup_cosine", "warmup_linear"):
-            raise ValueError("lr_schedule must be 'none', 'plateau', 'warmup_cosine' or "
-                             "'warmup_linear', "
+        if self.lr_schedule not in ("none", "plateau", "warmup_cosine", "warmup_linear",
+                                    "warmup_cosine_steps"):
+            raise ValueError("lr_schedule must be 'none', 'plateau', 'warmup_cosine', "
+                             "'warmup_linear' or 'warmup_cosine_steps', "
                              f"got {self.lr_schedule!r}")
         if self.optimizer not in ("adam", "adamw"):
             raise ValueError(f"optimizer must be 'adam' or 'adamw', got {self.optimizer!r}")
@@ -174,12 +180,39 @@ class Trainer:
         # None for every model but MMIM; see MSAModel.auxiliary_optimizer.
         self.aux_optimizer = model.auxiliary_optimizer(cfg.lr, cfg.weight_decay)
         self.scheduler = None
+        #: warmup_cosine_steps advances once per optimiser step; every other
+        #: schedule here advances once per epoch.
+        self.step_scheduler_per_batch = False
         if cfg.lr_schedule == "plateau":
             direction = "min" if cfg.select_on in LOWER_IS_BETTER else "max"
             self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
                 self.optimizer, mode=direction,
                 factor=cfg.lr_schedule_factor, patience=cfg.lr_schedule_patience,
             )
+        elif cfg.lr_schedule == "warmup_cosine_steps":
+            # CLGSI: transformers' get_cosine_schedule_with_warmup, stepped once
+            # per OPTIMISER step rather than per epoch, over a horizon of
+            # `lr_horizon_epochs` worth of steps -- 75 in its config.
+            #
+            # The horizon is not the run length and is not meant to be. Early
+            # stopping fires at 8 epochs without improvement, long before 75, so
+            # the rate only ever traverses the first stretch of the cosine.
+            # Reproducing that means keeping the horizon fixed rather than
+            # rescaling it to however long the run turns out to be, which is the
+            # tempting "fix" that would change the protocol.
+            steps_per_epoch = max(1, len(self.loaders["train"]) // cfg.accumulate_steps)
+            total = max(1, cfg.lr_horizon_epochs * steps_per_epoch)
+            warmup = max(1, int(0.1 * total))
+
+            def cosine(step: int, w: int = warmup, t: int = total) -> float:
+                if step < w:
+                    return step / w
+                progress = (step - w) / max(1, t - w)
+                return max(0.0, 0.5 * (1.0 + math.cos(math.pi * progress)))
+
+            self.scheduler = torch.optim.lr_scheduler.LambdaLR(
+                self.optimizer, lr_lambda=cosine)
+            self.step_scheduler_per_batch = True
         elif cfg.lr_schedule == "warmup_linear":
             # ConFEDE: transformers' get_linear_schedule_with_warmup -- the rate
             # climbs linearly for `lr_warmup_epochs` worth of epochs and then
@@ -309,6 +342,8 @@ class Trainer:
             self._clip()
             if (step + 1) % accumulate == 0:
                 self.optimizer.step()
+                if self.step_scheduler_per_batch and self.scheduler is not None:
+                    self.scheduler.step()
             self.model.on_train_batch_end(outputs, batch, epoch)
             n = batch["label"].numel()
             # Weight by batch size: the last batch is usually partial, and a plain
@@ -349,7 +384,7 @@ class Trainer:
                       f"{' *' if improved else ''}")
             if isinstance(self.scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
                 self.scheduler.step(score)
-            elif self.scheduler is not None:
+            elif self.scheduler is not None and not self.step_scheduler_per_batch:
                 # Epoch-driven schedules take no metric.
                 self.scheduler.step()
             if epoch - best_epoch >= cfg.patience:
