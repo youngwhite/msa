@@ -59,6 +59,7 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     dmd_mosi
     confede_mosi
     clgsi_mosi
+    feada_mosi
     clgsi_mosi_ablation_unweighted
     confede_mosi_ablation_weighted
     mfn_mosi_ablation_realseq
@@ -125,6 +126,13 @@ args_for() {
     # around epoch 31 and that early stopping is left unimplemented.
     dpdf_lq_mosi)
         echo "--model dpdf_lq --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --optimizer adamw --lr 1e-4 --weight-decay 1e-4 --batch-size 64 --grad-clip 0 --epochs 200 --patience 200 --lr-schedule warmup_cosine" ;;
+    # FeaDA: UNALIGNED features, and stage one is produced per seed by
+    # on_run_start. Adam over four groups at three rates, supplied by the model's
+    # param_groups -- --lr and --weight-decay here are placeholders it ignores.
+    # No scheduler. --select-reduction batch matches the release's own last-batch
+    # overweighting (it scales by a hardcoded 32); see #select-reduction.
+    feada_mosi)
+        echo "--model feada --unaligned --seeds 42 43 44 45 46 47 48 49 50 51 --device cuda --optimizer adam --lr 1e-3 --weight-decay 1e-3 --batch-size 32 --accumulate-steps 4 --epochs 25 --patience 25 --select-reduction mmsa" ;;
     # CLGSI: UNALIGNED features. need_data_aligned is False and AMIO pools audio
     # (375) and vision (500) down to the text length inside forward, so the
     # word-aligned pickle is the wrong input -- a first run used it and was
