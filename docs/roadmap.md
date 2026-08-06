@@ -222,6 +222,10 @@ python scripts/check_acceptance.py --all         # 全部有参照的组
 `docs/spec_feada.md`、`src/msa/models/feada.py`、`scripts/pretrain_feada.py`（含
 `on_run_start` 自动产出与冻结）。已推送。
 
+**⚠️ 已发现的缺陷（最高优先）**：`feada.py` 的 `compute_loss` **缺 `0.02·sup_const_loss`**
+（伙伴采样整条路径未接）。等价测试因只比前向而未发现；10 seed 结果已丢弃。
+**先补实现 + 补测试，再重跑**。经过见 `spec_feada.md`。
+
 **下一步，按序**：
 
 1. `scripts/check_feada_equivalence.py` —— **最费事的一步**：作者模型依赖它自己的
