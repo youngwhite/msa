@@ -43,6 +43,26 @@ Facet(20) 序列**不是同一批输入**。
 已回查：本仓库 22 个对照组全部同口径（`scripts/check_feature_parity.py`，已接入 `check_all.sh`）。
 **「应该都对」不等于「查过」**，所以做成脚本而不是一次性检查——以后每加一个模型都会自动核。
 
+### 第四类阻塞：代码有、口径对，但必需产物拿不到（2026-08-06）
+
+核实近年五篇（链接从正文抽取，PDF 里被换行截断需缝合后再取）：
+
+| 方法 | 出处 | MOSI | 作者代码 | 口径 | 裁定 |
+|---|---|---|---|---|---|
+| **KuDA** | Findings of EMNLP 2024 | ✅ | [MKMaS-GUET/KuDA](https://github.com/MKMaS-GUET/KuDA)，MIT | ✅ **MMSA 的 pkl + bert-base-uncased**（README 明写从 MMSA 下载） | **阻塞**，见下 |
+| MoLAN | Findings of ACL 2026 | ✅ | [betterfly123/MoLAN-Framework](https://github.com/betterfly123/MoLAN-Framework) | — | **排除：仓库只有一个 README，无代码** |
+| TF-Mamba | Findings of EMNLP 2025 | ✅ | [codemous/TF-Mamba](https://github.com/codemous/TF-Mamba) | 待核 | 候选 |
+| FeaDA | IJCNLP-AACL 2025 | ✅ | [PowerLittleYin/FeaDA-main](https://github.com/PowerLittleYin/FeaDA-main) | 待核 | 候选 |
+| P-RMF | ACL 2025 长文 | ✅ | [aoqzhu/P-RMF](https://github.com/aoqzhu/P-RMF) | 待核 | 候选（克隆失败，需重试） |
+
+**KuDA 是新出现的一类阻塞**：代码在、许可清楚、特征口径与本表完全一致——**但它的知识注入预训练权重只有两条获取途径，都在百度网盘**（翻译文本文件用于自行预训练，或直接下载已训练权重）。本实例无法访问百度网盘。
+
+**这与 ConFEDE 的情形相同（缺预训练阶段则结果不可用，实测 MAE 1.1549 对 0.7358），所以不能"跳过预训练先跑一版"**——那个数字会是错的且看起来正常。
+
+**故台账新增第四类裁定**：`阻塞-产物不可得`。前三类是「无作者代码」「任务不同」「特征口径不同」。
+
+**MoLAN 也值得记**：论文正文印了 GitHub 链接，仓库确实存在，**但里面只有一个 README，没有任何代码**。「论文印了链接」既不等于「有代码」（ConKI 那条印的是所用框架），也不等于「仓库里有东西」。
+
 ## 扫描规程
 
 - **出处**：ACL / NAACL / EMNLP / Findings / IJCNLP-AACL、CVPR / ICCV / WACV、AAAI、ICLR、ACM MM

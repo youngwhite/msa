@@ -5,7 +5,7 @@
 
 - 共 **129** 条；已复现 **18** 条
 - 对比学习一类 **8** 条（导师指定方向，见 `decisions.md` 2026-08-04）
-- **尚未核实作者代码 104** 条——空的「作者代码」列意思是**没查过**，
+- **尚未核实作者代码 101** 条——空的「作者代码」列意思是**没查过**，
   不是「没有代码」。这两件事必须分开数，否则"没查"会慢慢被读成"没有"。
 
 **「作者代码」一列的链接一律取自论文正文**，不取会议页面元数据——后者不显示正文里的代码链接，
@@ -36,11 +36,17 @@
 | `misa` | arXiv:2005.03545 | — | MISA: Modality-Invariant and -Specific Representations for Multimodal  | [链接](https://github.com/declare-lab/MISA) | ✓ |
 | `clgsi` | naacl2024f | contrastive | CLGSI: A Multimodal Sentiment Analysis Framework based on Contrastive  | [链接](https://github.com/AZYoung233/CLGSI) | — |
 
-## ◻ 候选（108）
+## ▶ 计划中（1）
 
 | key | 出处 | 类别 | 标题 | 作者代码 | PDF |
 |---|---|---|---|---|---|
-| `p_rmf` | ACL 2025 长文 | — | P-RMF | — | — |
+| `kuda**_knowledge_guided_dynamic_modality_attention_fusion` | Findings of EMNLP 2024 | — | KuDA** Knowledge-Guided Dynamic Modality Attention Fusion | [链接](https://github.com/MKMaS-GUET/KuDA) | — |
+
+## ◻ 候选（105）
+
+| key | 出处 | 类别 | 标题 | 作者代码 | PDF |
+|---|---|---|---|---|---|
+| `p_rmf` | ACL 2025 长文 | — | P-RMF | [链接](https://github.com/aoqzhu/P-RMF) | — |
 | `qa_moe**_quality_aware_mixture_of_experts,_robust_msa` | ACL 2026 长文 | — | QA-MoE** Quality-Aware Mixture of Experts, Robust MSA | — | — |
 | `active_perceptual_inference_a_corticotha` | CVPR2026 | — | Active Perceptual Inference: A Corticothalamic-Inspired Dynamic Nested | — | — |
 | `cica_coupling_confidence_aware_pretraini` | CVPR2026 | — | CICA: Coupling Confidence-Aware Pretraining with Confidence-Informed A | — | — |
@@ -52,10 +58,8 @@
 | `lfd_rt**_cross_lingual_msa,_language_family_disentanglement` | Findings of ACL 2025 | — | LFD-RT** Cross-lingual MSA, Language Family Disentanglement | [链接](https://github.com/ShuoyuGuan/LFD-RT) | — |
 | `dear` | Findings of ACL 2026 | — | DEAR | — | ✓ |
 | `fast_retrieval_and_slow_reasoning**_explainable_msa` | Findings of ACL 2026 | — | Fast Retrieval and Slow Reasoning** Explainable MSA | — | — |
-| `molan` | Findings of ACL 2026 | — | MoLAN | [链接](https://github.com/betterfly123/MoLAN-Framework) | ✓ |
 | `mulcot_rd**_resource_limited_joint_msa_reasoning（cot_蒸馏）` | Findings of ACL 2026 | — | MulCoT-RD** Resource-Limited Joint MSA Reasoning（CoT 蒸馏） | [链接](https://github.com/123sghn/MulCoT-RD) | — |
 | `uncertainty_calibrated_elastic_alignment**,_missing_modalities` | Findings of ACL 2026 | — | Uncertainty-Calibrated Elastic Alignment**, Missing Modalities | — | — |
-| `kuda**_knowledge_guided_dynamic_modality_attention_fusion` | Findings of EMNLP 2024 | — | KuDA** Knowledge-Guided Dynamic Modality Attention Fusion | [链接](https://github.com/MKMaS-GUET/KuDA) | — |
 | `tf_mamba**_text_enhanced_fusion_mamba,_missing_modalities` | Findings of EMNLP 2025 | — | TF-Mamba** Text-enhanced Fusion Mamba, Missing Modalities | [链接](https://github.com/codemous/TF-Mamba) | — |
 | `cmad` | ICCV 2025, pp.4626-4636 | — | CMAD | [链接](https://github.com/YetZzzzzz/CMAD) | ✓ |
 | `cmad_correlation_aware_and_modalities_aw` | ICCV2025 | — | CMAD: Correlation-Aware and Modalities-Aware Distillation for Multimod | — | — |
@@ -101,7 +105,6 @@
 | `qa_moe_towards_a_continuous_reliability` | acl2026-1 | — | QA-MoE: Towards a Continuous Reliability Spectrum with Quality-Aware M | — | — |
 | `dear_distributional_error_aware_reliabil` | acl2026f | — | DEAR: Distributional Error-Aware Reliability for Robust Multimodal Sen | — | — |
 | `fast_retrieval_and_slow_reasoning_for_ex` | acl2026f | — | Fast Retrieval and Slow Reasoning for Explainable Multimodal Sentiment | — | — |
-| `molan_a_unified_modality_aware_noise_dyn` | acl2026f | — | MoLAN: A Unified Modality-Aware Noise Dynamic Editing Framework for Mu | — | — |
 | `resource_limited_joint_multimodal_sentim` | acl2026f | — | Resource-Limited Joint Multimodal Sentiment Reasoning and Classificati | — | — |
 | `uncertainty_calibrated_elastic_alignment` | acl2026f | — | Uncertainty-Calibrated Elastic Alignment for Multimodal Sentiment Anal | — | — |
 | `correlation_decoupled_knowledge_distilla` | cvpr2024 | — | Correlation-Decoupled Knowledge Distillation for Multimodal Sentiment  | — | — |
@@ -118,7 +121,7 @@
 | `d2r_dual_branch_dynamic_routing_network` | emnlp2024 | — | D2R: Dual-Branch Dynamic Routing Network for Multimodal Sentiment Dete | — | — |
 | `knowledge_guided_dynamic_modality_attent` | emnlp2024f | — | Knowledge-Guided Dynamic Modality Attention Fusion Framework for Multi | — | — |
 | `dual_path_dynamic_fusion_with_learnable` | emnlp2025 | — | Dual-Path Dynamic Fusion with Learnable Query for Multimodal Sentiment | — | — |
-| `tf_mamba_text_enhanced_fusion_mamba_with` | emnlp2025f | — | TF-Mamba: Text-enhanced Fusion Mamba with Missing Modalities for Robus | — | — |
+| `tf_mamba_text_enhanced_fusion_mamba_with` | emnlp2025f | — | TF-Mamba: Text-enhanced Fusion Mamba with Missing Modalities for Robus | [链接](https://github.com/codemous/TF-Mamba) | — |
 | `adapting_bert_for_target_oriented_multim` | ijcai2019 | — | Adapting BERT for Target-Oriented Multimodal Sentiment Classification | — | — |
 | `deepcu_integrating_both_common_and_uniqu` | ijcai2019 | — | DeepCU: Integrating both Common and Unique Latent Information for Mult | — | — |
 | `targeted_multimodal_sentiment_classifica` | ijcai2022 | — | Targeted Multimodal Sentiment Classification based on Coarse-to-Fine G | — | — |
@@ -149,10 +152,12 @@
 | `towards_explainable_fusion_and_balanced` | mm2025 | — | Towards Explainable Fusion and Balanced Learning in Multimodal Sentime | — | — |
 | `analyzing_modality_robustness_in_multimo` | naacl2022 | — | Analyzing Modality Robustness in Multimodal Sentiment Analysis | — | — |
 
-## ✕ 已排除（3）
+## ✕ 已排除（5）
 
 | key | 出处 | 类别 | 标题 | 作者代码 | PDF |
 |---|---|---|---|---|---|
 | `ebmc` | CVPR 2026, pp.30183-30193 | different-features | EBMC | [链接](https://github.com/kangverse/EBMC) | ✓ |
 | `enhance_then_balance_modality_collaborat` | CVPR2026 | different-features | Enhance-then-Balance Modality Collaboration for Robust Multimodal Sent | [链接](https://github.com/kangverse/EBMC) | — |
+| `molan` | Findings of ACL 2026 | — | MoLAN | [链接](https://github.com/betterfly123/MoLAN-Framework) | ✓ |
+| `molan_a_unified_modality_aware_noise_dyn` | acl2026f | — | MoLAN: A Unified Modality-Aware Noise Dynamic Editing Framework for Mu | [链接](https://github.com/betterfly123/MoLAN-Framework) | — |
 | `clmlf_a_contrastive_learning_and_multi_l` | naacl2022f | contrastive | CLMLF: A Contrastive Learning and Multi-Layer Fusion Method for Multim | — | — |
