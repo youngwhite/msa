@@ -230,8 +230,18 @@ class FeaDA(MSAModel):
         ]
 
     def forward(self, batch: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
-        hidden = self.text_encoder(batch["text_bert"])
-        pooled = hidden[:, 0, :]
+        # Both outputs, and they are not interchangeable: the release projects
+        # `last_hidden_state` for the cross-modal streams and feeds
+        # `pooler_output` -- CLS through BERT's own dense+tanh -- to the six
+        # projections. Taking hidden[:, 0] for the second would silently drop
+        # that pooling layer, which is a different vector, not a shortcut to the
+        # same one. `BertTextEncoder` returns only the sequence, so the pooler is
+        # read from the wrapped model.
+        tokens = batch["text_bert"]
+        output = self.text_encoder.bert(
+            input_ids=tokens[:, 0].long(), attention_mask=tokens[:, 1].long(),
+            token_type_ids=tokens[:, 2].long())
+        hidden, pooled = output.last_hidden_state, output.pooler_output
         text = F.dropout(self.proj_t(hidden.permute(1, 0, 2)),
                          p=self.text_dropout, training=self.training)
 
