@@ -48,7 +48,12 @@ OUT_PATH = PROJECT_ROOT / "docs" / "model_table.md"
 #: Currently empty. ConFEDE lived here until its stage-one pretraining was
 #: implemented, which moved it from 1.1549 to 0.7358 -- kept as the mechanism,
 #: because the next half-finished model will need it too.
-CAVEATS: dict[str, str] = {}
+CAVEATS: dict[str, str] = {
+    "feada_mosi": "**无作者代码参照**：其 release 在自身配置下显存峰值超过本机 GPU"
+                  "（伙伴采样使每步 224 条 500 帧序列同时过编码器），降批大小即不再是该论文的参照。"
+                  "实现已通过等价测试（前向 7.451e-09、对比损失 0.000e+00），但**此行不予判定，"
+                  "亦不得与有参照的行并列比较**。见 `survey.md` 第五类阻塞。",
+}
 
 #: group -> (year, one-line idea, reference tier). Order is the story's, which is
 #: chronological except that the two controls sit at the end where they belong.
@@ -75,6 +80,7 @@ MODELS: list[tuple[str, str, str, str]] = [
     ("cenet_mosi", "2023", "音视频作为偏移注入 BERT 层间", "mmsa"),
     ("tetfn_mosi", "2023", "音视频交互经文本中介，不直接相见", "mmsa"),
     ("almt_mosi", "2023", "音视频只位移一个语言主导的超模态", "mmsa"),
+    ("feada_mosi", "2025", "文本查询音视频；冻结的单模态表征投影后门控跨模态嵌入", "none"),
     ("clgsi_mosi", "2024", "正负对不按标签相等划分，按情感强度距离加权", "author"),
     ("confede_mosi", "2023", "每模态投影为相似/相异两支，与检索来的伙伴样本对比", "author"),
     ("dmd_mosi", "2023", "专属/共享解耦后在可学习的图上互相蒸馏，边权决定谁教谁", "author-patched"),
@@ -84,6 +90,7 @@ MODELS: list[tuple[str, str, str, str]] = [
 ]
 
 REFERENCE_LABEL = {
+    "none": "无参照",
     "author": "作者代码",
     "author-patched": "作者代码+兼容重建",
     "mmsa": "MMSA 代码",
