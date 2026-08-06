@@ -4,7 +4,7 @@
 论文状态只在 `docs/papers.tsv` 里声明；本文件只是渲染，且**每条声明都与别处的证据对过**。
 
 - 共 **129** 条；已复现 **18** 条
-- 对比学习一类 **8** 条（导师指定方向，见 `decisions.md` 2026-08-04）
+- 对比学习一类 **3** 条（导师指定方向，见 `decisions.md` 2026-08-04）
 - **尚未核实作者代码 101** 条——空的「作者代码」列意思是**没查过**，
   不是「没有代码」。这两件事必须分开数，否则"没查"会慢慢被读成"没有"。
 
@@ -22,19 +22,19 @@
 | `mfm` | — | — | Learning Factorized Multimodal Representations | [链接](https://github.com/pliang279/factorized/) | ✓ |
 | `tetfn` | — | — | TETFN: A text enhanced transformer fusion network for multimodal senti | — | — |
 | `self_mm` | AAAI 2021 | — | Learning Modality-Specific Representations with Self-Supervised Multi- | [链接](https://github.com/thuiar/Self-MM) | — |
-| `mfn` | AAAI-18 | — | Memory Fusion Network for Multi-view Sequential Learning | [链接](https://github.com/pliang279/MFN) | ✓ |
+| `mfn` | AAAI-18 | 融合 | Memory Fusion Network for Multi-view Sequential Learning | [链接](https://github.com/pliang279/MFN) | ✓ |
 | `graph_mfn` | ACL 2018 | — | Multimodal Language Analysis in the Wild: **CMU-MOSEI Dataset** and In | — | — |
-| `lmf` | ACL 2018 | — | Efficient Low-rank Multimodal Fusion With Modality-Specific Factors | [链接](https://github.com/Justin1904/Low-rank-Multimodal-Fusion) | ✓ |
-| `mult` | ACL 2019 | — | Multimodal Transformer for Unaligned Multimodal Language Sequences | [链接](https://github.com/yaohungt/Multimodal-Transformer) | ✓ |
-| `bert_mag` | ACL 2020 | — | Integrating Multimodal Information in Large Pretrained Transformers | [链接](https://github.com/WasifurRahman/BERT_multimodal_transformer) | — |
-| `confede` | ACL 2023 长文, pp.7617-7630 | contrastive | ConFEDE | [链接](https://github.com/XpastaX/ConFEDE/) | — |
-| `dmd` | CVPR 2023 (highlight), pp.6631-6640 | — | DMD | [链接](https://github.com/mdswyz/DMD) | — |
-| `tfn` | EMNLP 2017 | — | Tensor Fusion Network for Multimodal Sentiment Analysis | — | ✓ |
-| `mmim` | EMNLP 2021 | contrastive | Improving Multimodal Fusion with Hierarchical Mutual Information Maxim | [链接](https://github.com/declare-lab/Multimodal-Infomax) | ✓ |
+| `lmf` | ACL 2018 | 融合 | Efficient Low-rank Multimodal Fusion With Modality-Specific Factors | [链接](https://github.com/Justin1904/Low-rank-Multimodal-Fusion) | ✓ |
+| `mult` | ACL 2019 | 对齐 | Multimodal Transformer for Unaligned Multimodal Language Sequences | [链接](https://github.com/yaohungt/Multimodal-Transformer) | ✓ |
+| `bert_mag` | ACL 2020 | 融合 | Integrating Multimodal Information in Large Pretrained Transformers | [链接](https://github.com/WasifurRahman/BERT_multimodal_transformer) | — |
+| `confede` | ACL 2023 长文, pp.7617-7630 | 对比学习 | ConFEDE | [链接](https://github.com/XpastaX/ConFEDE/) | — |
+| `dmd` | CVPR 2023 (highlight), pp.6631-6640 | 蒸馏 | DMD | [链接](https://github.com/mdswyz/DMD) | — |
+| `tfn` | EMNLP 2017 | 融合 | Tensor Fusion Network for Multimodal Sentiment Analysis | — | ✓ |
+| `mmim` | EMNLP 2021 | 表示学习 | Improving Multimodal Fusion with Hierarchical Mutual Information Maxim | [链接](https://github.com/declare-lab/Multimodal-Infomax) | ✓ |
 | `almt` | EMNLP 2023 | — | Learning Language-guided Adaptive Hyper-modality Representation for Mu | — | ✓ |
-| `dpdf_lq` | EMNLP 2025 主会 | — | DPDF-LQ | [链接](https://github.com/ZhouMiaoGX/DPDF-LQ) | — |
-| `misa` | arXiv:2005.03545 | — | MISA: Modality-Invariant and -Specific Representations for Multimodal  | [链接](https://github.com/declare-lab/MISA) | ✓ |
-| `clgsi` | naacl2024f | contrastive | CLGSI: A Multimodal Sentiment Analysis Framework based on Contrastive  | [链接](https://github.com/AZYoung233/CLGSI) | — |
+| `dpdf_lq` | EMNLP 2025 主会 | 融合 | DPDF-LQ | [链接](https://github.com/ZhouMiaoGX/DPDF-LQ) | — |
+| `misa` | arXiv:2005.03545 | 表示学习 | MISA: Modality-Invariant and -Specific Representations for Multimodal  | [链接](https://github.com/declare-lab/MISA) | ✓ |
+| `clgsi` | naacl2024f | 对比学习 | CLGSI: A Multimodal Sentiment Analysis Framework based on Contrastive  | [链接](https://github.com/AZYoung233/CLGSI) | — |
 
 ## ▶ 计划中（2）
 
@@ -72,7 +72,7 @@
 | `a_unified_self_distillation_framework_fo` | aaai2024 | — | A Unified Self-Distillation Framework for Multimodal Sentiment Analysi | — | — |
 | `a_multi_focus_driven_multi_branch_networ` | aaai2025 | — | A Multi-Focus-Driven Multi-Branch Network for Robust Multimodal Sentim | — | — |
 | `bridging_the_gap_for_test_time_multimoda` | aaai2025 | — | Bridging the Gap for Test-Time Multimodal Sentiment Analysis | — | — |
-| `dlf_disentangled_language_focused_multim` | aaai2025 | — | DLF: Disentangled-Language-Focused Multimodal Sentiment Analysis | — | — |
+| `dlf_disentangled_language_focused_multim` | aaai2025 | 融合 | DLF: Disentangled-Language-Focused Multimodal Sentiment Analysis | — | — |
 | `enriching_multimodal_sentiment_analysis` | aaai2025 | — | Enriching Multimodal Sentiment Analysis Through Textual Emotional Desc | — | — |
 | `msamba_exploring_multimodal_sentiment_an` | aaai2025 | — | MSAmba: Exploring Multimodal Sentiment Analysis with State Space Model | — | — |
 | `mse_adapter_a_lightweight_plugin_endowin` | aaai2025 | — | MSE-Adapter: A Lightweight Plugin Endowing LLMs with the Capability to | — | — |
@@ -94,9 +94,9 @@
 | `msctd_a_multimodal_sentiment_chat_transl` | acl2022-1 | — | MSCTD: A Multimodal Sentiment Chat Translation Dataset | — | — |
 | `m_sena_an_integrated_platform_for_multim` | acl2022-d | — | M-SENA: An Integrated Platform for Multimodal Sentiment Analysis | — | — |
 | `sentiment_word_aware_multimodal_refineme` | acl2022f | — | Sentiment Word Aware Multimodal Refinement for Multimodal Sentiment An | — | — |
-| `confede_contrastive_feature_decompositio` | acl2023-1 | contrastive | ConFEDE: Contrastive Feature Decomposition for Multimodal Sentiment An | — | — |
+| `confede_contrastive_feature_decompositio` | acl2023-1 | 对比学习 | ConFEDE: Contrastive Feature Decomposition for Multimodal Sentiment An | — | — |
 | `tackling_modality_heterogeneity_with_mul` | acl2023-1 | — | Tackling Modality Heterogeneity with Multi-View Calibration Network fo | — | — |
-| `conki_contrastive_knowledge_injection_fo` | acl2023f | contrastive | ConKI: Contrastive Knowledge Injection for Multimodal Sentiment Analys | — | — |
+| `conki_contrastive_knowledge_injection_fo` | acl2023f | 对比学习 | ConKI: Contrastive Knowledge Injection for Multimodal Sentiment Analys | — | — |
 | `sentiment_knowledge_enhanced_self_superv` | acl2023f | — | Sentiment Knowledge Enhanced Self-supervised Learning for Multimodal S | — | — |
 | `proxy_driven_robust_multimodal_sentiment` | acl2025-1 | — | Proxy-Driven Robust Multimodal Sentiment Analysis with Incomplete Data | — | — |
 | `cross_lingual_multimodal_sentiment_analy` | acl2025f | — | Cross-lingual Multimodal Sentiment Analysis for Low-Resource Languages | — | — |
@@ -126,7 +126,7 @@
 | `targeted_multimodal_sentiment_classifica` | ijcai2022 | — | Targeted Multimodal Sentiment Classification based on Coarse-to-Fine G | — | — |
 | `hydiscgan_a_hybrid_distributed_cgan_for` | ijcai2024 | — | HyDiscGAN: A Hybrid Distributed cGAN for Audio-Visual Privacy Preserva | — | — |
 | `decoupling_and_reconstructing_a_multimod` | ijcai2025 | — | Decoupling and Reconstructing: A Multimodal Sentiment Analysis Framewo | — | — |
-| `dfmu_distribution_based_framework_for_mo` | ijcai2025 | — | DFMU: Distribution-based Framework for Modeling Aleatoric Uncertainty  | — | — |
+| `dfmu_distribution_based_framework_for_mo` | ijcai2025 | 对比学习 | DFMU: Distribution-based Framework for Modeling Aleatoric Uncertainty  | — | — |
 | `effective_sentiment_relevant_word_select` | mm2019 | — | Effective Sentiment-relevant Word Selection for Multi-modal Sentiment  | — | — |
 | `summary_of_muse_2020_multimodal_sentimen` | mm2020 | — | Summary of MuSe 2020: Multimodal Sentiment Analysis, Emotion-target En | — | — |
 | `transformer_based_feature_reconstruction` | mm2021 | — | Transformer-based Feature Reconstruction Network for Robust Multimodal | — | — |

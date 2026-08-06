@@ -1,35 +1,35 @@
 key	title	venue	class	code	status
 almt	Learning Language-guided Adaptive Hyper-modality Representation for Multimodal Sentiment Analysis	EMNLP 2023			reproduced
-bert_mag	Integrating Multimodal Information in Large Pretrained Transformers	ACL 2020		https://github.com/WasifurRahman/BERT_multimodal_transformer	reproduced
+bert_mag	Integrating Multimodal Information in Large Pretrained Transformers	ACL 2020	融合	https://github.com/WasifurRahman/BERT_multimodal_transformer	reproduced
 cenet	Cross-Modal Enhancement Network for Multimodal Sentiment Analysis			https://github.com/Say2L/CENet	reproduced
 cmad	CMAD	ICCV 2025, pp.4626-4636		https://github.com/YetZzzzzz/CMAD	candidate
-confede	ConFEDE	ACL 2023 长文, pp.7617-7630	contrastive	https://github.com/XpastaX/ConFEDE/	reproduced
+confede	ConFEDE	ACL 2023 长文, pp.7617-7630	对比学习	https://github.com/XpastaX/ConFEDE/	reproduced
 dear	DEAR	Findings of ACL 2026			candidate
-dmd	DMD	CVPR 2023 (highlight), pp.6631-6640		https://github.com/mdswyz/DMD	reproduced
-dpdf_lq	DPDF-LQ	EMNLP 2025 主会		https://github.com/ZhouMiaoGX/DPDF-LQ	reproduced
+dmd	DMD	CVPR 2023 (highlight), pp.6631-6640	蒸馏	https://github.com/mdswyz/DMD	reproduced
+dpdf_lq	DPDF-LQ	EMNLP 2025 主会	融合	https://github.com/ZhouMiaoGX/DPDF-LQ	reproduced
 ebmc	EBMC	CVPR 2026, pp.30183-30193	different-features	https://github.com/kangverse/EBMC	excluded
 fast_retrieval_and_slow_reasoning**_explainable_msa	Fast Retrieval and Slow Reasoning** Explainable MSA	Findings of ACL 2026			candidate
 feada	FeaDA	IJCNLP-AACL 2025		https://github.com/PowerLittleYin/FeaDA-main	planned
 graph_mfn	Multimodal Language Analysis in the Wild: **CMU-MOSEI Dataset** and Interpretable Dynamic Fusion Graph	ACL 2018			reproduced
 kuda**_knowledge_guided_dynamic_modality_attention_fusion	KuDA** Knowledge-Guided Dynamic Modality Attention Fusion	Findings of EMNLP 2024		https://github.com/MKMaS-GUET/KuDA	planned
 lfd_rt**_cross_lingual_msa,_language_family_disentanglement	LFD-RT** Cross-lingual MSA, Language Family Disentanglement	Findings of ACL 2025		https://github.com/ShuoyuGuan/LFD-RT	candidate
-lmf	Efficient Low-rank Multimodal Fusion With Modality-Specific Factors	ACL 2018		https://github.com/Justin1904/Low-rank-Multimodal-Fusion	reproduced
+lmf	Efficient Low-rank Multimodal Fusion With Modality-Specific Factors	ACL 2018	融合	https://github.com/Justin1904/Low-rank-Multimodal-Fusion	reproduced
 mctn	Found in Translation: Learning Robust Joint Representations by Cyclic Translations Between Modalities			https://github.com/hainow/MCTN	reproduced
 mer_clip	MER-CLIP	WACV 2025, pp.6115-6124			candidate
 mfm	Learning Factorized Multimodal Representations			https://github.com/pliang279/factorized/	reproduced
-mfn	Memory Fusion Network for Multi-view Sequential Learning	AAAI-18		https://github.com/pliang279/MFN	reproduced
-misa	MISA: Modality-Invariant and -Specific Representations for Multimodal Sentiment Analysis	arXiv:2005.03545		https://github.com/declare-lab/MISA	reproduced
+mfn	Memory Fusion Network for Multi-view Sequential Learning	AAAI-18	融合	https://github.com/pliang279/MFN	reproduced
+misa	MISA: Modality-Invariant and -Specific Representations for Multimodal Sentiment Analysis	arXiv:2005.03545	表示学习	https://github.com/declare-lab/MISA	reproduced
 mma	MMA	NAACL 2025 长文		https://github.com/MMA4MSA/MMA	candidate
-mmim	Improving Multimodal Fusion with Hierarchical Mutual Information Maximization for Multimodal Sentiment Analysis	EMNLP 2021	contrastive	https://github.com/declare-lab/Multimodal-Infomax	reproduced
+mmim	Improving Multimodal Fusion with Hierarchical Mutual Information Maximization for Multimodal Sentiment Analysis	EMNLP 2021	表示学习	https://github.com/declare-lab/Multimodal-Infomax	reproduced
 molan	MoLAN	Findings of ACL 2026		https://github.com/betterfly123/MoLAN-Framework	excluded
 mulcot_rd**_resource_limited_joint_msa_reasoning（cot_蒸馏）	MulCoT-RD** Resource-Limited Joint MSA Reasoning（CoT 蒸馏）	Findings of ACL 2026		https://github.com/123sghn/MulCoT-RD	candidate
-mult	Multimodal Transformer for Unaligned Multimodal Language Sequences	ACL 2019		https://github.com/yaohungt/Multimodal-Transformer	reproduced
+mult	Multimodal Transformer for Unaligned Multimodal Language Sequences	ACL 2019	对齐	https://github.com/yaohungt/Multimodal-Transformer	reproduced
 p_rmf	P-RMF	ACL 2025 长文		https://github.com/aoqzhu/P-RMF	excluded
 qa_moe**_quality_aware_mixture_of_experts,_robust_msa	QA-MoE** Quality-Aware Mixture of Experts, Robust MSA	ACL 2026 长文			candidate
 self_mm	Learning Modality-Specific Representations with Self-Supervised Multi-Task Learning for Multimodal Sentiment Analysis	AAAI 2021		https://github.com/thuiar/Self-MM	reproduced
 tetfn	TETFN: A text enhanced transformer fusion network for multimodal sentiment analysis				reproduced
 tf_mamba**_text_enhanced_fusion_mamba,_missing_modalities	TF-Mamba** Text-enhanced Fusion Mamba, Missing Modalities	Findings of EMNLP 2025		https://github.com/codemous/TF-Mamba	candidate
-tfn	Tensor Fusion Network for Multimodal Sentiment Analysis	EMNLP 2017			reproduced
+tfn	Tensor Fusion Network for Multimodal Sentiment Analysis	EMNLP 2017	融合		reproduced
 uncertainty_calibrated_elastic_alignment**,_missing_modalities	Uncertainty-Calibrated Elastic Alignment**, Missing Modalities	Findings of ACL 2026			candidate
 active_perceptual_inference_a_corticotha	Active Perceptual Inference: A Corticothalamic-Inspired Dynamic Nested Recurrent Network for Multimodal Sentiment Analysis with Incomplete Data	CVPR2026			candidate
 cica_coupling_confidence_aware_pretraini	CICA: Coupling Confidence-Aware Pretraining with Confidence-Informed Attention for Robust Multimodal Sentiment Analysis	CVPR2026			candidate
@@ -47,7 +47,7 @@ robust_msa_understanding_the_impact_of_m	Robust-MSA: Understanding the Impact of
 a_unified_self_distillation_framework_fo	A Unified Self-Distillation Framework for Multimodal Sentiment Analysis with Uncertain Missing Modalities	aaai2024			candidate
 a_multi_focus_driven_multi_branch_networ	A Multi-Focus-Driven Multi-Branch Network for Robust Multimodal Sentiment Analysis	aaai2025			candidate
 bridging_the_gap_for_test_time_multimoda	Bridging the Gap for Test-Time Multimodal Sentiment Analysis	aaai2025			candidate
-dlf_disentangled_language_focused_multim	DLF: Disentangled-Language-Focused Multimodal Sentiment Analysis	aaai2025			candidate
+dlf_disentangled_language_focused_multim	DLF: Disentangled-Language-Focused Multimodal Sentiment Analysis	aaai2025	融合		candidate
 enriching_multimodal_sentiment_analysis	Enriching Multimodal Sentiment Analysis Through Textual Emotional Descriptions of Visual-Audio Content	aaai2025			candidate
 msamba_exploring_multimodal_sentiment_an	MSAmba: Exploring Multimodal Sentiment Analysis with State Space Models	aaai2025			candidate
 mse_adapter_a_lightweight_plugin_endowin	MSE-Adapter: A Lightweight Plugin Endowing LLMs with the Capability to Perform Multimodal Sentiment Analysis and Emotion Recognition	aaai2025			candidate
@@ -69,9 +69,9 @@ a_text_centered_shared_private_framework	A Text-Centered Shared-Private Framewor
 msctd_a_multimodal_sentiment_chat_transl	MSCTD: A Multimodal Sentiment Chat Translation Dataset	acl2022-1			candidate
 m_sena_an_integrated_platform_for_multim	M-SENA: An Integrated Platform for Multimodal Sentiment Analysis	acl2022-d			candidate
 sentiment_word_aware_multimodal_refineme	Sentiment Word Aware Multimodal Refinement for Multimodal Sentiment Analysis with ASR Errors	acl2022f			candidate
-confede_contrastive_feature_decompositio	ConFEDE: Contrastive Feature Decomposition for Multimodal Sentiment Analysis	acl2023-1	contrastive		candidate
+confede_contrastive_feature_decompositio	ConFEDE: Contrastive Feature Decomposition for Multimodal Sentiment Analysis	acl2023-1	对比学习		candidate
 tackling_modality_heterogeneity_with_mul	Tackling Modality Heterogeneity with Multi-View Calibration Network for Multimodal Sentiment Detection	acl2023-1			candidate
-conki_contrastive_knowledge_injection_fo	ConKI: Contrastive Knowledge Injection for Multimodal Sentiment Analysis	acl2023f	contrastive		candidate
+conki_contrastive_knowledge_injection_fo	ConKI: Contrastive Knowledge Injection for Multimodal Sentiment Analysis	acl2023f	对比学习		candidate
 sentiment_knowledge_enhanced_self_superv	Sentiment Knowledge Enhanced Self-supervised Learning for Multimodal Sentiment Analysis	acl2023f			candidate
 proxy_driven_robust_multimodal_sentiment	Proxy-Driven Robust Multimodal Sentiment Analysis with Incomplete Data	acl2025-1			candidate
 cross_lingual_multimodal_sentiment_analy	Cross-lingual Multimodal Sentiment Analysis for Low-Resource Languages via Language Family Disentanglement and Rethinking Transfer	acl2025f			candidate
@@ -101,7 +101,7 @@ adapting_bert_for_target_oriented_multim	Adapting BERT for Target-Oriented Multi
 deepcu_integrating_both_common_and_uniqu	DeepCU: Integrating both Common and Unique Latent Information for Multimodal Sentiment Analysis	ijcai2019			candidate
 targeted_multimodal_sentiment_classifica	Targeted Multimodal Sentiment Classification based on Coarse-to-Fine Grained Image-Target Matching	ijcai2022			candidate
 hydiscgan_a_hybrid_distributed_cgan_for	HyDiscGAN: A Hybrid Distributed cGAN for Audio-Visual Privacy Preservation in Multimodal Sentiment Analysis	ijcai2024			candidate
-dfmu_distribution_based_framework_for_mo	DFMU: Distribution-based Framework for Modeling Aleatoric Uncertainty in Multimodal Sentiment Analysis	ijcai2025			candidate
+dfmu_distribution_based_framework_for_mo	DFMU: Distribution-based Framework for Modeling Aleatoric Uncertainty in Multimodal Sentiment Analysis	ijcai2025	对比学习		candidate
 decoupling_and_reconstructing_a_multimod	Decoupling and Reconstructing: A Multimodal Sentiment Analysis Framework Towards Robustness	ijcai2025			candidate
 effective_sentiment_relevant_word_select	Effective Sentiment-relevant Word Selection for Multi-modal Sentiment Analysis in Spoken Language	mm2019			candidate
 summary_of_muse_2020_multimodal_sentimen	Summary of MuSe 2020: Multimodal Sentiment Analysis, Emotion-target Engagement and Trustworthiness Detection in Real-life Media	mm2020			candidate
@@ -127,4 +127,4 @@ ldw_label_divergence_weighting_for_multi	LDW: Label Divergence Weighting for Mul
 towards_explainable_fusion_and_balanced	Towards Explainable Fusion and Balanced Learning in Multimodal Sentiment Analysis	mm2025			candidate
 analyzing_modality_robustness_in_multimo	Analyzing Modality Robustness in Multimodal Sentiment Analysis	naacl2022			candidate
 clmlf_a_contrastive_learning_and_multi_l	CLMLF: A Contrastive Learning and Multi-Layer Fusion Method for Multimodal Sentiment Detection	naacl2022f	contrastive		excluded
-clgsi	CLGSI: A Multimodal Sentiment Analysis Framework based on Contrastive Learning Guided by Sentiment Intensity	naacl2024f	contrastive	https://github.com/AZYoung233/CLGSI	reproduced
+clgsi	CLGSI: A Multimodal Sentiment Analysis Framework based on Contrastive Learning Guided by Sentiment Intensity	naacl2024f	对比学习	https://github.com/AZYoung233/CLGSI	reproduced
