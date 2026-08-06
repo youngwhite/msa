@@ -269,6 +269,24 @@ ACL 系逐卷枚举筛出的同任务论文，按核实规矩逐条核（全文�
 而这正是 **ConFEDE 实现了却从未启用**的那个东西（`update_label` 定义三份、无一处调用）。
 两篇放在一起看，能问一个具体的问题：这个加权究竟有没有用。
 
+### 对比学习一类：核实完毕（2026-08-06）
+
+| 方法 | 出处 | 用 CMU-MOSI | 作者代码 | 裁定 |
+|---|---|---|---|---|
+| **ConFEDE** | ACL 2023 | ✅ | ✅ | **已复现** |
+| **CLGSI** | NAACL 2024 Findings | ✅ | ✅ MIT | **已复现** |
+| MMIM | EMNLP 2021 | ✅ | ✅（MMSA 收录） | **已复现**（互信息/CPC，本类边界） |
+| CLMLF | NAACL 2022 Findings | ❌ **图文**（text+image） | [Link-Li/CLMLF](https://github.com/Link-Li/CLMLF) | **排除：任务不同** |
+| MMCL（Uni-Modal Coding + Cross-Modal Prediction） | EMNLP 2022 Findings | ✅ | **无**（正文无链接，作者仓库亦无） | 只能自实现 |
+| SupAngular（Angular Margin CL） | EMNLP 2023 Findings | ✅ | **无**（同上） | 只能自实现 |
+| ConKI | ACL 2023 Findings | ✅ | **无**（正文唯一链接是所用框架 MMSA） | 只能自实现 |
+
+**这一类共 7 篇，3 篇已复现，1 篇任务不同已排除，剩下 3 篇全部没有作者代码。**
+
+**这个分布本身是结论的一部分**：对比学习这条线上，**能做权重复制等价测试的论文只有 3 篇**，其余只能自实现——而自实现无法区分「我们写错了」与「论文没写清」。故后续若要覆盖这 3 篇，必须在台账与表中标为 `reimpl`（最弱档），并且它们的数字不能与 `reimpl+equiv` 档的数字并列比较而不加限定。
+
+**CLMLF 是「核实规矩」的又一例证**：标题写 Multimodal Sentiment，枚举器据此判为 IN_SCOPE，而正文用的是图文数据。同前例 D2R、Beyond Static Alignment。
+
 ## 待核实
 
 **不许当已知事实引用。**

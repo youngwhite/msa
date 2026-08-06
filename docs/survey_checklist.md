@@ -5,7 +5,7 @@
 
 - 共 **129** 条；已复现 **18** 条
 - 对比学习一类 **8** 条（导师指定方向，见 `decisions.md` 2026-08-04）
-- **尚未核实作者代码 106** 条——空的「作者代码」列意思是**没查过**，
+- **尚未核实作者代码 105** 条——空的「作者代码」列意思是**没查过**，
   不是「没有代码」。这两件事必须分开数，否则"没查"会慢慢被读成"没有"。
 
 **「作者代码」一列的链接一律取自论文正文**，不取会议页面元数据——后者不显示正文里的代码链接，
@@ -36,7 +36,7 @@
 | `misa` | arXiv:2005.03545 | — | MISA: Modality-Invariant and -Specific Representations for Multimodal  | [链接](https://github.com/declare-lab/MISA) | ✓ |
 | `clgsi` | naacl2024f | contrastive | CLGSI: A Multimodal Sentiment Analysis Framework based on Contrastive  | [链接](https://github.com/AZYoung233/CLGSI) | — |
 
-## ◻ 候选（111）
+## ◻ 候选（110）
 
 | key | 出处 | 类别 | 标题 | 作者代码 | PDF |
 |---|---|---|---|---|---|
@@ -150,4 +150,9 @@
 | `ldw_label_divergence_weighting_for_multi` | mm2025 | — | LDW: Label Divergence Weighting for Multimodal Sentiment Analysis | — | — |
 | `towards_explainable_fusion_and_balanced` | mm2025 | — | Towards Explainable Fusion and Balanced Learning in Multimodal Sentime | — | — |
 | `analyzing_modality_robustness_in_multimo` | naacl2022 | — | Analyzing Modality Robustness in Multimodal Sentiment Analysis | — | — |
+
+## ✕ 已排除（1）
+
+| key | 出处 | 类别 | 标题 | 作者代码 | PDF |
+|---|---|---|---|---|---|
 | `clmlf_a_contrastive_learning_and_multi_l` | naacl2022f | contrastive | CLMLF: A Contrastive Learning and Multi-Layer Fusion Method for Multim | — | — |
