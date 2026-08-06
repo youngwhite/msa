@@ -200,6 +200,44 @@ def main() -> int:
             if not compare(key, theirs.p2a(their_views[source]), our_out[key]):
                 return 1
 
+    # The contrastive loss, against the release's own cont_NTXentLoss on the
+    # same 42-row block. This project's spec for FeaDA said the test must do
+    # this, an earlier version did not, and the port shipped without the term at
+    # all -- a "must" in a document needs a check that can fail.
+    with torch.no_grad():
+        from MOSI.utils import cont_NTXentLoss
+
+        # PATCH (signature only). Its compute_loss calls
+        # `self.loss_method(mat, indices_tuple)`, which the installed
+        # pytorch-metric-learning rejects -- it wants labels too, and the
+        # three-argument call is sitting COMMENTED OUT on the line above in
+        # their own file. Restored so the comparison can run. With
+        # `self.label` unset -- and nothing in the release ever calls
+        # update_label, the third time this project has found that same dormant
+        # weighting -- their _compute_loss is standard NT-Xent, which is what
+        # our port uses from the library.
+        def _compat(self, embeddings, labels, indices_tuple=None, **kwargs):
+            from pytorch_metric_learning.utils.loss_and_miner_utils import convert_to_pairs
+            indices_tuple = convert_to_pairs(indices_tuple, labels)
+            if all(len(x) <= 1 for x in indices_tuple):
+                return self.zero_losses()
+            return self.loss_method(self.distance(embeddings), labels, indices_tuple)
+
+        cont_NTXentLoss.compute_loss = _compat
+
+        block = torch.randn(42, 384)
+        pair_labels = torch.tensor(
+            [0, 0, 0, 1, 2, 3, 4, 0, 0, 0, 1, 2, 3, 4, 0, 0, 0, 1, 2, 3, 4,
+             5, 5, 5, 6, 7, 8, 9, 5, 5, 5, 6, 7, 8, 9, 5, 5, 5, 6, 7, 8, 9])
+        from msa.models.feada import ANCHOR1, ANCHOR2, NEGATIVE, POSITIVE, TEMPERATURE
+
+        tuples = tuple(torch.tensor(x) for x in (ANCHOR1, POSITIVE, ANCHOR2, NEGATIVE))
+        theirs_loss = float(cont_NTXentLoss(temperature=TEMPERATURE)(
+            block, pair_labels, indices_tuple=tuples))
+        ours_loss = float(ours.ntxent_loss(block, pair_labels, indices_tuple=tuples))
+        compare("contrastive", torch.tensor([theirs_loss]), torch.tensor([ours_loss]))
+        print(f"    (theirs {theirs_loss:.6f}  ours {ours_loss:.6f}, weight {0.02})")
+
     print(f"{len(their_params)} parameter tensors matched and copied")
     print(f"max abs difference: {worst:.3e} ({worst_name})")
     if worst > TOLERANCE:

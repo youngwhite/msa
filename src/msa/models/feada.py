@@ -136,6 +136,58 @@ class UnimodalEncoder(nn.Module):
         return torch.mean(self.layernorm(x.transpose(0, 1)), dim=-2)
 
 
+class SimilarityPools:
+    """Companion pools, built once from raw features and never rebuilt.
+
+    ConFEDE rebuilds these from model features every other epoch; FeaDA inherits
+    the `update_matrix` method and its trainer never calls it, so the pools stay
+    as constructed. Reproduced -- the rebuild is machinery it inherited and does
+    not use.
+    """
+
+    def __init__(self, labels, depth: int = 10) -> None:
+        import numpy as np
+
+        self.labels = np.round(labels)
+        self.depth = depth
+        self.pools: dict[str, list[list[int]]] = {}
+
+    def build(self, features: torch.Tensor) -> None:
+        normalised = F.normalize(features.float(), dim=-1, eps=1e-6)
+        order = torch.argsort(normalised @ normalised.t(), dim=1, descending=True)
+        pools: dict[str, list[list[int]]] = {"ss": [], "dd": [], "sd": []}
+        for i in range(features.size(0)):
+            row = order[i].tolist()
+            same = [j for j in row if j != i and self.labels[i] == self.labels[j]]
+            different = [j for j in row if j != i and self.labels[i] != self.labels[j]]
+            pools["ss"].append(same[:self.depth])
+            pools["sd"].append(different[:self.depth])
+            pools["dd"].append(list(reversed(different))[:self.depth])
+        self.pools = pools
+
+    def draw(self, indices: list[int], rng) -> list[int]:
+        drawn: list[int] = []
+        for i in indices:
+            for name in ("ss", "dd", "sd"):
+                pool = self.pools[name][i]
+                drawn += (rng.sample(pool, 2) if len(pool) >= 2
+                          else [pool[0] if pool else i] * 2)
+        return drawn
+
+
+#: The release's hardcoded 42-row block: seven rows (anchor plus six companions)
+#: for each of six views. Identical to ConFEDE's, which it inherits.
+ANCHOR1 = [0, 0, 7, 7, 14, 14, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6]
+POSITIVE = [1, 2, 8, 9, 15, 16, 7, 14, 8, 15, 9, 16, 10, 17, 11, 18, 12, 19, 13, 20]
+ANCHOR2 = [0, 0, 0, 0, 7, 7, 7, 7, 14, 14, 14, 14,
+           0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6]
+NEGATIVE = [3, 4, 5, 6, 10, 11, 12, 13, 17, 18, 19, 20,
+            21, 28, 35, 22, 29, 36, 23, 30, 37, 24, 31, 38, 25, 32, 39, 26, 33, 40, 27, 34, 41]
+PAIR_LABELS = [0, 0, 0, 1, 2, 3, 4, 0, 0, 0, 1, 2, 3, 4, 0, 0, 0, 1, 2, 3, 4,
+               5, 5, 5, 6, 7, 8, 9, 5, 5, 5, 6, 7, 8, 9, 5, 5, 5, 6, 7, 8, 9]
+VIEW_ORDER = ("t_simi", "v_simi", "a_simi", "t_dissimi", "v_dissimi", "a_dissimi")
+
+
 def padding_mask(features: torch.Tensor) -> torch.Tensor:
     """True where a frame is padding, with a slot prepended for the CLS token."""
     mask = features.sum(dim=-1) == 0
@@ -216,6 +268,47 @@ class FeaDA(MSAModel):
 
         self.TVA_decoder = BaseClassifier(width * 3, [width, width // 2, width // 8], 1)
         self.mono_decoder = BaseClassifier(half, [width // 4, width // 8], 1)
+
+        from pytorch_metric_learning.losses import NTXentLoss
+
+        self.ntxent_loss = NTXentLoss(temperature=TEMPERATURE)
+        self.pools: SimilarityPools | None = None
+        self._train: dict | None = None
+        self._rng = __import__("random").Random(0)
+
+    def attach_training_set(self, pickle_path) -> None:
+        """Hold the training split and build the companion pools once.
+
+        The release builds them from the raw scaled features at dataset
+        construction and never rebuilds -- its `update_matrix` is inherited from
+        ConFEDE and never called by its trainer.
+        """
+        import pickle
+
+        import numpy as np
+
+        with open(pickle_path, "rb") as handle:
+            train = pickle.load(handle)["train"]
+        vision = torch.as_tensor(np.asarray(train["vision"])).float()
+        audio = torch.as_tensor(np.asarray(train["audio"])).float()
+        text = torch.as_tensor(np.asarray(train["text"])).float()
+        self._train = {
+            "text_bert": torch.as_tensor(np.asarray(train["text_bert"])).long(),
+            "vision": vision, "audio": audio,
+            "labels": torch.as_tensor(np.asarray(train["regression_labels"])).float(),
+        }
+        labels = np.asarray(train["regression_labels"]).reshape(-1)
+        self.pools = SimilarityPools(labels)
+        self.pools.build(torch.cat([text.mean(1), vision.mean(1), audio.mean(1)], dim=-1))
+
+    @classmethod
+    def build(cls, spec, **kwargs):
+        """Construct, and load the split companions are drawn from."""
+        kwargs.setdefault("vision_dim", spec.vision_dim)
+        kwargs.setdefault("audio_dim", spec.audio_dim)
+        model = cls(**kwargs)
+        model.attach_training_set(spec.unaligned_pkl)
+        return model
 
     def on_run_start(self, seed: int) -> None:
         """Produce this seed's stage one if absent, load it, freeze it, drop the rest.
@@ -317,7 +410,38 @@ class FeaDA(MSAModel):
         out.update({f"view_{k}": v for k, v in views.items()})
         out["gate_v"], out["gate_a"] = gate_v, gate_a
         out["vision_gated"], out["audio_gated"] = vision_gated, audio_gated
+
+        companions = self._companion_views(batch)
+        if companions is not None:
+            out.update({f"companion_{k}": v for k, v in companions.items()})
         return out
+
+    def _views_for(self, text_bert: torch.Tensor, vision: torch.Tensor,
+                   audio: torch.Tensor) -> dict[str, torch.Tensor]:
+        """The six projections for an arbitrary batch -- used for companions."""
+        output = self.text_encoder.bert(
+            input_ids=text_bert[:, 0].long(), attention_mask=text_bert[:, 1].long(),
+            token_type_ids=text_bert[:, 2].long())
+        pooled = output.pooler_output
+        xv = self.vision_encoder(vision, padding_mask(vision))
+        xa = self.audio_encoder(audio, padding_mask(audio))
+        return {
+            "t_simi": self.T_simi_proj(pooled), "v_simi": self.V_simi_proj(xv),
+            "a_simi": self.A_simi_proj(xa), "t_dissimi": self.T_dissimi_proj(pooled),
+            "v_dissimi": self.V_dissimi_proj(xv), "a_dissimi": self.A_dissimi_proj(xa),
+        }
+
+    def _companion_views(self, batch: dict[str, torch.Tensor]):
+        """Six companions per anchor, projected. Training only, as the release does."""
+        if not self.training or self.pools is None or not self.pools.pools:
+            return None
+        train = self._train
+        assert train is not None
+        device = batch["vision"].device
+        indices = self.pools.draw(batch["index"].tolist(), self._rng)
+        return self._views_for(train["text_bert"][indices].to(device),
+                               train["vision"][indices].to(device).float(),
+                               train["audio"][indices].to(device).float())
 
     def compute_loss(
         self, outputs: dict[str, torch.Tensor], batch: dict[str, torch.Tensor]
@@ -332,7 +456,36 @@ class FeaDA(MSAModel):
 
         distillation = (_kl(outputs["vision_gated"], outputs["gate_v"])
                         + _kl(outputs["audio_gated"], outputs["gate_a"]))
-        return prediction + MONO_WEIGHT * mono + KL_WEIGHT * distillation
+
+        total = prediction + MONO_WEIGHT * mono + KL_WEIGHT * distillation
+        if "companion_t_simi" in outputs:
+            total = total + CONST_WEIGHT * self.contrastive(outputs, label)
+        return total
+
+    def contrastive(self, outputs: dict[str, torch.Tensor],
+                    label: torch.Tensor) -> torch.Tensor:
+        """The release's supervised contrastive term, over 42-row blocks.
+
+        Missing from the first version of this port, which is why its ten seeds
+        were discarded: the objective ran without a quarter of itself and the
+        equivalence test, comparing only forward outputs, could not see it.
+        """
+        device = label.device
+        indices_tuple = tuple(torch.tensor(x, device=device)
+                              for x in (ANCHOR1, POSITIVE, ANCHOR2, NEGATIVE))
+        pair_labels = torch.tensor(PAIR_LABELS, device=device)
+        anchors = [outputs[f"view_{k}"] for k in VIEW_ORDER]
+        companions = [outputs[f"companion_{k}"] for k in VIEW_ORDER]
+
+        total = label.new_zeros(())
+        for i in range(anchors[0].size(0)):
+            block = torch.cat([
+                torch.cat((anchor[i].unsqueeze(0),
+                           companion[COMPANIONS * i:COMPANIONS * (i + 1)]), dim=0)
+                for anchor, companion in zip(anchors, companions, strict=True)], dim=0)
+            total = total + self.ntxent_loss(block, pair_labels,
+                                             indices_tuple=indices_tuple)
+        return total / anchors[0].size(0)
 
 
 def _kl(student: torch.Tensor, teacher: torch.Tensor) -> torch.Tensor:
