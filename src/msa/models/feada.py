@@ -317,6 +317,7 @@ class FeaDA(MSAModel):
         pretraining returned MAE 1.1549 against 0.7358, a number that would have
         sat in the comparison table looking ordinary.
         """
+        import gc
         import subprocess
         import sys
         from pathlib import Path as _Path
@@ -329,6 +330,14 @@ class FeaDA(MSAModel):
         if not all(path.exists() for path in needed):
             script = _Path(__file__).resolve().parents[3] / "scripts" / "pretrain_feada.py"
             print(f"  stage one for seed {seed} is missing; running {script.name}", flush=True)
+            # Hand back the previous seed's cached blocks first: they are
+            # invisible to the child process, which then gets whatever is left
+            # and dies at the first attention. ConFEDE hit exactly this at seed
+            # 43 and was fixed there; the fix did not travel with the code that
+            # was modelled on it, and this run died at seed 43 too.
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
             subprocess.run([sys.executable, str(script), "--seed", str(seed)], check=True)
         for modality, module in (("vision", self.vision_encoder),
                                  ("audio", self.audio_encoder)):
