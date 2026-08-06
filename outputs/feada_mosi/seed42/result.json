@@ -355,7 +355,7 @@
       "valid_f1_non0": 0.8606701940035274
     }
   ],
-  "elapsed_sec": 665.1799045349471,
+  "elapsed_sec": 667.890670867986,
   "env": {
     "python": "3.12.3",
     "platform": "Linux-6.8.0-124-generic-x86_64-with-glibc2.39",
@@ -374,7 +374,7 @@
     "cublas_workspace_config": ":4096:8",
     "deterministic_algorithms": true,
     "git": {
-      "commit": "8ee78c56e2a9a10bb9df129c94f7561d174279fb",
+      "commit": "7a40b3342fda557b6d54a70d4a3289cb5fa68338",
       "dirty": false
     },
     "device": "cuda",

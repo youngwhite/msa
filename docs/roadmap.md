@@ -222,9 +222,9 @@ python scripts/check_acceptance.py --all         # 全部有参照的组
 `docs/spec_feada.md`、`src/msa/models/feada.py`、`scripts/pretrain_feada.py`（含
 `on_run_start` 自动产出与冻结）。已推送。
 
-**⚠️ 已发现的缺陷（最高优先）**：`feada.py` 的 `compute_loss` **缺 `0.02·sup_const_loss`**
-（伙伴采样整条路径未接）。等价测试因只比前向而未发现；10 seed 结果已丢弃。
-**先补实现 + 补测试，再重跑**。经过见 `spec_feada.md`。
+**FeaDA 已收口至可收口的程度**：实现、等价测试（含对比损失）、10 seed 均已完成
+（MAE 0.7483 ± 0.0136）。**但作者代码参照跑不起来**——release 在自身配置下峰值超过本机 GPU
+可用显存，见 `survey.md` 第五类阻塞。**故不予判定**，数字入表须标「无参照」。
 
 **下一步，按序**：
 

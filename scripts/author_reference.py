@@ -442,6 +442,12 @@ METHODS = {
         "command": ["python", "{driver}", "{seed}"],
         "log": {"final": "FINAL TEST:"},
         "reap": "MOSI/save_models",
+        # Its own memory use peaks above this GPU: batch 32 anchors plus six
+        # companions each puts 224 sequences of 500 frames through the encoders.
+        # expandable_segments changes how the allocator reuses freed blocks and
+        # touches no tensor value, so it is a fair thing to set; the batch size
+        # is protocol and is not.
+        "env": {"PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"},
         "paper": "FeaDA, IJCNLP-AACL 2025",
         "licence": "no LICENSE file in the repository",
     },
@@ -651,6 +657,7 @@ def run(method: str, seeds: list[int], out_root: Path) -> None:
         fields["driver"] = str(driver.resolve())
 
     environment = dict(os.environ)
+    environment.update(spec.get("env", {}))
     shim = environment.get("MMSA_SHIM", "/workspace/mmsa_env/shim")
     environment["PYTHONPATH"] = os.pathsep.join(
         [shim, str(repo), environment.get("PYTHONPATH", "")])
