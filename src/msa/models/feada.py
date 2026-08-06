@@ -51,6 +51,33 @@ CONST_WEIGHT, MONO_WEIGHT, KL_WEIGHT, TEMPERATURE = 0.02, 0.03, 0.09, 0.5
 COMPANIONS = 6
 
 
+class _Extractor(nn.Module):
+    """LayerNorm, one linear, tanh, dropout.
+
+    The release ships this twice under two names -- `common_feature_extractor`
+    (dropout 0.3) for the similar views and `private_feature_extractor`
+    (dropout 0.5) for the dissimilar ones -- with identical bodies. The only
+    difference is the dropout rate, so it is one class with a parameter here and
+    the two rates are passed at the call sites.
+
+    Also worth stating: this is NOT the plain Linear a first pass here assumed.
+    The LayerNorm is two more tensors per projection, twelve across the six, and
+    the equivalence test's count was the only thing that said so.
+    """
+
+    def __init__(self, input_dim: int, output_dim: int, dropout: float) -> None:
+        super().__init__()
+        self.fc = nn.Sequential(
+            nn.LayerNorm(input_dim),
+            nn.Linear(input_dim, output_dim),
+            nn.Tanh(),
+            nn.Dropout(dropout),
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.fc(x)
+
+
 class BaseClassifier(nn.Module):
     def __init__(self, input_size: int, hidden_size: list[int], output_size: int) -> None:
         super().__init__()
@@ -93,12 +120,15 @@ class UnimodalEncoder(nn.Module):
     def __init__(self, fea_size: int, hidden: int, patches: int, heads: int,
                  layers: int, dropout: float) -> None:
         super().__init__()
+        # The release declares layernorm before the encoder it wraps (its proj_a
+        # and trans_encoder_a sit between, and are the dead branch), so a
+        # positional weight copy needs the same order here.
+        self.layernorm = nn.LayerNorm(hidden)
         self.pos_encoder = _PositionEncodingTraining(fea_size, hidden, patches, dropout)
         layer = nn.TransformerEncoderLayer(
             d_model=hidden, nhead=heads, dim_feedforward=hidden,
             dropout=dropout, activation="gelu")
         self.transformer_encoder = nn.TransformerEncoder(layer, layers)
-        self.layernorm = nn.LayerNorm(hidden)
 
     def forward(self, x: torch.Tensor, key_padding_mask: torch.Tensor) -> torch.Tensor:
         x = self.pos_encoder(x).transpose(0, 1)
@@ -138,6 +168,18 @@ class FeaDA(MSAModel):
         self.text_dropout = text_dropout
         half = width // 2
 
+        # Declared in the release's own order: the six projections come first,
+        # before the prompts and encoders. A positional weight copy is what the
+        # equivalence test does, and grouping these more readably misaligned it.
+        # Similar views use the release's common_feature_extractor at dropout
+        # 0.3; dissimilar use private_feature_extractor at 0.5. Same body.
+        self.T_simi_proj = _Extractor(width, half, 0.3)
+        self.V_simi_proj = _Extractor(width, half, 0.3)
+        self.A_simi_proj = _Extractor(width, half, 0.3)
+        self.T_dissimi_proj = _Extractor(width, half, 0.5)
+        self.V_dissimi_proj = _Extractor(width, half, 0.5)
+        self.A_dissimi_proj = _Extractor(width, half, 0.5)
+
         self.prompta_m = nn.Parameter(torch.rand(audio_length, width))
         self.promptv_m = nn.Parameter(torch.rand(vision_length, width))
         self.text_encoder = BertTextEncoder(pretrained, finetune_bert)
@@ -146,25 +188,30 @@ class FeaDA(MSAModel):
         self.vision_with_text = TransformerEncoder(
             embed_dim=width, num_heads=cross_heads, layers=vision_cross_layers,
             attn_dropout=cross_dropout, relu_dropout=cross_dropout,
-            res_dropout=cross_dropout, embed_dropout=cross_dropout, attn_mask=True)
+            res_dropout=cross_dropout, embed_dropout=cross_dropout, attn_mask=True,
+            # Its feed-forward is embed_dim wide, not the 4x every earlier model
+            # here uses. Reusing the default would have been a silently larger
+            # model that still trained and still looked right.
+            ffn_dim=width,
+            # Its transformer builds SinusoidalPositionalEmbedding unconditionally
+            # -- no switch. Our shared encoder defaults the switch OFF, which is
+            # exactly how MulT lost its positional encoding here
+            # (investigations.md#mult-position). Made that mistake again writing
+            # this; the equivalence test caught it at 3.05e-03 relative.
+            position_embedding=True)
         self.proj_a = nn.Linear(audio_dim, width)
         # Five layers for audio against two for vision -- the release's asymmetry.
         self.audio_with_text = TransformerEncoder(
             embed_dim=width, num_heads=cross_heads, layers=audio_cross_layers,
             attn_dropout=cross_dropout, relu_dropout=cross_dropout,
-            res_dropout=cross_dropout, embed_dropout=cross_dropout, attn_mask=True)
+            res_dropout=cross_dropout, embed_dropout=cross_dropout, attn_mask=True,
+            ffn_dim=width, position_embedding=True)
 
         self.vision_encoder = UnimodalEncoder(
             vision_dim, width, vision_length, unimodal_heads, unimodal_layers, unimodal_dropout)
         self.audio_encoder = UnimodalEncoder(
             audio_dim, width, audio_length, unimodal_heads, unimodal_layers, unimodal_dropout)
 
-        self.T_simi_proj = nn.Linear(width, half)
-        self.V_simi_proj = nn.Linear(width, half)
-        self.A_simi_proj = nn.Linear(width, half)
-        self.T_dissimi_proj = nn.Linear(width, half)
-        self.V_dissimi_proj = nn.Linear(width, half)
-        self.A_dissimi_proj = nn.Linear(width, half)
         self.p2a = nn.Linear(half, width)
 
         self.TVA_decoder = BaseClassifier(width * 3, [width, width // 2, width // 8], 1)

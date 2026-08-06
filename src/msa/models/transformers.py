@@ -92,6 +92,7 @@ class _EncoderLayer(nn.Module):
         relu_dropout: float,
         res_dropout: float,
         attn_mask: bool,
+        ffn_dim: int | None = None,
     ) -> None:
         super().__init__()
         self.attention = nn.MultiheadAttention(embed_dim, num_heads, dropout=attn_dropout)
@@ -105,8 +106,12 @@ class _EncoderLayer(nn.Module):
         self.attn_mask = attn_mask
         self.relu_dropout = relu_dropout
         self.res_dropout = res_dropout
-        self.fc1 = nn.Linear(embed_dim, 4 * embed_dim)
-        self.fc2 = nn.Linear(4 * embed_dim, embed_dim)
+        # 4x is the MulT default every earlier model here uses. FeaDA's release
+        # sets its feed-forward to embed_dim, so the width is a parameter --
+        # defaulted to 4x, which leaves every existing model byte-identical.
+        hidden = ffn_dim if ffn_dim is not None else 4 * embed_dim
+        self.fc1 = nn.Linear(embed_dim, hidden)
+        self.fc2 = nn.Linear(hidden, embed_dim)
         self.norms = nn.ModuleList([nn.LayerNorm(embed_dim) for _ in range(2)])
         for linear in (self.fc1, self.fc2):
             nn.init.xavier_uniform_(linear.weight)
@@ -147,6 +152,7 @@ class TransformerEncoder(nn.Module):
         embed_dropout: float = 0.0,
         attn_mask: bool = False,
         position_embedding: bool = False,
+        ffn_dim: int | None = None,
     ) -> None:
         super().__init__()
         self.embed_scale = math.sqrt(embed_dim)
@@ -156,7 +162,7 @@ class TransformerEncoder(nn.Module):
         )
         self.layers = nn.ModuleList(
             _EncoderLayer(embed_dim, num_heads, attn_dropout, relu_dropout,
-                          res_dropout, attn_mask)
+                          res_dropout, attn_mask, ffn_dim)
             for _ in range(layers)
         )
         self.layer_norm = nn.LayerNorm(embed_dim)
