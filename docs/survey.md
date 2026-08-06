@@ -287,6 +287,26 @@ ACL 系逐卷枚举筛出的同任务论文，按核实规矩逐条核（全文�
 
 **CLMLF 是「核实规矩」的又一例证**：标题写 Multimodal Sentiment，枚举器据此判为 IN_SCOPE，而正文用的是图文数据。同前例 D2R、Beyond Static Alignment。
 
+### EBMC（CVPR 2026）：有作者代码，但特征口径不同——排除（2026-08-06）
+
+按「换一类找作者代码比例更高的」这条思路，EBMC 是最强候选：CVPR 2026、有 release、用 MOSI。
+克隆后核实，**必须排除**：
+
+| 项 | 本仓库全部 21 组 | EBMC |
+|---|---|---|
+| 文本 | BERT-base（768） | **DeBERTa-large** |
+| 音频 | COVAREP（5 维，序列） | **wav2vec-large**（句级 UTT） |
+| 视觉 | Facet（20 维，序列） | **MANet**（句级 UTT） |
+
+`run_ebmc_cmumosi.sh` 与 README 一致：`--text-feature=deberta-large-4-UTT --audio-feature=wav2vec-large-c-UTT --video-feature=manet_UTT`，dataloader 读的是**每条话语一个 `.npy`**，不是 MMSA 的 `aligned_50.pkl`。
+
+**「有作者代码」是必要条件，不是充分条件——特征口径也必须对得上。**
+在不同特征上得到的数字与本表并列，会把「特征更强」读成「方法更好」，这正是本项目要拆穿的那类混淆。
+
+若将来要做，只能作为**独立的一档**（自带特征、单独一张表），不能进主对照表。
+
+**许可也须照实记**：EBMC 是 **CC BY-NC 4.0**，不是前几个的 MIT。学术非商业使用允许，但与 MIT 不是一回事，台账不得顺手写成 MIT。
+
 ## 待核实
 
 **不许当已知事实引用。**

@@ -5,7 +5,7 @@
 
 - 共 **129** 条；已复现 **18** 条
 - 对比学习一类 **8** 条（导师指定方向，见 `decisions.md` 2026-08-04）
-- **尚未核实作者代码 105** 条——空的「作者代码」列意思是**没查过**，
+- **尚未核实作者代码 104** 条——空的「作者代码」列意思是**没查过**，
   不是「没有代码」。这两件事必须分开数，否则"没查"会慢慢被读成"没有"。
 
 **「作者代码」一列的链接一律取自论文正文**，不取会议页面元数据——后者不显示正文里的代码链接，
@@ -36,17 +36,15 @@
 | `misa` | arXiv:2005.03545 | — | MISA: Modality-Invariant and -Specific Representations for Multimodal  | [链接](https://github.com/declare-lab/MISA) | ✓ |
 | `clgsi` | naacl2024f | contrastive | CLGSI: A Multimodal Sentiment Analysis Framework based on Contrastive  | [链接](https://github.com/AZYoung233/CLGSI) | — |
 
-## ◻ 候选（110）
+## ◻ 候选（108）
 
 | key | 出处 | 类别 | 标题 | 作者代码 | PDF |
 |---|---|---|---|---|---|
 | `p_rmf` | ACL 2025 长文 | — | P-RMF | — | — |
 | `qa_moe**_quality_aware_mixture_of_experts,_robust_msa` | ACL 2026 长文 | — | QA-MoE** Quality-Aware Mixture of Experts, Robust MSA | — | — |
-| `ebmc` | CVPR 2026, pp.30183-30193 | — | EBMC | [链接](https://github.com/kangverse/EBMC) | ✓ |
 | `active_perceptual_inference_a_corticotha` | CVPR2026 | — | Active Perceptual Inference: A Corticothalamic-Inspired Dynamic Nested | — | — |
 | `cica_coupling_confidence_aware_pretraini` | CVPR2026 | — | CICA: Coupling Confidence-Aware Pretraining with Confidence-Informed A | — | — |
 | `conflict_aware_adaptive_cross_reconstruc` | CVPR2026 | — | Conflict-Aware Adaptive Cross-Reconstruction for Multimodal Sentiment  | — | — |
-| `enhance_then_balance_modality_collaborat` | CVPR2026 | — | Enhance-then-Balance Modality Collaboration for Robust Multimodal Sent | — | — |
 | `factorize_reconstruct_enhance_a_unified` | CVPR2026 | — | Factorize, Reconstruct, Enhance: A Unified Framework for Multimodal Se | — | — |
 | `multi_metric_representation_learning_str` | CVPR2026 | — | Multi-Metric Representation Learning Strategy Based on Clustering for  | — | — |
 | `prototype_as_prompt_multimodal_sentiment` | CVPR2026 | — | Prototype-as-Prompt: Multimodal Sentiment Prototypes Endowing Large La | — | — |
@@ -151,8 +149,10 @@
 | `towards_explainable_fusion_and_balanced` | mm2025 | — | Towards Explainable Fusion and Balanced Learning in Multimodal Sentime | — | — |
 | `analyzing_modality_robustness_in_multimo` | naacl2022 | — | Analyzing Modality Robustness in Multimodal Sentiment Analysis | — | — |
 
-## ✕ 已排除（1）
+## ✕ 已排除（3）
 
 | key | 出处 | 类别 | 标题 | 作者代码 | PDF |
 |---|---|---|---|---|---|
+| `ebmc` | CVPR 2026, pp.30183-30193 | different-features | EBMC | [链接](https://github.com/kangverse/EBMC) | ✓ |
+| `enhance_then_balance_modality_collaborat` | CVPR2026 | different-features | Enhance-then-Balance Modality Collaboration for Robust Multimodal Sent | [链接](https://github.com/kangverse/EBMC) | — |
 | `clmlf_a_contrastive_learning_and_multi_l` | naacl2022f | contrastive | CLMLF: A Contrastive Learning and Multi-Layer Fusion Method for Multim | — | — |

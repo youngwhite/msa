@@ -7,7 +7,7 @@ confede	ConFEDE	ACL 2023 长文, pp.7617-7630	contrastive	https://github.com/Xpa
 dear	DEAR	Findings of ACL 2026			candidate
 dmd	DMD	CVPR 2023 (highlight), pp.6631-6640		https://github.com/mdswyz/DMD	reproduced
 dpdf_lq	DPDF-LQ	EMNLP 2025 主会		https://github.com/ZhouMiaoGX/DPDF-LQ	reproduced
-ebmc	EBMC	CVPR 2026, pp.30183-30193		https://github.com/kangverse/EBMC	candidate
+ebmc	EBMC	CVPR 2026, pp.30183-30193	different-features	https://github.com/kangverse/EBMC	excluded
 fast_retrieval_and_slow_reasoning**_explainable_msa	Fast Retrieval and Slow Reasoning** Explainable MSA	Findings of ACL 2026			candidate
 feada	FeaDA	IJCNLP-AACL 2025		https://github.com/PowerLittleYin/FeaDA-main	candidate
 graph_mfn	Multimodal Language Analysis in the Wild: **CMU-MOSEI Dataset** and Interpretable Dynamic Fusion Graph	ACL 2018			reproduced
@@ -34,7 +34,7 @@ uncertainty_calibrated_elastic_alignment**,_missing_modalities	Uncertainty-Calib
 active_perceptual_inference_a_corticotha	Active Perceptual Inference: A Corticothalamic-Inspired Dynamic Nested Recurrent Network for Multimodal Sentiment Analysis with Incomplete Data	CVPR2026			candidate
 cica_coupling_confidence_aware_pretraini	CICA: Coupling Confidence-Aware Pretraining with Confidence-Informed Attention for Robust Multimodal Sentiment Analysis	CVPR2026			candidate
 conflict_aware_adaptive_cross_reconstruc	Conflict-Aware Adaptive Cross-Reconstruction for Multimodal Sentiment Analysis	CVPR2026			candidate
-enhance_then_balance_modality_collaborat	Enhance-then-Balance Modality Collaboration for Robust Multimodal Sentiment Analysis	CVPR2026			candidate
+enhance_then_balance_modality_collaborat	Enhance-then-Balance Modality Collaboration for Robust Multimodal Sentiment Analysis	CVPR2026	different-features	https://github.com/kangverse/EBMC	excluded
 factorize_reconstruct_enhance_a_unified	Factorize, Reconstruct, Enhance: A Unified Framework for Multimodal Sentiment Analysis	CVPR2026			candidate
 multi_metric_representation_learning_str	Multi-Metric Representation Learning Strategy Based on Clustering for Fine-Grained Multimodal Sentiment Analysis	CVPR2026			candidate
 prototype_as_prompt_multimodal_sentiment	Prototype-as-Prompt: Multimodal Sentiment Prototypes Endowing Large Language Models the Capability to Perform Multimodal Sentiment Analysis	CVPR2026			candidate
