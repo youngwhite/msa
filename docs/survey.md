@@ -63,6 +63,20 @@ Facet(20) 序列**不是同一批输入**。
 
 **MoLAN 也值得记**：论文正文印了 GitHub 链接，仓库确实存在，**但里面只有一个 README，没有任何代码**。「论文印了链接」既不等于「有代码」（ConKI 那条印的是所用框架），也不等于「仓库里有东西」。
 
+### TF-Mamba / FeaDA / P-RMF 核实结果（2026-08-06）
+
+| 方法 | 出处 | 口径 | 依赖 | 许可 | 裁定 |
+|---|---|---|---|---|---|
+| **FeaDA** | IJCNLP-AACL 2025 | ✅ `unaligned_50.pkl` + `bert-base-uncased` | 常规 + `pytorch_metric_learning`（已装）+ matplotlib（可用桩） | **无 LICENSE 文件** | **下一个做** |
+| TF-Mamba | Findings of EMNLP 2025 | ✅ `unaligned_50.pkl` + `bert-base-uncased` | **`mamba_ssm`——需编译 CUDA kernel** | 无 LICENSE 文件 | 暂缓，见下 |
+| P-RMF | ACL 2025 长文 | — | — | — | **排除：仓库 404** |
+
+**TF-Mamba 暂缓的理由不是它不好，是装 `mamba_ssm` 的风险**：它要现场编译 CUDA kernel，作者环境是 torch 2.1/cu121，本机是 torch 2.11/cu128 的 Blackwell（sm_120）。而**上一次为装一个依赖，拖来 CUDA 大版本不匹配的 torchvision，八个 BERT 模型全部起不来**（见 `.claude/CLAUDE.md` 环境一节）。若要做，须先备份 venv 或另建环境，不能直接装。
+
+**P-RMF 的链接在论文正文里印着，仓库 404。** 与 MoLAN（仓库只有 README）同类：**链接必须打开看**——这是「核实规矩」新增的一条。
+
+**两篇都没有 LICENSE 文件**，即默认保留所有权利。学术复现（阅读、重实现、引用、本地运行作参照）是通行做法，但**台账不得写成 MIT**；只有 DPDF-LQ/DLF/DMD/CLGSI/KuDA 是明确的 MIT，ConFEDE 见仓库，EBMC 是 CC BY-NC。
+
 ## 扫描规程
 
 - **出处**：ACL / NAACL / EMNLP / Findings / IJCNLP-AACL、CVPR / ICCV / WACV、AAAI、ICLR、ACM MM

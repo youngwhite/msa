@@ -36,17 +36,17 @@
 | `misa` | arXiv:2005.03545 | — | MISA: Modality-Invariant and -Specific Representations for Multimodal  | [链接](https://github.com/declare-lab/MISA) | ✓ |
 | `clgsi` | naacl2024f | contrastive | CLGSI: A Multimodal Sentiment Analysis Framework based on Contrastive  | [链接](https://github.com/AZYoung233/CLGSI) | — |
 
-## ▶ 计划中（1）
+## ▶ 计划中（2）
 
 | key | 出处 | 类别 | 标题 | 作者代码 | PDF |
 |---|---|---|---|---|---|
 | `kuda**_knowledge_guided_dynamic_modality_attention_fusion` | Findings of EMNLP 2024 | — | KuDA** Knowledge-Guided Dynamic Modality Attention Fusion | [链接](https://github.com/MKMaS-GUET/KuDA) | — |
+| `feada` | IJCNLP-AACL 2025 | — | FeaDA | [链接](https://github.com/PowerLittleYin/FeaDA-main) | — |
 
-## ◻ 候选（105）
+## ◻ 候选（103）
 
 | key | 出处 | 类别 | 标题 | 作者代码 | PDF |
 |---|---|---|---|---|---|
-| `p_rmf` | ACL 2025 长文 | — | P-RMF | [链接](https://github.com/aoqzhu/P-RMF) | — |
 | `qa_moe**_quality_aware_mixture_of_experts,_robust_msa` | ACL 2026 长文 | — | QA-MoE** Quality-Aware Mixture of Experts, Robust MSA | — | — |
 | `active_perceptual_inference_a_corticotha` | CVPR2026 | — | Active Perceptual Inference: A Corticothalamic-Inspired Dynamic Nested | — | — |
 | `cica_coupling_confidence_aware_pretraini` | CVPR2026 | — | CICA: Coupling Confidence-Aware Pretraining with Confidence-Informed A | — | — |
@@ -63,7 +63,6 @@
 | `tf_mamba**_text_enhanced_fusion_mamba,_missing_modalities` | Findings of EMNLP 2025 | — | TF-Mamba** Text-enhanced Fusion Mamba, Missing Modalities | [链接](https://github.com/codemous/TF-Mamba) | — |
 | `cmad` | ICCV 2025, pp.4626-4636 | — | CMAD | [链接](https://github.com/YetZzzzzz/CMAD) | ✓ |
 | `cmad_correlation_aware_and_modalities_aw` | ICCV2025 | — | CMAD: Correlation-Aware and Modalities-Aware Distillation for Multimod | — | — |
-| `feada` | IJCNLP-AACL 2025 | — | FeaDA | [链接](https://github.com/PowerLittleYin/FeaDA-main) | — |
 | `mma` | NAACL 2025 长文 | — | MMA | [链接](https://github.com/MMA4MSA/MMA) | — |
 | `mer_clip` | WACV 2025, pp.6115-6124 | — | MER-CLIP | — | — |
 | `multi_interactive_memory_network_for_asp` | aaai2019 | — | Multi-Interactive Memory Network for Aspect Based Multimodal Sentiment | — | — |
@@ -152,10 +151,11 @@
 | `towards_explainable_fusion_and_balanced` | mm2025 | — | Towards Explainable Fusion and Balanced Learning in Multimodal Sentime | — | — |
 | `analyzing_modality_robustness_in_multimo` | naacl2022 | — | Analyzing Modality Robustness in Multimodal Sentiment Analysis | — | — |
 
-## ✕ 已排除（5）
+## ✕ 已排除（6）
 
 | key | 出处 | 类别 | 标题 | 作者代码 | PDF |
 |---|---|---|---|---|---|
+| `p_rmf` | ACL 2025 长文 | — | P-RMF | [链接](https://github.com/aoqzhu/P-RMF) | — |
 | `ebmc` | CVPR 2026, pp.30183-30193 | different-features | EBMC | [链接](https://github.com/kangverse/EBMC) | ✓ |
 | `enhance_then_balance_modality_collaborat` | CVPR2026 | different-features | Enhance-then-Balance Modality Collaboration for Robust Multimodal Sent | [链接](https://github.com/kangverse/EBMC) | — |
 | `molan` | Findings of ACL 2026 | — | MoLAN | [链接](https://github.com/betterfly123/MoLAN-Framework) | ✓ |
