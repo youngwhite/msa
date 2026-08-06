@@ -65,6 +65,9 @@ $PY scripts/survey_checklist.py | sed 's/^/survey: /'
 
 run "lint"                 $PY -m ruff check src scripts --select E,F,W,B,SIM,I,UP --line-length 100
 run "data integrity"       $PY scripts/check_data.py
+# One layer above check_data: not "is the file right" but "did every compared
+# number come from it". EBMC is why -- author code, CMU-MOSI, different features.
+run "feature parity"       $PY scripts/check_feature_parity.py --check
 run "invariants"           $PY scripts/check_invariants.py
 run "stored results"       $PY scripts/verify_runs.py --quiet
 run "per-model acceptance" $PY scripts/check_acceptance.py --all

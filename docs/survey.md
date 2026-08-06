@@ -26,6 +26,23 @@ curl -s -o /dev/null -w "%{http_code}" <repo URL>     # 每个链接实地请求
 - **抓取失败 ≠ 不存在**：OpenReview 有人机验证墙、CVF 对无 UA 请求返回 403、部分 PDF 是压缩流。**换权威副本再判**，不要把工具失败写成结论。
 - **有代码 ≠ 可用**：FeaDA 的仓库存在但无 README、无 LICENSE。无许可证在法律上不可复用。
 
+### 核实的第三项：特征口径（2026-08-06 新增）
+
+原先每篇只核两项——**用不用 CMU-MOSI**、**有没有作者代码**。EBMC 说明这不够：它两项全中，
+却用 DeBERTa-large / wav2vec-large / MANet 的句级特征，与本表的 BERT-base + COVAREP(5) +
+Facet(20) 序列**不是同一批输入**。
+
+**故第三项：该方法跑在哪一版特征上。** 三项缺一不可：
+
+| 项 | 怎么核 |
+|---|---|
+| 数据集 | 读正文，不看会议页面元数据 |
+| 作者代码 | 读正文 + 查作者仓库（MFN 的教训） |
+| **特征口径** | **读它的 dataloader 与运行脚本，不看论文的「we follow XXX」** |
+
+已回查：本仓库 22 个对照组全部同口径（`scripts/check_feature_parity.py`，已接入 `check_all.sh`）。
+**「应该都对」不等于「查过」**，所以做成脚本而不是一次性检查——以后每加一个模型都会自动核。
+
 ## 扫描规程
 
 - **出处**：ACL / NAACL / EMNLP / Findings / IJCNLP-AACL、CVPR / ICCV / WACV、AAAI、ICLR、ACM MM
