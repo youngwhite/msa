@@ -10,6 +10,7 @@ from .confede import ConFEDE
 from .dlf import DisentangledLanguageFocused
 from .dmd import DecoupledMultimodalDistillation
 from .dpdf_lq import DualPathDynamicFusion
+from .feada import FeaDA
 from .graph_mfn import GraphMemoryFusionNetwork
 from .lf_lstm import LateFusionLSTM
 from .lmf import LowRankFusion
@@ -30,6 +31,7 @@ __all__ = [
     "DecoupledMultimodalDistillation",
     "ConFEDE",
     "CLGSI",
+    "FeaDA",
     "DualPathDynamicFusion",
     "BertMAG",
     "ALMT",
