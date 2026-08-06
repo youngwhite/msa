@@ -215,3 +215,26 @@ python scripts/check_acceptance.py --all         # 全部有参照的组
   - 当前余量 **6.4G / 16G**（`.venv` 独占 7.2G，刚清掉 1.2G 的 pip 缓存）。**下载 MOSEI 前必须先量余量**——它比 MOSI 的 879MB 大得多，是下一个最可能把盘写满的东西。
 - **MPS 未在真机验证**。无 Apple Silicon 硬件。
 - EF-LSTM 的崩溃 seed 说明判据缺稳健性维度，见 `docs/investigations.md#ef-lstm-collapse`。改判据前先记决策，**不得在已有结果之后调整以迎合结果**。
+
+## 断点：FeaDA（2026-08-06）
+
+**已完成**：三项核实（MOSI / 有代码 / 特征口径 `unaligned_50.pkl` + BERT-base）、
+`docs/spec_feada.md`、`src/msa/models/feada.py`、`scripts/pretrain_feada.py`（含
+`on_run_start` 自动产出与冻结）。已推送。
+
+**下一步，按序**：
+
+1. `scripts/check_feada_equivalence.py` —— **最费事的一步**：作者模型依赖它自己的
+   `config` 模块与 ConFEDE 血缘的子模块；`load_froze()` 不在构造函数里，故可直接构造。
+   **输入形状必须取 375/500**（CLGSI 那次的教训），**并单独验对比损失与 KL 项**。
+2. 冒烟（改完模型必重跑）
+3. 注册 `feada_mosi` 到 `reproduce_all.sh` → 10 seed
+4. 作者代码参照（`author_reference.py` 加条目；预计需 matplotlib 桩与路径注入，同 CLGSI）
+5. 判定 → storyline / 台账 / experiments / model_table
+6. **随后可问的问题**：FeaDA 相对 ConFEDE 的增量在 10 seed 下是否可检出。
+   ConFEDE 是 MAE 0.7358 ± 0.0185，两者同协议同特征。**而该增量的一部分
+   （六个投影 + `p2a`）从未离开随机初始化**——见 `spec_feada.md` 已核实第 2 条。
+
+**其它待办**：KuDA 三项全过，**唯一卡点是预训练权重只在百度网盘**（本实例访问不了，
+用户可解）；TF-Mamba 需 `mamba_ssm`（要编译 CUDA kernel，须另建环境，不得直接装——
+上次装依赖废掉八个 BERT 模型）。
