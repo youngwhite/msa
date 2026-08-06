@@ -41,13 +41,50 @@
 
 **不得跳过。** ConFEDE 上跳过预训练的代价是 MAE 1.1549 对 0.7358，而那个错数字在表里看起来完全正常（见 `storyline.md` 第 18 节）。本仓库已有 `scripts/pretrain_confede.py` 可作范本，但**另写 `pretrain_feada.py`**，理由同上（隔离）。
 
-## 待核实（实现时必须查清，不得想当然）
+## 已核实（2026-08-06）
 
-1. **选轮用的 `result_loss` 是什么**——若含对比项等训练期损失，则与本仓库约定 2 的「按验证集主指标选轮」不同口径，须显式记录并决定如何对齐。
-2. **四个参数组是否覆盖全部参数**。`model_params_other` 只收名字含 `_decoder` 的；若有参数落在四组之外，它们在作者实现里**不被更新**，这属于「声明了但不训练」，必须原样复现而不是补上。
-3. `promptv_m` / `prompta_m` / `p2a` 三个提示向量的形状与用法（`p_len = 3`）。
-4. `sds_heat` / `const_heat`（均 0.5）分别喂给哪个损失。
-5. 伙伴采样的池子构造是否与 ConFEDE 相同（同标签相似/异标签不相似/异标签相似各取 2），还是有改动。
+### 1. 选轮口径：验证集**预测损失**，符合约定 2
+
+`eval` 取的是模型返回值的第 3 位。对照训练处的解包
+（`pred, loss, loss_nce, pred_loss, sup_const_loss`），该位是 **`pred_loss`**，即
+`MSELoss(pred, label)`——只含主任务、不含对比项，且只在验证集上算。**与约定 2 同口径。**
+
+**但有一处末批超权**：`loss += _loss.item() * 32` 用的是写死的 32 而非实际批大小，再除以批数。
+最后一个不满批被当成整批计。这正是本项目 `#select-reduction` 查过的口径，实现时以
+`--select-reduction batch` 对齐，不得"顺手改对"。
+
+### 2. 七个模块参与前向，却从不被更新——**本项目至今最强的一例**
+
+四个参数组是：`proj_t`+`text_encoder` / `proj_v`+`vision_with_text`+`promptv_m` /
+`proj_a`+`audio_with_text`+`prompta_m` / **名字含 `_decoder` 的**（即 `TVA_decoder`、`mono_decoder`）。
+
+**落在四组之外、但在 `forward` 里被调用的：**
+
+| 模块 | 用处 | 行号 |
+|---|---|---|
+| `T_simi_proj` / `T_dissimi_proj` | 文本的相似/相异投影 | 227 |
+| `V_simi_proj` / `V_dissimi_proj` | 视觉同上 | 228 |
+| `A_simi_proj` / `A_dissimi_proj` | 音频同上 | 230 |
+| `p2a` | `Linear(384, 768)`，投影相似表征 | 293-294 |
+
+**这七个模块永远停在随机初始化。** 它们有梯度，但优化器里没有它们，`step()` 永远不动它们。
+
+**与音视频编码器的情况不同**：那两个是 `set_froze()` 显式冻结的（第 186-187 行），
+意图明确、有据可查。**这七个是被参数分组遗漏的**——代码里没有任何一处说要冻结它们。
+
+**而对比学习正是靠这些投影头把表征投到对比空间的。** 也就是说，
+**FeaDA 的对比损失作用在一组随机投影上。**
+
+按约定 5 原样复现（本仓库的 `param_groups` 也不收它们），并在 storyline 记录。
+**不得"修正"它**——那样就不是这篇论文了。
+
+### 3-5. 其余
+
+- `promptv_m` / `prompta_m` 是**加性提示**：`proj_v(vision).permute(1,0,2) + promptv_m.unsqueeze(1)`，
+  形状 `(seq_len, 768)`（视觉 500、音频 375），**不是 `p_len=3` 那种前缀提示**。`p_len` 另有用处，实现时再核。
+- 总损失：`pred_loss + 0.02·sup_const_loss + 0.03·mono_task_loss + 0.09·(loss_v + loss_a)`，
+  其中 `loss_v`/`loss_a` 用的是 **`KLDivLoss(reduction='batchmean')`**——这是 FeaDA 相对 ConFEDE 的增量所在。
+- 伙伴采样：与 ConFEDE 同一套 `dataset.sample(idx)`，具体池子构造实现时逐行核。
 
 ## 验收计划
 
