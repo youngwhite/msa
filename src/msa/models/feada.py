@@ -170,6 +170,44 @@ class FeaDA(MSAModel):
         self.TVA_decoder = BaseClassifier(width * 3, [width, width // 2, width // 8], 1)
         self.mono_decoder = BaseClassifier(half, [width // 4, width // 8], 1)
 
+    def on_run_start(self, seed: int) -> None:
+        """Produce this seed's stage one if absent, load it, freeze it, drop the rest.
+
+        Raises rather than warns when it cannot be produced: ConFEDE without its
+        pretraining returned MAE 1.1549 against 0.7358, a number that would have
+        sat in the comparison table looking ordinary.
+        """
+        import subprocess
+        import sys
+        from pathlib import Path as _Path
+
+        from msa.config import OUTPUT_ROOT
+
+        root = OUTPUT_ROOT / "feada_pretrain"
+        current = root / f"seed{seed}"
+        needed = [current / f"{m}_encoder.pt" for m in ("vision", "audio")]
+        if not all(path.exists() for path in needed):
+            script = _Path(__file__).resolve().parents[3] / "scripts" / "pretrain_feada.py"
+            print(f"  stage one for seed {seed} is missing; running {script.name}", flush=True)
+            subprocess.run([sys.executable, str(script), "--seed", str(seed)], check=True)
+        for modality, module in (("vision", self.vision_encoder),
+                                 ("audio", self.audio_encoder)):
+            path = current / f"{modality}_encoder.pt"
+            if not path.exists():
+                raise FileNotFoundError(
+                    f"no pretrained {modality} encoder at {path}. Run\n"
+                    f"    python scripts/pretrain_feada.py --seed {seed}\n"
+                    f"first -- FeaDA without stage one is not FeaDA.")
+            module.load_state_dict(torch.load(path, map_location="cpu"))
+        # set_froze(), as the release calls it right after loading.
+        for module in (self.vision_encoder, self.audio_encoder):
+            for parameter in module.parameters():
+                parameter.requires_grad = False
+        for other in sorted(root.glob("seed*")):
+            if other != current:
+                for stale in other.glob("*.pt"):
+                    stale.unlink()
+
     def param_groups(self, lr: float, weight_decay: float) -> list[dict]:
         """Four groups at three rates -- and seven modules in none of them.
 

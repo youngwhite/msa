@@ -16,3 +16,4 @@ mmsa_runs/
 papers/*.pdf
 author_runs/
 outputs/confede_pretrain/
+outputs/feada_pretrain/
