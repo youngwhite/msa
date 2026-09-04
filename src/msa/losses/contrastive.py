@@ -34,6 +34,7 @@ unnormalised vectors.
 from __future__ import annotations
 
 import itertools
+import math
 
 import torch
 import torch.nn as nn
@@ -204,7 +205,10 @@ class HardNegativeContrastive(ContrastiveLoss):
 
         n = batch - 1
         debiased = (reweighted - n * self.tau_plus * positive) / (1 - self.tau_plus)
-        debiased = debiased.clamp_min(n * torch.exp(torch.tensor(-1.0 / self.temperature)))
+        # A float, not a tensor: `torch.tensor(...)` here builds it on the CPU,
+        # and clamp_min against a CPU tensor fails on a CUDA input. The gate
+        # missed it because it only ever ran on the CPU.
+        debiased = debiased.clamp_min(n * math.exp(-1.0 / self.temperature))
         return -torch.log(positive / (positive + debiased)).mean()
 
 

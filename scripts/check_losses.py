@@ -20,6 +20,12 @@ Per loss:
 4. **Deterministic** under a fixed seed, twice in a row -- the project reports
    bit-identical runs, and a loss with hidden randomness would break that.
 
+All of it runs on the resolved device, CUDA included. The first version ran only
+on the CPU and so did not catch `hcl` building a scalar with `torch.tensor(...)`
+-- a CPU tensor, which `clamp_min` refuses against a CUDA input. That failed on
+the seventh group of a screening sweep rather than in the gate written to
+prevent exactly this.
+
 Exit code 0 if every loss passes, non-zero otherwise.
 """
 
@@ -27,10 +33,12 @@ from __future__ import annotations
 
 import torch
 
+from msa.device import describe_device, resolve_device
 from msa.losses import available_losses, get_loss_class
 from msa.repro import set_seed
 
 BATCH, DIM = 24, 32
+DEVICE = resolve_device("auto")
 
 #: Objectives that are invariant to which row pairs with which, by construction.
 #: `supcon` and `arcface` group by label, not by correspondence; `align_uniform`
@@ -52,7 +60,7 @@ def build(name: str) -> torch.nn.Module:
     kwargs = {}
     if getattr(cls, "parametric", False):
         kwargs["dim"] = DIM
-    return cls(**kwargs)
+    return cls(**kwargs).to(DEVICE)
 
 
 def make_views(shuffle: bool = False) -> tuple[dict[str, torch.Tensor], torch.Tensor]:
@@ -65,12 +73,12 @@ def make_views(shuffle: bool = False) -> tuple[dict[str, torch.Tensor], torch.Te
     set_seed(0)
     shared = torch.randn(BATCH, DIM)
     views = {
-        modality: shared + 0.5 * torch.randn(BATCH, DIM)
+        modality: (shared + 0.5 * torch.randn(BATCH, DIM)).to(DEVICE)
         for modality in ("t", "a", "v")
     }
     if shuffle:
-        views["a"] = views["a"][torch.randperm(BATCH)]
-    labels = torch.empty(BATCH).uniform_(-3, 3)
+        views["a"] = views["a"][torch.randperm(BATCH, device=DEVICE)]
+    labels = torch.empty(BATCH).uniform_(-3, 3).to(DEVICE)
     for view in views.values():
         view.requires_grad_(True)
     return views, labels
@@ -171,12 +179,12 @@ def check_composite() -> list[str]:
         losses={n: build(n) for n in names},
         scheme=SCHEMES["equal"](names),
         projection_dim=DIM,
-    )
+    ).to(DEVICE)
     head.train()
     # Six orders of magnitude apart, which no real pair of objectives reaches.
     extreme = {"infonce": 1e-3, "barlow_twins": 1e3, "rnc": 1.0}
     rescaled = {
-        name: float(head.rescale(name, torch.tensor(value)))
+        name: float(head.rescale(name, torch.tensor(value, device=DEVICE)))
         for name, value in extreme.items()
     }
     for name, value in rescaled.items():
@@ -189,8 +197,8 @@ def check_composite() -> list[str]:
     # And it must track, not freeze: a term that grows tenfold should come back
     # towards 1 rather than staying at 10 forever.
     for _ in range(2000):
-        head.rescale("infonce", torch.tensor(1e-2))
-    tracked = float(head.rescale("infonce", torch.tensor(1e-2)))
+        head.rescale("infonce", torch.tensor(1e-2, device=DEVICE))
+    tracked = float(head.rescale("infonce", torch.tensor(1e-2, device=DEVICE)))
     if abs(tracked - 1.0) > 0.05:
         problems.append(
             f"running scale did not track a tenfold change: rescaled to {tracked:.4f}"
@@ -241,7 +249,7 @@ def check_composite() -> list[str]:
 
 def main() -> int:
     names = available_losses()
-    print(f"== {len(names)} registered objective(s) ==\n")
+    print(f"== {len(names)} registered objective(s) on {describe_device(DEVICE)} ==\n")
     failed = {}
     for name in names:
         cls = get_loss_class(name)
