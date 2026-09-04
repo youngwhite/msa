@@ -308,9 +308,13 @@ class Trainer:
             valid_metrics, _ = self.evaluate("valid")
             score = (self._batch_mean_mae if cfg.select_reduction == "mmsa"
                      else valid_metrics[cfg.select_on])
+            # Empty for every model that does not override it, so existing
+            # histories are unchanged.
+            extra = self.model.on_train_epoch_end(epoch)
             history.append(
                 {"epoch": epoch, "train_loss": train_loss,
-                 **{f"valid_{k}": v for k, v in valid_metrics.items()}}
+                 **{f"valid_{k}": v for k, v in valid_metrics.items()},
+                 **extra}
             )
             improved = cfg.is_better(score, best_score)
             if improved:

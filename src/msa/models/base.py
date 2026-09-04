@@ -63,6 +63,16 @@ class MSAModel(nn.Module):
     def on_train_epoch_start(self, epoch: int) -> None:
         """Called before each training epoch."""
 
+    def on_train_epoch_end(self, epoch: int) -> dict[str, float]:
+        """Called after each training epoch; whatever it returns joins history.
+
+        For objectives whose own state is part of the result — a loss weighting
+        that moves during training is not reproducible from the config alone —
+        this is how that state reaches `result.json`. No-op by default, so the
+        history of every existing model is byte-identical.
+        """
+        return {}
+
     def auxiliary_optimizer(
         self, lr: float, weight_decay: float
     ) -> torch.optim.Optimizer | None:

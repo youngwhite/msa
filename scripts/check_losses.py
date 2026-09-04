@@ -140,6 +140,105 @@ def check(name: str) -> list[str]:
     return problems
 
 
+def check_composite() -> list[str]:
+    """The properties the weighted combination has to have to be interpretable.
+
+    1. **Rescaling equalises influence.** The whole point of dividing each term
+       by its running magnitude is that a weight becomes a share of influence.
+       Tested on values with a deliberately extreme spread (1e-3 against 1e3)
+       rather than on whatever spread a synthetic batch happens to produce --
+       the real one is ~1e4 between barlow_twins and rnc, and a check that
+       depended on reproducing that would be measuring the test batch.
+    2. **Weights sum to 1** under every scheme, at every epoch. A scheme whose
+       weights drifted off 1 would silently change the effective lambda, and the
+       comparison between schemes would be measuring that instead.
+    3. **`equal` never moves.** It is the control; if it drifts, the adaptive
+       arms have nothing to be compared against.
+    4. **`grad_rate` holds still for `window` epochs, then moves.** Its whole
+       claim is that it reacts to a 10-epoch trend, so reacting sooner would
+       mean it is reacting to noise.
+    5. **`linear_ramp` reaches its target and does not overshoot.**
+    """
+    problems = []
+    from msa.losses.composite import SCHEMES, ContrastiveHead
+
+    names = ["infonce", "barlow_twins", "rnc"]
+    views, labels = make_views()
+    dims = {m: DIM for m in views}
+
+    head = ContrastiveHead(
+        feature_dims=dims,
+        losses={n: build(n) for n in names},
+        scheme=SCHEMES["equal"](names),
+        projection_dim=DIM,
+    )
+    head.train()
+    # Six orders of magnitude apart, which no real pair of objectives reaches.
+    extreme = {"infonce": 1e-3, "barlow_twins": 1e3, "rnc": 1.0}
+    rescaled = {
+        name: float(head.rescale(name, torch.tensor(value)))
+        for name, value in extreme.items()
+    }
+    for name, value in rescaled.items():
+        if abs(value - 1.0) > 1e-3:
+            problems.append(
+                f"rescale({name}, {extreme[name]:g}) = {value:.6f}, expected ~1.0 "
+                f"on the first observation"
+            )
+
+    # And it must track, not freeze: a term that grows tenfold should come back
+    # towards 1 rather than staying at 10 forever.
+    for _ in range(2000):
+        head.rescale("infonce", torch.tensor(1e-2))
+    tracked = float(head.rescale("infonce", torch.tensor(1e-2)))
+    if abs(tracked - 1.0) > 0.05:
+        problems.append(
+            f"running scale did not track a tenfold change: rescaled to {tracked:.4f}"
+        )
+
+    # The head must still run end to end on real term values.
+    _, raw, _ = head(views, labels)
+    if not all(torch.isfinite(v) for v in raw.values()):
+        problems.append(f"non-finite term in the combination: {raw}")
+
+    for scheme_name in sorted(SCHEMES):
+        kwargs = {}
+        if scheme_name == "grad_rate":
+            kwargs = {"window": 3}
+        elif scheme_name == "linear_ramp":
+            kwargs = {"favour": "infonce", "total_epochs": 10, "target": 0.7}
+        scheme = SCHEMES[scheme_name](names, **kwargs)
+        seen = []
+        for epoch in range(1, 11):
+            scheme.observe(
+                epoch,
+                dict.fromkeys(names, 1.0),
+                {n: 1.0 + 0.5 * epoch * (i + 1) for i, n in enumerate(names)},
+            )
+            weights = scheme.weights()
+            total = sum(weights.values())
+            if abs(total - 1.0) > 1e-6:
+                problems.append(f"{scheme_name}: weights sum to {total} at epoch {epoch}")
+                break
+            seen.append(weights)
+
+        if scheme_name == "equal" and any(w != seen[0] for w in seen):
+            problems.append("equal: weights moved, so it is not a control")
+        if scheme_name == "grad_rate":
+            if any(w != seen[0] for w in seen[:3]):
+                problems.append("grad_rate: moved before its window elapsed")
+            elif all(w == seen[0] for w in seen):
+                problems.append("grad_rate: never moved at all")
+        if scheme_name == "linear_ramp":
+            final = seen[-1]["infonce"]
+            if abs(final - 0.7) > 1e-6:
+                problems.append(f"linear_ramp: reached {final:.4f}, target was 0.7")
+            if max(w["infonce"] for w in seen) > 0.7 + 1e-6:
+                problems.append("linear_ramp: overshot its target")
+
+    return problems
+
+
 def main() -> int:
     names = available_losses()
     print(f"== {len(names)} registered objective(s) ==\n")
@@ -159,11 +258,23 @@ def main() -> int:
         if problems:
             failed[name] = problems
 
+    print("\n== weighted combination ==")
+    composite = check_composite()
+    for problem in composite:
+        print(f"  FAIL {problem}")
+    if not composite:
+        print("  ok   rescaling equalises influence; every scheme sums to 1 and "
+              "moves when it should")
+
     print()
-    if failed:
-        print(f"{len(failed)} objective(s) failed: {', '.join(sorted(failed))}")
+    if failed or composite:
+        if failed:
+            print(f"{len(failed)} objective(s) failed: {', '.join(sorted(failed))}")
+        if composite:
+            print(f"{len(composite)} problem(s) in the weighted combination")
         return 1
-    print("every objective is finite, differentiable, pairing-sensitive and deterministic")
+    print("every objective is finite, differentiable, pairing-sensitive and deterministic; "
+          "the combination weights are interpretable")
     return 0
 
 

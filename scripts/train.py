@@ -18,6 +18,8 @@ import argparse
 import ast
 import json
 
+import torch
+
 from msa.config import OUTPUT_ROOT
 from msa.data import build_dataloaders
 from msa.device import (
@@ -26,7 +28,10 @@ from msa.device import (
     describe_device,
     resolve_device,
 )
+from msa.losses import available_losses, get_loss_class
+from msa.losses.composite import SCHEMES, ContrastiveHead
 from msa.metrics import METRIC_KEYS, format_metrics
+from msa.models.contrastive import ContrastiveModel, feature_dims
 from msa.registry import available_models, build_model
 from msa.repro import set_seed
 from msa.trainer import TrainConfig, Trainer, format_summary, save_run, summarize
@@ -103,7 +108,98 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--run-group", default=None,
                     help="output subdirectory (default: <model>_<dataset>_<device>)")
     ap.add_argument("--quiet", action="store_true", help="suppress per-epoch lines")
+
+    contrastive = ap.add_argument_group(
+        "contrastive auxiliary loss",
+        "Adds `lambda * sum(w_i * loss_i)` on top of the model's own loss, on its "
+        "pooled modality features. Without --contrastive nothing here has any "
+        "effect and the run is byte-identical to one from before these options "
+        "existed.",
+    )
+    contrastive.add_argument("--list-losses", action="store_true")
+    contrastive.add_argument("--contrastive", nargs="+", default=[], metavar="NAME",
+                             help="one or more registered contrastive objectives; "
+                                  "phase 2 caps a combination at 4")
+    contrastive.add_argument("--contrastive-lambda", type=float, default=0.1,
+                             help="weight of the whole contrastive part against the "
+                                  "task loss (default 0.1)")
+    contrastive.add_argument("--contrastive-arg", action="append", default=[],
+                             metavar="KEY=VALUE",
+                             help="kwargs for the objectives, e.g. temperature=0.1")
+    contrastive.add_argument("--projection-dim", type=int, default=64,
+                             help="width of the shared space the terms are computed "
+                                  "in; modality features differ in width so a "
+                                  "projection is required, not optional")
+    contrastive.add_argument("--weight-scheme", default="equal",
+                             choices=sorted(SCHEMES),
+                             help="equal: fixed 1/k, the control. grad_rate: shift "
+                                  "weight every --weight-window epochs towards terms "
+                                  "whose gradient is still moving. linear_ramp: move "
+                                  "weight linearly towards --favour late in training")
+    contrastive.add_argument("--weight-window", type=int, default=10,
+                             help="grad_rate: epochs between weight updates")
+    contrastive.add_argument("--weight-floor", type=float, default=0.05,
+                             help="grad_rate: smallest weight a term can hold; zero "
+                                  "would be an absorbing state")
+    contrastive.add_argument("--favour", default=None,
+                             help="linear_ramp: which term to ramp towards")
+    contrastive.add_argument("--favour-target", type=float, default=0.7,
+                             help="linear_ramp: weight it reaches by the end")
+    contrastive.add_argument("--raw-terms", dest="normalise_terms",
+                             action="store_false",
+                             help="weight the objectives' raw values instead of "
+                                  "rescaling each by its own running magnitude. The "
+                                  "terms differ by ~1e4 on real batches, so with this "
+                                  "set a weight is not a share of influence and one "
+                                  "lambda is not comparable across candidates")
     return ap
+
+
+def build_contrastive(args, model, batch, spec) -> object:
+    """Wrap `model` with a contrastive head, or return it untouched.
+
+    The feature widths come from a forward pass rather than from the model's
+    constructor arguments -- TFN's are 32, 32 and 128 and follow from three
+    separate kwargs, so reading them off the model cannot drift out of date.
+    """
+    if not args.contrastive:
+        return model
+    if len(args.contrastive) > 4:
+        raise SystemExit(
+            f"phase 2 caps a combination at 4 terms, got {len(args.contrastive)}: "
+            f"{args.contrastive}"
+        )
+    duplicates = {n for n in args.contrastive if args.contrastive.count(n) > 1}
+    if duplicates:
+        raise SystemExit(f"repeated objective(s): {sorted(duplicates)}")
+
+    loss_kwargs = parse_model_args(args.contrastive_arg)
+    dims = feature_dims(model, batch)
+    losses = {}
+    for name in args.contrastive:
+        cls = get_loss_class(name)
+        kwargs = dict(loss_kwargs)
+        if getattr(cls, "parametric", False):
+            kwargs.setdefault("dim", args.projection_dim)
+        losses[name] = cls(**kwargs)
+
+    scheme_cls = SCHEMES[args.weight_scheme]
+    scheme_kwargs: dict = {}
+    if args.weight_scheme == "grad_rate":
+        scheme_kwargs = {"window": args.weight_window, "floor": args.weight_floor}
+    elif args.weight_scheme == "linear_ramp":
+        if args.favour is None:
+            raise SystemExit("--weight-scheme linear_ramp needs --favour <term>")
+        scheme_kwargs = {"favour": args.favour, "total_epochs": args.epochs,
+                         "target": args.favour_target}
+    scheme = scheme_cls(sorted(losses), **scheme_kwargs)
+
+    head = ContrastiveHead(
+        feature_dims=dims, losses=losses, scheme=scheme,
+        projection_dim=args.projection_dim, lambda_=args.contrastive_lambda,
+        normalise_terms=args.normalise_terms,
+    )
+    return ContrastiveModel(model, head)
 
 
 def main() -> None:
@@ -111,6 +207,16 @@ def main() -> None:
 
     if args.list_models:
         print("\n".join(available_models()))
+        return
+    if args.list_losses:
+        for name in available_losses():
+            cls = get_loss_class(name)
+            tags = " ".join(t for t, on in (
+                ("class-labels", cls.needs_class_labels),
+                ("continuous-labels", cls.uses_continuous_labels),
+                ("parametric", cls.parametric),
+            ) if on)
+            print(f"{name:14s} {tags}")
         return
 
     model_kwargs = parse_model_args(args.model_arg)
@@ -132,6 +238,15 @@ def main() -> None:
             device=device,
         )
         model = build_model(args.model, spec, **model_kwargs).to(device)
+        if args.contrastive:
+            probe = next(iter(loaders["train"]))
+            probe = {k: v.to(device) for k, v in probe.items()
+                     if isinstance(v, torch.Tensor)}
+            model = build_contrastive(args, model, probe, spec).to(device)
+            # Re-seed: probing consumed nothing random, but building the head
+            # drew from the generators, and the training run must not depend on
+            # how many parameters the head happened to have.
+            set_seed(seed, args.deterministic, warn_only=args.deterministic_warn_only)
 
         if group_dir is None:  # one name for the whole sweep, computed once
             group_dir = OUTPUT_ROOT / (
