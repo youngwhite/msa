@@ -26,20 +26,22 @@ Exit code 0 if the outputs match to 1e-6, non-zero otherwise.
 
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
 import torch
 import torch.nn as nn
 
-MMSA_SRC = Path("/workspace/MMSA/src")
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _reference_paths import mmsa_shim, mmsa_src  # noqa: E402
+
+MMSA_SRC = mmsa_src()
 #: transformers 4.x, einops and easydict live here, not in this project's venv —
 #: MMSA needs all three and we deliberately do not depend on einops or easydict.
-#: Same directory and same environment variable as mmsa_reference.py; it was
-#: previously a hard-coded path under a scratch directory that did not survive
-#: the move to another machine, which is how this check went quietly to SKIP.
-SHIM = Path(os.environ.get("MMSA_SHIM", "/workspace/mmsa_env/shim"))
+#: Resolved by _reference_paths, which both this and mmsa_reference.py share. It
+#: was twice a hard-coded absolute path, and both times this check went quietly
+#: to SKIP rather than red — see that module for why the constant had to go.
+SHIM = mmsa_shim()
 
 BATCH, DIM, TOKENS = 4, 128, 8
 LEN_TEXT, LEN_AUDIO, LEN_VISION = 50, 375, 500

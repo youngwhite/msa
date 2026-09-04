@@ -27,8 +27,8 @@ Environment: MMSA's model files cannot import under transformers 5, so `run`
 needs a transformers 4.x tree on sys.path ahead of ours, plus a handful of small
 packages MMSA imports (easydict, einops, pynvml, and for CENET the real
 pytorch_transformers). `scripts/setup_mmsa_reference.sh` builds all of it and
-leaves the directory at /workspace/mmsa_env/shim, which is where MMSA_SHIM
-defaults to; point MMSA_SHIM elsewhere to override. `collect` needs none of this
+leaves the directory at <repo>/.mmsa-reference/env/shim, which is where
+scripts/_reference_paths.py looks; set MMSA_SHIM to override. `collect` needs none of this
 — it only reads text.
 
 `collect` also overwrites docs/mmsa_code_runs_mosi.json, and the numbers in
@@ -44,13 +44,15 @@ from __future__ import annotations
 import argparse
 import ast
 import json
-import os
 import re
 import subprocess
 import sys
 from pathlib import Path
 
-MMSA_SRC = Path("/workspace/MMSA/src")
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _reference_paths import mmsa_shim, mmsa_src  # noqa: E402
+
+MMSA_SRC = mmsa_src()
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATASETS = PROJECT_ROOT / "datasets" / "CMU-MOSI" / "Processed"
 DEFAULT_OUT = PROJECT_ROOT / "mmsa_runs"
@@ -245,9 +247,7 @@ def main() -> None:
     args = ap.parse_args()
 
     if args.command == "run":
-        shim = os.environ.get("MMSA_SHIM")
-        if shim:
-            sys.path.insert(0, shim)
+        sys.path.insert(0, str(mmsa_shim()))
         run(args.model, args.seeds, args.out)
     else:
         collect(args.out, args.also)

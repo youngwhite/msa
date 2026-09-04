@@ -13,3 +13,7 @@ checkpoints/
 .claude/*.tmp.*
 
 mmsa_runs/
+
+# MMSA reference checkout + its transformers 4.x environment (250MB of wheels
+# and someone else's project). Rebuilt by scripts/setup_mmsa_reference.sh.
+.mmsa-reference/

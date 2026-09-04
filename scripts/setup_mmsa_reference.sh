@@ -3,9 +3,10 @@
 #
 #   bash scripts/setup_mmsa_reference.sh
 #
-# Neither /workspace/MMSA nor /workspace/mmsa_env is in this repository (the
-# first is someone else's project, the second is 250MB of wheels), so both are
-# lost on every machine move. Two things need them:
+# Neither the MMSA checkout nor its environment is in this repository (the first
+# is someone else's project, the second is 250MB of wheels), so both are lost on
+# every machine move. They default to <repo>/.mmsa-reference/ , which is
+# gitignored; override with MMSA_DIR / ENV_DIR. Two things need them:
 #
 #   * scripts/check_almt_equivalence.py -- convention 5's numerical-equivalence
 #     test. Without a checkout it prints SKIP and still exits 0, so a missing
@@ -24,11 +25,44 @@
 # chosen packages rather than the whole site-packages.
 set -euo pipefail
 
-MMSA_DIR=${MMSA_DIR:-/workspace/MMSA}
-ENV_DIR=${ENV_DIR:-/workspace/mmsa_env}
-SHIM_DIR="$ENV_DIR/shim"
-PYTHON=${PYTHON:-python3}
 cd "$(dirname "$0")/.."
+
+# The interpreter that builds this environment must be the one that will import
+# the shim -- .venv's, not the system's. Half these packages ship C extensions
+# (tokenizers, safetensors, sentencepiece) whose wheels are built per CPython
+# ABI, so a shim built by python3.10 and put on a python3.12 sys.path fails at
+# import. It never showed on the first two machines because the system python
+# happened to be the same version as .venv's.
+if [ -z "${PYTHON:-}" ]; then
+    if [ -x .venv/bin/python ]; then
+        PYTHON=$PWD/.venv/bin/python
+    else
+        echo "No .venv -- run scripts/setup.sh first." >&2
+        exit 1
+    fi
+fi
+
+# Same three candidates, same order, as scripts/_reference_paths.py: an explicit
+# override, then the gitignored directory inside the repo, then /workspace where
+# the first two machines kept it. The repo-local default is what stops this from
+# silently disappearing again -- nothing has to be exported for the gate to find
+# it, and it moves with the checkout.
+if [ -z "${MMSA_DIR:-}" ]; then
+    if [ -d /workspace/MMSA/.git ] && [ ! -d .mmsa-reference/MMSA ]; then
+        MMSA_DIR=/workspace/MMSA
+    else
+        MMSA_DIR=$PWD/.mmsa-reference/MMSA
+    fi
+fi
+if [ -z "${ENV_DIR:-}" ]; then
+    if [ -d /workspace/mmsa_env ] && [ ! -d .mmsa-reference/env ]; then
+        ENV_DIR=/workspace/mmsa_env
+    else
+        ENV_DIR=$PWD/.mmsa-reference/env
+    fi
+fi
+SHIM_DIR="$ENV_DIR/shim"
+mkdir -p "$(dirname "$MMSA_DIR")" "$(dirname "$ENV_DIR")"
 
 # Pinned because the reference numbers in docs/mmsa_code_runs_mosi.json were
 # produced against exactly these. transformers 4.44.2 is also the version
@@ -81,7 +115,7 @@ echo "    $(find "$SHIM_DIR" -maxdepth 1 -mindepth 1 | wc -l) entries linked"
 # grep for the verdict rather than trusting the exit code, which is 0 for SKIP.
 echo
 echo "==> verifying: scripts/check_almt_equivalence.py"
-output=$(MMSA_SHIM="$SHIM_DIR" .venv/bin/python scripts/check_almt_equivalence.py 2>&1)
+output=$(MMSA_DIR="$MMSA_DIR" MMSA_SHIM="$SHIM_DIR" .venv/bin/python scripts/check_almt_equivalence.py 2>&1)
 echo "$output" | grep -vE "FutureWarning|warnings.warn" || true
 if ! grep -q "^EQUIVALENT$" <<<"$output"; then
     echo
@@ -92,7 +126,7 @@ if ! grep -q "^EQUIVALENT$" <<<"$output"; then
 fi
 
 echo
-echo "Reference ready. Run MMSA's own code with:"
-echo "  MMSA_SHIM=$SHIM_DIR .venv/bin/python scripts/mmsa_reference.py run <model> <seeds...>"
+echo "Reference ready at $MMSA_DIR . Run MMSA's own code with:"
+echo "  .venv/bin/python scripts/mmsa_reference.py run <model> <seeds...>"
 echo "Note that 'collect' overwrites docs/mmsa_code_runs_mosi.json, whose numbers"
 echo "were produced on the RTX 5070 Ti machine and do not reproduce elsewhere."
