@@ -60,6 +60,7 @@ disk_note
 # module docstring for the two machine moves that proved it.
 run "environment"          $PY scripts/check_env.py
 run "lint"                 $PY -m ruff check src scripts --select E,F,W,B,SIM,I,UP --line-length 100
+run "contrastive losses"   $PY scripts/check_losses.py
 run "data integrity"       $PY scripts/check_data.py
 run "invariants"           $PY scripts/check_invariants.py
 run "stored results"       $PY scripts/verify_runs.py --quiet
