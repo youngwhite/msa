@@ -579,3 +579,26 @@ MMIM 比 TFN 强得多（0.694 vs 0.867 MAE）且 seed 标准差更小（0.0139 
 本次用 `--epochs 40`，而已入库的 `mmim_mosi` 当初用 `--epochs 200`（实际停在 22 轮）。实测两臂训练轮数中位数为 20 / 22、**无任何 run 触到 40 轮上限**，故上限未截断任何运行；且两臂设置相同，on/off 比较内部自洽。
 
 重现：`scripts/mmim_diagnostic.py run` 然后 `report`。
+
+
+## MOSEI 的 LF-LSTM 基线与 seed 方差（2026-09-05）
+
+`--model lf_lstm --dataset mosei --seeds 42 43 44 45 46 --device cuda`（其余为仓库默认），组名 `lf_lstm_mosei_cuda`。这是 `NOISE_FLOOR_BY_DATASET["mosei"]` 的来源。
+
+| 指标 | MOSEI mean ± sd | MOSI mean ± sd | sd 倍数 |
+|---|---|---|---|
+| mae | **0.5613 ± 0.0049** | 0.9708 ± 0.0387 | **7.9×** 更小 |
+| corr | 0.7327 ± 0.0042 | 0.6460 ± 0.0110 | 2.6× |
+| acc7 | 0.5199 ± 0.0052 | 0.3464 ± 0.0262 | 5.0× |
+| acc5 | 0.5348 ± 0.0045 | — ± 0.0316 | 7.0× |
+| acc2_non0 | 0.8384 ± 0.0075 | — ± 0.0124 | 1.7× |
+| **acc2_has0** | 0.8076 ± **0.0274** | — ± 0.0101 | **0.4×（更差）** |
+| f1_non0 | 0.8371 ± 0.0061 | — ± 0.0120 | 2.0× |
+
+均值不可直接比（两个数据集难度不同），**sd 才是这一轮要的东西**。
+
+单 seed 耗时 **69s**，MOSI 是 22s——只慢 3.1 倍，而数据量是 13 倍。
+
+`acc2_has0` 是唯一变差的指标，按实测填入未做平滑，原因见 [`investigations.md#mosei-seed-noise`](investigations.md#mosei-seed-noise)。
+
+重现：`bash scripts/reproduce_all.sh lf_lstm_mosei_cuda`

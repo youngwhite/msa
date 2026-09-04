@@ -84,6 +84,21 @@ NOISE_FLOOR_BY_DATASET = {
         "mae": 0.0387, "corr": 0.0110, "acc2_non0": 0.0124, "acc2_has0": 0.0101,
         "f1_non0": 0.0122, "acc7": 0.0262, "acc5": 0.0299,
     },
+    # Measured 2026-09-05 on `lf_lstm_mosei_cuda`, seeds 42-46, the same
+    # definition as MOSI's: the sample sd (ddof=1) of each test metric across the
+    # five seeds. Nearly an order of magnitude tighter than MOSI's on MAE
+    # (0.0049 against 0.0387), which is the whole reason the roadmap wanted this
+    # dataset primary -- see docs/investigations.md#mosei-seed-noise.
+    #
+    # acc2_has0 is the exception and is recorded as measured, not smoothed: at
+    # 0.0274 it is *wider* than MOSI's 0.0101, the only metric that got worse.
+    # MOSEI has far more exactly-zero labels, and that metric folds them into the
+    # negative class, so it is unstable here for a reason that belongs to the
+    # metric rather than to the data volume.
+    "mosei": {
+        "mae": 0.0049, "corr": 0.0042, "acc2_non0": 0.0075, "acc2_has0": 0.0274,
+        "f1_non0": 0.0061, "acc7": 0.0052, "acc5": 0.0045,
+    },
 }
 
 

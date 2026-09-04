@@ -23,6 +23,7 @@ PY=.venv/bin/python
 RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user's gids)
     lf_lstm_mosi_cuda
     lf_lstm_mosi_cpu
+    lf_lstm_mosei_cuda
     abl_lf_padded
     abl_lf_unaligned_masked
     abl_lf_unaligned_padded
@@ -148,6 +149,9 @@ args_for() {
         echo "--model lf_lstm --seeds 42 43 44 45 46 --device cuda" ;;
     lf_lstm_mosi_cpu)
         echo "--model lf_lstm --seeds 42 --device cpu --num-threads 8" ;;
+    lf_lstm_mosei_cuda)
+        # The group NOISE_FLOOR_BY_DATASET["mosei"] is measured from.
+        echo "--model lf_lstm --dataset mosei --seeds 42 43 44 45 46 --device cuda" ;;
     abl_lf_padded)
         echo "--model lf_lstm --seeds 42 43 44 45 46 --device cuda --model-arg use_lengths=False" ;;
     abl_lf_unaligned_masked)
