@@ -61,10 +61,49 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     tfn_mosi_mmsaseeds
 )
 
+# The phase-2 contrastive screen has its own driver (scripts/screen_contrastive.py,
+# which is what docs/experiments.md tells you to run), but its groups belong here
+# as well: their predictions are committed like any others, so check_reproduction.py
+# has to cover them or they are documented numbers nothing verifies.
+#
+# Enumerated from what is on disk rather than listed by hand. The groups are
+# mechanical -- one per (candidate, lambda) -- and a hand-written list of seventy
+# would go stale the first time the sweep grew an axis. They are committed, so
+# this is deterministic from a clean clone.
+#
+# They roughly triple this script's runtime. `reproduce_all.sh <group>` still does
+# one, and SKIP_SCREEN=1 leaves them all out.
+if [ "${SKIP_SCREEN:-0}" != "1" ]; then
+    while IFS= read -r _group; do
+        [ -n "$_group" ] && RUN_GROUPS+=("$_group")
+    done < <(find outputs -maxdepth 1 -name 'screen_*' -type d -printf '%f\n' 2>/dev/null | sort)
+fi
+
 # TFN reproduces MMSA's reported MOSI result, so those groups use MMSA's
 # hyper-parameters (lr 1e-3, no weight decay) rather than this repo's defaults.
+#: TFN with MMSA's hyper-parameters, which is what the screen is built on.
+SCREEN_BACKBONE="--model tfn --unaligned --lr 1e-3 --weight-decay 0 --seeds 42 43 44 45 46"
+
 args_for() {
     case "$1" in
+    screen_control)
+        echo "$SCREEN_BACKBONE" ;;
+    screen_*)
+        # screen_<candidate>, or screen_<candidate>_l<lambda> with the decimal
+        # point written as `p` so it survives being a directory name. No
+        # candidate name contains `_l` followed by a digit, so the split is
+        # unambiguous.
+        _rest=${1#screen_}
+        case "$_rest" in
+        *_l[0-9]*)
+            _candidate=${_rest%_l*}
+            _lambda=${_rest##*_l}
+            _lambda=${_lambda//p/.} ;;
+        *)
+            _candidate=$_rest
+            _lambda=0.1 ;;
+        esac
+        echo "$SCREEN_BACKBONE --contrastive $_candidate --contrastive-lambda $_lambda" ;;
     lf_lstm_mosi_cuda)
         echo "--model lf_lstm --seeds 42 43 44 45 46 --device cuda" ;;
     lf_lstm_mosi_cpu)
