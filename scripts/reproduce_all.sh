@@ -79,15 +79,49 @@ if [ "${SKIP_SCREEN:-0}" != "1" ]; then
     done < <(find outputs -maxdepth 1 -name 'screen_*' -type d -printf '%f\n' 2>/dev/null | sort)
 fi
 
+# The weighting arms and their confirmation. Few enough to list, and unlike the
+# screen each one differs in more than a single number, so args_for spells them
+# out rather than deriving them from the name.
+RUN_GROUPS+=(
+    weight_control
+    weight_equal
+    weight_grad10
+    weight_grad5
+    weight_ramp
+    confirm_l1
+    confirm_combo
+)
+
 # TFN reproduces MMSA's reported MOSI result, so those groups use MMSA's
 # hyper-parameters (lr 1e-3, no weight decay) rather than this repo's defaults.
 #: TFN with MMSA's hyper-parameters, which is what the screen is built on.
 SCREEN_BACKBONE="--model tfn --unaligned --lr 1e-3 --weight-decay 0 --seeds 42 43 44 45 46"
+#: The same backbone, but seeds 100-119 for the weighting arms and 120-139 for
+#: their confirmation. Three disjoint seed sets on purpose: 42-46 chose the four
+#: terms, so reusing them downstream would confirm this work's own selection.
+TFN_BACKBONE="--model tfn --unaligned --lr 1e-3 --weight-decay 0"
+WEIGHT_SEEDS=$(seq -s' ' 100 119)
+CONFIRM_SEEDS=$(seq -s' ' 120 139)
+COMBO="--contrastive hcl infonce simsiam supcon --contrastive-lambda 0.1"
 
 args_for() {
     case "$1" in
     screen_control)
         echo "$SCREEN_BACKBONE" ;;
+    weight_control)
+        echo "$TFN_BACKBONE --seeds $WEIGHT_SEEDS" ;;
+    weight_equal)
+        echo "$TFN_BACKBONE --seeds $WEIGHT_SEEDS $COMBO --weight-scheme equal" ;;
+    weight_grad10)
+        echo "$TFN_BACKBONE --seeds $WEIGHT_SEEDS $COMBO --weight-scheme grad_rate --weight-window 10" ;;
+    weight_grad5)
+        echo "$TFN_BACKBONE --seeds $WEIGHT_SEEDS $COMBO --weight-scheme grad_rate --weight-window 5" ;;
+    weight_ramp)
+        echo "$TFN_BACKBONE --seeds $WEIGHT_SEEDS $COMBO --weight-scheme linear_ramp --favour infonce --favour-target 0.7 --favour-end-fraction 0.5" ;;
+    confirm_l1)
+        echo "$TFN_BACKBONE --seeds $CONFIRM_SEEDS" ;;
+    confirm_combo)
+        echo "$TFN_BACKBONE --seeds $CONFIRM_SEEDS $COMBO --weight-scheme equal" ;;
     screen_*)
         # screen_<candidate>, or screen_<candidate>_l<lambda> with the decimal
         # point written as `p` so it survives being a directory name. No
