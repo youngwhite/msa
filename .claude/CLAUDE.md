@@ -11,7 +11,9 @@
 - venv 在 `.venv/`，所有命令用 `.venv/bin/python`
 - **Python 必须是 3.12**。`requirements-lock.txt` 在 3.11 以下解析不了（`networkx==3.6.1`），305 次已入库运行记的全是 3.12.x。系统 python 更老时 `uv python install 3.12.3` 再 `PYTHON=$(uv python find 3.12.3) bash scripts/setup.sh`
 - GPU 是 RTX 3090（Ampere sm_86，2026-09-04 起；此前 RTX 5080、更早 RTX 5070 Ti，都是 Blackwell sm_120）。**PyTorch 用 cu128 轮子**——sm_120 的机器必须如此（PyPI 默认版本没有 sm_120 kernel），sm_86 也兼容，所以这条不随机器改
-- 数据集 `datasets/CMU-MOSI/`（不入库，879MB，sha256 记在 `DatasetSpec.file_sha256`）。**`bash scripts/fetch_dataset.sh` 一条命令下载并校验**；不要直接 `gdown --folder` 整个发布目录，理由见 `docs/migration.md`。MOSEI 尚未下载
+- 数据集（都不入库，sha256 记在 `DatasetSpec.file_sha256`）：`datasets/CMU-MOSI/` 879MB、`datasets/CMU-MOSEI/` **18GB**（aligned 4.7G + unaligned 13.7G）。**`bash scripts/fetch_dataset.sh [mosi|mosei|all]` 下载并校验**。两个坑写在脚本头注释里：不要 `gdown --folder` 整个发布目录（会递归几千个 .mp4 并被 Drive 500 掐断）；超过几 GB 的文件 gdown 处理不了 Drive 的病毒扫描中间页，要走确认令牌 + curl
+- **MOSEI 的维度与 MOSI 不同**：audio 74（MOSI 是 5）、vision 35（MOSI 是 20），split 16326/1871/4659
+- **`NOISE_FLOOR` 按数据集分层**（`check_acceptance.py`），**MOSEI 故意留空**——未测量的数据集会抛异常而不是回退到 MOSI 的值。那个地板是放宽判据的，借用别的数据集等于对判据做了一次没人测量过的改动。用 MOSEI 做验收前必须先测它自己的 LF-LSTM seed 方差
 - **换机器**：`bash scripts/setup.sh` 建环境 + 校验数据 + 跑闸门；完整步骤见 `docs/migration.md`
 - **参照环境**：`bash scripts/setup_mmsa_reference.sh` 重建 `.mmsa-reference/`（不入库，换机器必丢）。**不重建的代价是约定 5 的等价检查静默失效**——它 SKIP 时也记 PASS。路径解析在 `scripts/_reference_paths.py`，不需要 export 任何变量
 - `transformers` **钉死 5.14.1**（8 个 BERT 系模型要它）。跨大版本会改输出契约，`cenet.py` / `bert.py` 里的兼容分支就是证据；升级前先跑八个模型各一个 epoch 冒烟。理由见 `docs/decisions.md` 2026-08-01 那条

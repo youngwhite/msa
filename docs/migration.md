@@ -29,10 +29,12 @@ git push -u origin main
 
 ## 2. 数据集
 
-不入库（879MB）。**一条命令下载并校验**：
+都不入库：MOSI 879MB、**MOSEI 18GB**（aligned 4.7G + unaligned 13.7G）。**一条命令下载并校验**：
 
 ```bash
-bash scripts/fetch_dataset.sh
+bash scripts/fetch_dataset.sh            # mosi
+bash scripts/fetch_dataset.sh mosei      # 需要约 22G 余量
+bash scripts/fetch_dataset.sh all
 ```
 
 它幂等（已就位且哈希对得上就直接退出），并以 sha256 校验收尾。手动放置也可以，目录结构：
@@ -49,6 +51,8 @@ datasets/CMU-MOSI/label.csv
 - 百度网盘: <https://pan.baidu.com/s/1a1bDX5htPsZjsRyHcvCKHw?pwd=qq0b>（提取码 qq0b）
 
 **注意文本特征是 BERT 的，不是 CMU-Multimodal-SDK 原版的 GloVe。**
+
+**MOSEI 的两个大文件走不同的路径。** `aligned_50.pkl`（4.7GB）gdown 能下；`unaligned_50.pkl`（13.7GB）不能——Drive 对这个尺寸的文件返回"无法病毒扫描"中间页，gdown 在上面失败并报 `Cannot retrieve the public link... but Gdown can't`，读起来像权限或配额问题，两者都不是。那个页面带一个 `uuid` 确认令牌，所以脚本对这类文件改用 curl 打 `drive.usercontent.google.com` 并附上令牌，且带 `-C -` 断点续传（13.7GB 断了不必从头再来）。
 
 **不要对着那个 Drive 目录直接 `gdown --folder`。** 它会递归整个发布（CH-SIMS 与 MOSI 的原始视频，几千个 .mp4），枚举到一半被 Drive 返回 500 掐断，结果是一个文件都没下到。`fetch_dataset.sh` 因此逐层解析、只取 MOSI 的 `Processed/` 与 `label.csv`，folder ID 直接记在脚本里——发布若被重传会 404，是响亮的失败而不是悄悄下错文件。
 

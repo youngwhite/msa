@@ -108,18 +108,24 @@ def normal_two_sided(z: float) -> float:
     return math.erfc(abs(z) / math.sqrt(2))
 
 
-def our_runs() -> dict[str, dict]:
-    """Our acceptance groups, keyed by model.
+def our_runs(dataset: str) -> dict[str, dict]:
+    """Our acceptance groups for one dataset, keyed by model.
 
     Same rule as check_acceptance --all: only groups named <model>_<dataset>,
     never the ablations, which deviate from the reference on purpose.
+
+    Restricted to a single dataset, which matters now that there is more than
+    one. The reference files are MOSI's (`mmsa_reference_mosi.json`,
+    `mmsa_code_runs_mosi.json`) and the seed noise floor is per-dataset, so a
+    run that accepted whatever `<model>_<dataset>` groups happened to exist
+    would eventually average two datasets into one verdict.
     """
     runs = {}
     for summary_path in sorted(OUTPUT_ROOT.glob("*/summary.json")):
         payload = json.loads(summary_path.read_text())
         model, group = payload.get("model", ""), summary_path.parent.name
-        dataset = payload.get("dataset", "").lower().replace("cmu-", "")
-        if group == f"{model}_{dataset}":
+        found = payload.get("dataset", "").lower().replace("cmu-", "")
+        if found == dataset and group == f"{model}_{found}":
             runs[model] = payload["summary"]
     return runs
 
@@ -146,7 +152,7 @@ def mmsa_runs() -> dict[str, dict]:
 
 
 def collect(reference: dict, metrics: tuple[str, ...],
-            subject: dict[str, dict]) -> dict[str, list[dict]]:
+            subject: dict[str, dict], dataset: str) -> dict[str, list[dict]]:
     """One row per (metric, model): the shortfall and the SE it is measured in."""
     rows: dict[str, list[dict]] = {metric: [] for metric in metrics}
     for model, stats in sorted(subject.items()):
@@ -157,7 +163,7 @@ def collect(reference: dict, metrics: tuple[str, ...],
             if metric not in stats or metric not in ref:
                 continue
             mean, sd, n = stats[metric]["mean"], stats[metric]["std"], stats[metric]["n"]
-            se, paired = standard_error(sd, n, ref, metric)
+            se, paired = standard_error(sd, n, ref, metric, dataset)
             gap = shortfall(mean, ref[metric], metric)
             rows[metric].append({
                 "model": model, "ours": mean, "ref": ref[metric], "n": n,
@@ -222,13 +228,17 @@ def main() -> None:
                          "implementation through the identical test against the "
                          "table it published — the control for reading our own "
                          "shortfall against that table")
+    ap.add_argument("--dataset", default="mosi",
+                    help="which dataset's groups and seed-noise floor to use. The "
+                         "reference files are MOSI's, so this is the only value "
+                         "that currently has a reference to compare against")
     args = ap.parse_args()
 
     reference = pick_reference(args.reference)
     sources = {"auto": "MMSA's table where published, our runs of its code elsewhere",
                "table": "MMSA's published table only",
                "code": "our own runs of MMSA's code only"}
-    subject = our_runs() if args.subject == "ours" else mmsa_runs()
+    subject = (our_runs(args.dataset) if args.subject == "ours" else mmsa_runs())
     if args.subject == "mmsa_code" and args.reference != "table":
         ap.error("--subject mmsa_code only makes sense against --reference table; "
                  "anything else compares MMSA's runs with themselves")
@@ -236,7 +246,7 @@ def main() -> None:
                     else "MMSA implementation, run by us")
     print(f"subject  : {subject_name}")
     print(f"reference: {sources[args.reference]}")
-    rows = collect(reference, tuple(args.metrics), subject)
+    rows = collect(reference, tuple(args.metrics), subject, args.dataset)
     verdicts = {}
     label = "ours" if args.subject == "ours" else "MMSA"
     for metric in args.metrics:

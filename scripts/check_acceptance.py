@@ -67,16 +67,42 @@ REFERENCE_PATH = PROJECT_ROOT / "docs" / "mmsa_reference_mosi.json"
 CODE_REFERENCE_PATH = PROJECT_ROOT / "docs" / "mmsa_code_runs_mosi.json"
 ADJUDICATION_PATH = PROJECT_ROOT / "docs" / "acceptance_status.json"
 LOWER_IS_BETTER = {"mae"}
-#: This dataset's own seed noise, measured on the LF-LSTM baseline over seeds
+#: Each dataset's own seed noise, measured on the LF-LSTM baseline over seeds
 #: 42-46 and registered in docs/roadmap.md's opening argument long before any
 #: acceptance run existed. A shortfall smaller than this is smaller than the
 #: spread a rerun would produce, so it cannot be evidence of a failed port.
 #: Used as a floor under the SE test, not as a replacement for it — see
 #: docs/decisions.md, 2026-07-30, including what this rule does NOT fix.
-NOISE_FLOOR = {
-    "mae": 0.0387, "corr": 0.0110, "acc2_non0": 0.0124, "acc2_has0": 0.0101,
-    "f1_non0": 0.0122, "acc7": 0.0262, "acc5": 0.0299,
+#:
+#: **Keyed by dataset, and deliberately missing MOSEI.** These numbers are
+#: MOSI's. Until MOSEI's own LF-LSTM spread is measured, applying MOSI's floor
+#: to a MOSEI comparison would widen or narrow the test by an amount nobody
+#: measured — so `noise_floor` raises instead of falling back. Adding MOSEI here
+#: means measuring it first, not copying these.
+NOISE_FLOOR_BY_DATASET = {
+    "mosi": {
+        "mae": 0.0387, "corr": 0.0110, "acc2_non0": 0.0124, "acc2_has0": 0.0101,
+        "f1_non0": 0.0122, "acc7": 0.0262, "acc5": 0.0299,
+    },
 }
+
+
+def noise_floor(dataset: str, metric: str) -> float | None:
+    """This dataset's seed noise for `metric`, or None if it has none recorded.
+
+    Raises for a dataset with no measured floor at all, rather than silently
+    using another dataset's. The floor loosens the acceptance test, so borrowing
+    one is not a conservative default -- it is an unmeasured change to the
+    criterion.
+    """
+    key = dataset.lower().replace("cmu-", "")
+    if key not in NOISE_FLOOR_BY_DATASET:
+        raise KeyError(
+            f"no measured seed noise for dataset {dataset!r}; measure the LF-LSTM "
+            f"spread over seeds 42-46 and add it to NOISE_FLOOR_BY_DATASET. "
+            f"Known: {sorted(NOISE_FLOOR_BY_DATASET)}"
+        )
+    return NOISE_FLOOR_BY_DATASET[key].get(metric)
 
 PASS_SE = 1.0    # within this many standard errors: reproduced
 WARN_SE = 2.0    # beyond this: not reproduced
@@ -135,7 +161,8 @@ def shortfall(mean: float, reference: float, metric: str) -> float:
     return mean - reference if metric in LOWER_IS_BETTER else reference - mean
 
 
-def standard_error(sd: float, n: int, ref: dict, metric: str) -> tuple[float, bool]:
+def standard_error(sd: float, n: int, ref: dict, metric: str,
+                   dataset: str) -> tuple[float, bool]:
     """SE of the difference between our mean and the reference.
 
     Both spreads are capped at the noise floor first, for the reason in `judge`:
@@ -150,7 +177,7 @@ def standard_error(sd: float, n: int, ref: dict, metric: str) -> tuple[float, bo
     is a *looser* one, so it is fixed here before any of the three models it
     applies to has been run. See docs/decisions.md, 2026-07-31.
     """
-    floor = NOISE_FLOOR.get(metric)
+    floor = noise_floor(dataset, metric)
     cap = (lambda x: min(x, floor)) if floor is not None else (lambda x: x)
     if n <= 1:
         return float("inf"), False
@@ -169,6 +196,11 @@ def judge(group: str, model: str, reference: dict, verbose: bool = True) -> bool
         return False
     summary = json.loads(summary_path.read_text())
     stats = summary["summary"]
+    # Which dataset's seed noise applies. Read off the run rather than assumed:
+    # the floor loosens the test, and borrowing another dataset's is an
+    # unmeasured change to the criterion, so `noise_floor` raises for an
+    # unmeasured one instead of falling back.
+    dataset = summary.get("dataset", "").lower().replace("cmu-", "")
     if model not in reference:
         print(f"{group}: no MMSA reference for model {model!r}; "
               f"known: {sorted(reference)}")
@@ -192,13 +224,13 @@ def judge(group: str, model: str, reference: dict, verbose: bool = True) -> bool
         if metric not in stats or metric not in ref:
             continue
         mean, sd = stats[metric]["mean"], stats[metric]["std"]
-        floor = NOISE_FLOOR.get(metric)
+        floor = noise_floor(dataset, metric)
         # A model's own spread may make this test stricter, never looser than
         # the dataset's baseline noise. Without the cap, an unstable
         # implementation buys tolerance by being unstable: EF-LSTM's two
         # collapsed seeds pushed sigma to 0.2095 and turned a shortfall of 3.2
         # noise floors into +1.9 SE. See docs/decisions.md, 2026-07-31.
-        se, paired = standard_error(sd, n, ref, metric)
+        se, paired = standard_error(sd, n, ref, metric, dataset)
         gap = shortfall(mean, ref[metric], metric)
         in_se = gap / se if se > 0 else 0.0
         capped = floor is not None and sd > floor
