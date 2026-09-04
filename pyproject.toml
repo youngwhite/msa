@@ -6,7 +6,11 @@ build-backend = "setuptools.build_meta"
 name = "msa"
 version = "0.1.0"
 description = "Multimodal sentiment analysis research code"
-requires-python = ">=3.10"
+# 3.10 until 2026-09-04, which was untrue: requirements-lock.txt cannot be
+# resolved below 3.11 (networkx==3.6.1), so setup.sh built nothing at all on a
+# 3.10 machine. 3.12 rather than 3.11 because all 305 committed runs recorded
+# 3.12.x, and the interpreter decides which wheels resolve.
+requires-python = ">=3.12"
 dependencies = [
     "numpy",
     "pandas",

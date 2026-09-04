@@ -55,6 +55,10 @@ disk_note() {
 }
 disk_note
 
+# First, because every other gate reads results rather than building anything:
+# an environment that cannot train at all still passes all of them. See the
+# module docstring for the two machine moves that proved it.
+run "environment"          $PY scripts/check_env.py
 run "lint"                 $PY -m ruff check src scripts --select E,F,W,B,SIM,I,UP --line-length 100
 run "data integrity"       $PY scripts/check_data.py
 run "invariants"           $PY scripts/check_invariants.py

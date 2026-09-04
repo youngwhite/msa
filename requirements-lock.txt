@@ -2,6 +2,10 @@
 # because its wheel is platform-specific (see the header of scripts/setup.sh):
 #   this project was developed against torch 2.11.0+cu128
 #
+# These pins assume CPython 3.12 (all 305 committed runs recorded 3.12.x) and do
+# not resolve at all below 3.11 -- networkx==3.6.1 has no wheel for it. scripts/
+# check_env.py gates on this; scripts/setup.sh refuses an older interpreter.
+#
 # Regenerate with:
 #   .venv/bin/pip freeze | grep -vE '^-e|^msa|^nvidia-|^cuda-|^torch|^triton'
 #

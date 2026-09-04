@@ -18,6 +18,20 @@ cd "$(dirname "$0")/.."
 PYTHON=${PYTHON:-python3}
 VENV=${VENV:-.venv}
 
+# requirements-lock.txt does not resolve below 3.11 (networkx==3.6.1), and every
+# committed result was produced under 3.12. Checking here turns a machine move
+# into one legible line instead of a pip resolver error forty lines long, which
+# is what 2026-09-04 got. Overridable, because the number lives in one place.
+MIN_PYTHON=${MIN_PYTHON:-3.12}
+if ! "$PYTHON" -c "import sys; raise SystemExit(0 if sys.version_info[:2] >= tuple(int(p) for p in '$MIN_PYTHON'.split('.')) else 1)"; then
+    echo "This project needs python >= $MIN_PYTHON; $PYTHON is $("$PYTHON" -c 'import sys; print(".".join(map(str, sys.version_info[:3])))')." >&2
+    echo "requirements-lock.txt cannot be resolved below 3.11, and every recorded" >&2
+    echo "number was produced under 3.12. If the system python is older:" >&2
+    echo "    uv python install 3.12.3" >&2
+    echo "    PYTHON=\$(uv python find 3.12.3) bash scripts/setup.sh" >&2
+    exit 1
+fi
+
 if [ ! -d "$VENV" ]; then
     echo "==> creating $VENV with $PYTHON"
     "$PYTHON" -m venv "$VENV"
