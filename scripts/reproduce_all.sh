@@ -90,6 +90,8 @@ RUN_GROUPS+=(
     weight_ramp
     confirm_l1
     confirm_combo
+    mmim_contrast_off
+    mmim_contrast_on
 )
 
 # TFN reproduces MMSA's reported MOSI result, so those groups use MMSA's
@@ -122,6 +124,10 @@ args_for() {
         echo "$TFN_BACKBONE --seeds $CONFIRM_SEEDS" ;;
     confirm_combo)
         echo "$TFN_BACKBONE --seeds $CONFIRM_SEEDS $COMBO --weight-scheme equal" ;;
+    mmim_contrast_on)
+        echo "--model mmim --seeds $WEIGHT_SEEDS" ;;
+    mmim_contrast_off)
+        echo "--model mmim --seeds $WEIGHT_SEEDS --model-arg contrast=False" ;;
     screen_*)
         # screen_<candidate>, or screen_<candidate>_l<lambda> with the decimal
         # point written as `p` so it survives being a directory name. No
