@@ -145,6 +145,11 @@ def build_parser() -> argparse.ArgumentParser:
                              help="linear_ramp: which term to ramp towards")
     contrastive.add_argument("--favour-target", type=float, default=0.7,
                              help="linear_ramp: weight it reaches by the end")
+    contrastive.add_argument("--favour-end-fraction", type=float, default=1.0,
+                             help="linear_ramp: fraction of --epochs by which the "
+                                  "ramp completes. Below 1.0 because early stopping "
+                                  "ends most runs well short of --epochs, and a ramp "
+                                  "that never finishes is just the equal-weight arm")
     contrastive.add_argument("--raw-terms", dest="normalise_terms",
                              action="store_false",
                              help="weight the objectives' raw values instead of "
@@ -191,7 +196,8 @@ def build_contrastive(args, model, batch, spec) -> object:
         if args.favour is None:
             raise SystemExit("--weight-scheme linear_ramp needs --favour <term>")
         scheme_kwargs = {"favour": args.favour, "total_epochs": args.epochs,
-                         "target": args.favour_target}
+                         "target": args.favour_target,
+                         "end_fraction": args.favour_end_fraction}
     scheme = scheme_cls(sorted(losses), **scheme_kwargs)
 
     head = ContrastiveHead(

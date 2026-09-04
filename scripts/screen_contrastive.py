@@ -342,13 +342,138 @@ def report(candidates: list[str], lambdas: list[float]) -> int:
     return 0
 
 
+#: The three mechanism groups from msa.losses.contrastive, so the combination
+#: does not end up as four variants of one idea.
+FAMILIES = {
+    "cross_modal": ["infonce", "nt_xent", "dcl", "hcl", "cpc", "triplet",
+                    "max_margin", "align_uniform"],
+    "negative_free": ["barlow_twins", "vicreg", "simsiam"],
+    "label_aware": ["supcon", "rnc", "arcface"],
+}
+
+
+def combine(candidates: list[str], lambdas: list[float]) -> int:
+    """Choose the combination's terms by a stated rule, not by significance.
+
+    The screen could not separate these candidates -- with n=5 and a control sd
+    of 0.021 MAE its minimum detectable effect is 0.037 even uncorrected, twice
+    the largest effect anyone showed (see investigations.md#screen-underpowered).
+    So selecting "the significant ones" is not available, and pretending
+    otherwise would be the worst of the options.
+
+    What is available is a rule that is written down and applied mechanically:
+
+    1. Rank every candidate at every lambda on each metric; average the ranks.
+       Averaging over the whole lambda grid rather than taking each candidate's
+       best lambda matters -- `rnc` is the best single cell in the entire sweep
+       at lambda 0.03 and among the two worst at 0.1, and a best-cell rule would
+       carry that noise straight into the combination.
+    2. Take the best-ranked candidate from each of the three mechanism families,
+       so the combination tests three different ideas rather than three
+       spellings of one.
+    3. Fill the fourth slot with the best remaining candidate overall. Four is
+       the cap the phase brief sets.
+    4. The combination's lambda is the one with the best mean rank across the
+       four chosen terms.
+
+    This is a selection, not a finding. Nothing here claims these four are the
+    ones that work; they are the four the recorded numbers rank highest, chosen
+    before the weighting experiment so that experiment is not also a search.
+    """
+    control = read_group(None)
+    if control is None:
+        print("No control run on disk.")
+        return 1
+
+    cells = {}
+    for name in candidates:
+        for lambda_ in lambdas:
+            data = read_group(name, lambda_)
+            if data is None:
+                continue
+            cells[(name, lambda_)] = {
+                metric: welch_one_sided(
+                    data["valid"][metric]["per_seed"],
+                    control["valid"][metric]["per_seed"], metric,
+                )[0]
+                for metric in METRICS
+            }
+    if not cells:
+        print("No candidate groups on disk.")
+        return 1
+
+    # Rank within each (lambda, metric) column: 1 is the best improvement.
+    rank_at: dict[tuple[str, float], list[int]] = {}
+    for lambda_ in lambdas:
+        for metric in METRICS:
+            column = [(name, cells[(name, lambda_)][metric])
+                      for name in candidates if (name, lambda_) in cells]
+            column.sort(key=lambda pair: -pair[1])
+            for position, (name, _) in enumerate(column, start=1):
+                rank_at.setdefault((name, lambda_), []).append(position)
+
+    #: Mean rank of a candidate at one lambda, over both metrics.
+    per_lambda = {key: float(np.mean(v)) for key, v in rank_at.items()}
+    #: Mean rank of a candidate over the whole grid.
+    mean_rank = {
+        name: float(np.mean([per_lambda[(name, lam)] for lam in lambdas
+                             if (name, lam) in per_lambda]))
+        for name in candidates
+        if any((name, lam) in per_lambda for lam in lambdas)
+    }
+    order = sorted(mean_rank, key=lambda n: mean_rank[n])
+
+    chosen, why = [], {}
+    for family, members in FAMILIES.items():
+        ranked = [n for n in order if n in members]
+        if ranked:
+            chosen.append(ranked[0])
+            why[ranked[0]] = f"best of {family}"
+    for name in order:
+        if len(chosen) >= 4:
+            break
+        if name not in chosen:
+            chosen.append(name)
+            why[name] = "best remaining overall"
+
+    lambda_score = {
+        lam: float(np.mean([per_lambda[(n, lam)] for n in chosen
+                            if (n, lam) in per_lambda]))
+        for lam in lambdas
+        if all((n, lam) in per_lambda for n in chosen)
+    }
+    chosen_lambda = min(lambda_score, key=lambda lam: lambda_score[lam])
+
+    print("mean rank across the whole lambda grid (1 = best; "
+          f"{len(mean_rank)} candidates, {len(lambdas)} lambdas x "
+          f"{len(METRICS)} metrics):\n")
+    for name in order:
+        mark = f"  <- {why[name]}" if name in chosen else ""
+        family = next(f for f, m in FAMILIES.items() if name in m)
+        print(f"  {mean_rank[name]:5.2f}  {name:15s}{family:16s}{mark}")
+
+    print("\nmean rank of the four chosen, per lambda:")
+    for lam in sorted(lambda_score):
+        star = "  <- chosen" if lam == chosen_lambda else ""
+        print(f"  lambda {lam:5g}   {lambda_score[lam]:5.2f}{star}")
+
+    favour = next(n for n in order if n in chosen)
+    print(f"\ncombination ({len(chosen)} terms, cap is 4): {' '.join(sorted(chosen))}")
+    print(f"lambda: {chosen_lambda:g}")
+    print(f"linear_ramp favours: {favour}  (best-ranked of the four)")
+    print("\nThis is a selection under a stated rule, not a finding. The screen "
+          "could not\nseparate these candidates; see "
+          "investigations.md#screen-underpowered.")
+    return 0
+
+
 def main() -> int:
     sys.path.insert(0, str(REPO / "src"))
     from msa.losses import available_losses
 
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("command", choices=("run", "report"))
+    ap.add_argument("command", choices=("run", "report", "combine"))
     ap.add_argument("--epochs", type=int, default=40)
     ap.add_argument("--only", nargs="+", default=None, help="a subset of candidates")
     ap.add_argument("--lambdas", type=float, nargs="+", default=list(DEFAULT_LAMBDAS),
@@ -360,6 +485,8 @@ def main() -> int:
     candidates = args.only or available_losses()
     if args.command == "report":
         return report(candidates, args.lambdas)
+    if args.command == "combine":
+        return combine(candidates, args.lambdas)
 
     total = len(candidates) * len(args.lambdas)
     print(f"== control + {len(candidates)} candidate(s) x {len(args.lambdas)} "
