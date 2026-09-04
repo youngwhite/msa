@@ -30,11 +30,17 @@ python -m venv .venv
 | 换机器 | [`docs/migration.md`](docs/migration.md) |
 | 参照值从哪来 | [`docs/mmsa_reference_mosi.json`](docs/mmsa_reference_mosi.json)、[`docs/acceptance_status.json`](docs/acceptance_status.json) |
 
-换机器请看 [`docs/migration.md`](docs/migration.md)：`bash scripts/setup.sh` 一条命令建环境、校验数据集哈希并跑完全部闸门。
+换机器请看 [`docs/migration.md`](docs/migration.md)。三条命令：
+
+```bash
+bash scripts/fetch_dataset.sh            # 下载 CMU-MOSI 并校验 sha256
+bash scripts/setup.sh                    # 建环境（需要 Python 3.12）+ 跑全部闸门
+bash scripts/setup_mmsa_reference.sh     # 接回约定 5 的等价检查（不跑它会静默失效）
+```
 
 ## 数据
 
-`datasets/CMU-MOSI/`（已下载，不入库；sha256 记录在 `DatasetSpec.file_sha256`）：
+`datasets/CMU-MOSI/`（不入库，`bash scripts/fetch_dataset.sh` 下载并校验；sha256 记录在 `DatasetSpec.file_sha256`）：
 
 ```
 Processed/aligned_50.pkl     词级对齐，text/audio/vision 均为 50 帧
@@ -139,7 +145,10 @@ scripts/check_repro.py    复现性自检
 scripts/verify_runs.py    审计已落盘结果（从预测重算指标）
 scripts/check_reproduction.py 重训练的预测 vs git 里 committed 的预测
 scripts/reproduce_all.sh  重跑文档里的全部实验（是 docs 与代码之间的唯一链接）
+scripts/check_env.py      环境自检（解释器版本 + lock 里每条钉死的版本）
 scripts/setup.sh          新机器一键引导
+scripts/fetch_dataset.sh  下载 CMU-MOSI 并校验 sha256
+scripts/setup_mmsa_reference.sh  重建 MMSA 参照检出与其 shim
 scripts/sync.sh           闸门全绿则推送到远端
 scripts/train.py          训练 + 评测（任意注册模型，多 seed）
 docs/                     roadmap / decisions / experiments

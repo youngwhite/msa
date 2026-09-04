@@ -29,7 +29,13 @@ git push -u origin main
 
 ## 2. 数据集
 
-不入库（879MB）。放到 `datasets/CMU-MOSI/` 下，目录结构：
+不入库（879MB）。**一条命令下载并校验**：
+
+```bash
+bash scripts/fetch_dataset.sh
+```
+
+它幂等（已就位且哈希对得上就直接退出），并以 sha256 校验收尾。手动放置也可以，目录结构：
 
 ```
 datasets/CMU-MOSI/Processed/aligned_50.pkl
@@ -44,6 +50,8 @@ datasets/CMU-MOSI/label.csv
 
 **注意文本特征是 BERT 的，不是 CMU-Multimodal-SDK 原版的 GloVe。**
 
+**不要对着那个 Drive 目录直接 `gdown --folder`。** 它会递归整个发布（CH-SIMS 与 MOSI 的原始视频，几千个 .mp4），枚举到一半被 Drive 返回 500 掐断，结果是一个文件都没下到。`fetch_dataset.sh` 因此逐层解析、只取 MOSI 的 `Processed/` 与 `label.csv`，folder ID 直接记在脚本里——发布若被重传会 404，是响亮的失败而不是悄悄下错文件。
+
 若两台机器网络互通，直接 `rsync -a 旧机器:~/msa/datasets/ datasets/` 更快。
 
 三个文件的 sha256 记录在 `src/msa/config.py` 的 `DatasetSpec.file_sha256` 里，`scripts/setup.sh` 会自动校验；也可单独查：
@@ -55,6 +63,15 @@ datasets/CMU-MOSI/label.csv
 **这一步不能省。** 一个截断的下载或一份重新抽取的特征会被静默地训练下去，而所有已记录的数字都建立在这份特定数据上。
 
 ## 3. 环境
+
+**先确认解释器是 3.12。** `requirements-lock.txt` 在 3.11 以下根本解析不了（`networkx==3.6.1` 没有轮子），而 305 次已入库运行记录的全是 3.12.x。系统 python 更老时：
+
+```bash
+uv python install 3.12.3
+PYTHON=$(uv python find 3.12.3) bash scripts/setup.sh
+```
+
+`setup.sh` 会自己拦截并打印这段提示；`scripts/check_env.py` 是对应的闸门，它同时核对 lock 里每一条钉死的版本是否装上且一致。
 
 ```bash
 bash scripts/setup.sh
@@ -89,8 +106,12 @@ bash scripts/check_all.sh
 还有一道闸门在新机器上会静默失效：`check_almt_equivalence.py` 在没有 MMSA 检出时 SKIP 但记 PASS（有意为之，让 fresh clone 走绿）。它是约定 5 里最关键的那道数值等价检查。**换机器后跑一条命令把它接回来**：
 
 ```bash
-bash scripts/setup_mmsa_reference.sh     # clone MMSA + 建 /workspace/mmsa_env + 建 shim + 验证
+bash scripts/setup_mmsa_reference.sh     # clone MMSA + 建参照 venv + 建 shim + 验证
 ```
+
+默认装到仓库内的 `.mmsa-reference/`（已 gitignore），不再是 `/workspace`——路径写死在仓库外正是这道闸门两次静默失效的病根（一次是换机器后检出没了，一次更早，shim 路径指向某次会话的临时目录）。解析顺序统一在 `scripts/_reference_paths.py`：`$MMSA_DIR`/`$MMSA_SHIM` → `.mmsa-reference/` → `/workspace`（仅当真的存在）。**不需要 export 任何变量**，裸跑 `check_almt_equivalence.py` 就能找到它。
+
+参照 venv 用 `.venv` 的同一个解释器建，不是系统 `python3`：shim 里 `tokenizers`/`safetensors`/`sentencepiece` 都是按 CPython ABI 编译的，版本对不上会在 import 时炸。前两台机器的系统 python 恰好同版本，所以这个坑没暴露。
 
 脚本自身以那道等价检查收尾，且**不看退出码看结论**（SKIP 时退出码也是 0），拿不到 `EQUIVALENT` 就报错退出。跑完 `check_all.sh` 里的 `almt equivalence` 才是真在检查，而不是在跳过。
 

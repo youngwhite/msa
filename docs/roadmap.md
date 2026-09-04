@@ -129,7 +129,7 @@ python scripts/check_acceptance.py --all         # 全部有参照的组
 
 ## 当前进度与下一步
 
-**本节是会话之间的交接点，每完成一件事就更新它。** 最后更新：2026-08-01。
+**本节是会话之间的交接点，每完成一件事就更新它。** 最后更新：2026-09-04。
 
 ### 第 1 阶段（复现）进度：14 个模型全部通过
 
@@ -188,6 +188,22 @@ python scripts/check_acceptance.py --all         # 全部有参照的组
 
 已装 5.14.1 并钉进 lock，`collect_env()` 开始记录它的版本。**验证方式是八个模型各用自己的真实配置训一个 epoch，全部通过**，不是"能 import"。选版理由与已否决项见 [`decisions.md`](decisions.md)。
 
+### 又换机器（2026-09-04）：第三台
+
+从 RTX 5080 实例迁到 **RTX 3090 + i9-12900K** 的本地机（`/home/impulse/wang2/msa`，938G 盘，43G 可用）。上一台的 `/workspace` 已不可用。环境重建、数据集哈希校验、参照环境重建、全部闸门绿。
+
+**这次搬迁暴露了三个"只在换机器时才会发作、且没有闸门看得见"的洞，都已堵上：**
+
+1. **Python 版本从未被写下来。** 本机系统 python 是 3.10，`pip install -r requirements-lock.txt` 直接解析失败（`networkx==3.6.1` 无 3.10 轮子），`setup.sh` 在跑到任何闸门之前就死了，而 `pyproject.toml` 当时写的还是 `requires-python = ">=3.10"`——**那个声明是错的，不只是缺失**。现改为 `>=3.12`（305 次已入库运行记录的全是 3.12.x），`setup.sh` 提前拦截并打印 `uv` 的补救命令。
+2. **新闸门 `scripts/check_env.py`**，排在 `check_all.sh` 第一位。它核对解释器 minor 版本（从已入库结果里读，不写死）与 lock 里每一条钉死的版本是否装上且一致。**这道闸门本可以同时抓到 2026-08-01 那次 `transformers` 缺失**——两次是同一个形状：环境是每个数字的隐性输入，而所有闸门都只读已存结果、从不构造模型。
+3. **参照环境的路径写死在仓库外**，这是约定 5 那道等价检查**两次**静默失效的共同病根（一次是 shim 指向某会话的临时目录，一次是换机器后 `/workspace/MMSA` 没了）。现在解析统一在 `scripts/_reference_paths.py`，默认落在仓库内的 `.mmsa-reference/`（gitignore），**裸跑不需要 export 任何变量**。顺带修掉一个尚未发作的：参照 venv 原先用系统 `python3` 建，但 shim 是被 `.venv` 的解释器 import 的，`tokenizers`/`safetensors`/`sentencepiece` 的 C 扩展 ABI 会对不上——前两台机器系统 python 恰好同版本才没暴露。
+
+另外 **`scripts/fetch_dataset.sh`**：数据集下载此前只是文档里两个链接 + 人工拷贝。对着 MMSA 发布目录直接 `gdown --folder` 是不行的——它递归整个发布（CH-SIMS 与 MOSI 的原始视频，几千个 .mp4），枚举中途被 Drive 返回 500 掐断，一个文件都下不到。脚本改为逐层解析、只取 MOSI 的 `Processed/` 与 `label.csv`，并以 sha256 校验收尾。
+
+**约定 5 已验证接回**：183 个参数张量复制后两侧输出 max abs diff `0.000e+00`。
+
+**约定 6 的锚点哈希在本机同样失效**，与上次换机器同因，未做处理——它取决于下面那个待拍板项。本机的 `check_repro` 双跑逐比特一致（lf_lstm `8ad898b0804f51be`、tfn `ead6d52481abff6c`），设备内复现性成立。
+
 ### 下一步（按顺序）
 
 1. **MOSEI**：主数据集。换数据集后 `NOISE_FLOOR` 必须重测，SE 封顶与地板都依赖它。
@@ -196,6 +212,7 @@ python scripts/check_acceptance.py --all         # 全部有参照的组
 ### 阻塞项与待决
 
 - **待人拍板：本机要不要重立数值基线？** 涉及两件事——约定 6 的锚点哈希在本机重新生成（并标注绑定机器），以及 `reproduce_all.sh` 重跑一遍把 `docs/experiments.md` 换成本机数字。**代价是历史数字与新数字混在一起**，且旧机器已不可用、无法回头验证。另一条路是维持现状、承认那些数字属于旧机器，只在本机新增结果时另立一套。**这个决定应当先记进 `decisions.md` 再动手，不要默认执行。**
+  - 2026-09-04 补：**已经是第三台机器，且前两台都已不可用。** 参照环境在本机重建完毕，所以"两侧一起重立"现在技术上做得到（代价是 14 模型 × 10 seed 的参照重跑）。这个决定没做之前，`reproduce_all.sh` 在本机必红，不要拿它的红当回归看。
   - 2026-08-01 补：**参照侧（`docs/mmsa_code_runs_mosi.json`）与我们侧处境完全相同**，都是旧机器的数字。所以聚合判据现在是同机器配对、自洽的；**只重跑一侧会把两台机器混进同一个分布，比两侧都不重跑更糟**。要重立就两侧一起重立。
 - **已入库结果的 `transformers` 版本与 CPU 型号永久不可考。** `env` 从 2026-08-01 起才记 `transformers` / `cpu` / `cpu_capability` 三个字段，此前只有 python / torch / numpy。已入库的 8 个 BERT 模型结果只能确定是 5.x（代码里"transformers >= 5 返回张量、旧版返回元组"的兼容分支）；旧机器的 CPU 型号与向量化分派档位则完全没有记录，`investigations.md#cross-machine-hash` 的 ISA 假设因此**永远不会被验证**。字段本身已补上，救的是下一次换机器。
 - **MOSEI 尚未下载**。路线图定的是主数据集用 MOSEI（MOSI 测试集仅 686 条，判别力不足）。

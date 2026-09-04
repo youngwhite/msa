@@ -4,15 +4,16 @@
 
 其余：`docs/roadmap.md`（方向、验收标准、下一步）、`docs/investigations.md`（**排查记录，避免重复试错**）、`docs/decisions.md`（为什么这样做）、`docs/experiments.md`（全部数字）。
 
-参考实现在 `/workspace/MMSA`（MIT，THUIAR）。我们移植它的模型定义，但训练循环、评测协议、复现性基础设施自己实现——原因见 roadmap「与 MMSA 的关系」。
+参考实现在 `.mmsa-reference/MMSA`（MIT，THUIAR；不入库，`bash scripts/setup_mmsa_reference.sh` 重建）。我们移植它的模型定义，但训练循环、评测协议、复现性基础设施自己实现——原因见 roadmap「与 MMSA 的关系」。
 
 ## 环境
 
 - venv 在 `.venv/`，所有命令用 `.venv/bin/python`
-- GPU 是 RTX 5080（Blackwell sm_120，2026-08-01 起；此前是 RTX 5070 Ti，同属 sm_120），**PyTorch 必须是 cu128 及以上的轮子**，PyPI 默认版本没有 sm_120 kernel
-- 数据集 `datasets/CMU-MOSI/`（不入库，879MB，sha256 记在 `DatasetSpec.file_sha256`）。MOSEI 尚未下载
+- **Python 必须是 3.12**。`requirements-lock.txt` 在 3.11 以下解析不了（`networkx==3.6.1`），305 次已入库运行记的全是 3.12.x。系统 python 更老时 `uv python install 3.12.3` 再 `PYTHON=$(uv python find 3.12.3) bash scripts/setup.sh`
+- GPU 是 RTX 3090（Ampere sm_86，2026-09-04 起；此前 RTX 5080、更早 RTX 5070 Ti，都是 Blackwell sm_120）。**PyTorch 用 cu128 轮子**——sm_120 的机器必须如此（PyPI 默认版本没有 sm_120 kernel），sm_86 也兼容，所以这条不随机器改
+- 数据集 `datasets/CMU-MOSI/`（不入库，879MB，sha256 记在 `DatasetSpec.file_sha256`）。**`bash scripts/fetch_dataset.sh` 一条命令下载并校验**；不要直接 `gdown --folder` 整个发布目录，理由见 `docs/migration.md`。MOSEI 尚未下载
 - **换机器**：`bash scripts/setup.sh` 建环境 + 校验数据 + 跑闸门；完整步骤见 `docs/migration.md`
-- **参照环境**：`bash scripts/setup_mmsa_reference.sh` 重建 `/workspace/MMSA` 与 `/workspace/mmsa_env`（都不入库，换机器必丢）。**不重建的代价是约定 5 的等价检查静默失效**——它 SKIP 时也记 PASS
+- **参照环境**：`bash scripts/setup_mmsa_reference.sh` 重建 `.mmsa-reference/`（不入库，换机器必丢）。**不重建的代价是约定 5 的等价检查静默失效**——它 SKIP 时也记 PASS。路径解析在 `scripts/_reference_paths.py`，不需要 export 任何变量
 - `transformers` **钉死 5.14.1**（8 个 BERT 系模型要它）。跨大版本会改输出契约，`cenet.py` / `bert.py` 里的兼容分支就是证据；升级前先跑八个模型各一个 epoch 冒烟。理由见 `docs/decisions.md` 2026-08-01 那条
 
 ## 不可违背的约定
@@ -40,6 +41,7 @@ bash scripts/check_all.sh                      # 一条命令跑完所有闸门
 
 | 脚本 | 回答什么问题 |
 |---|---|
+| `check_env.py` | **环境是不是产生那些数字的环境？**（解释器版本 + lock 里每条钉死的版本都装上了没有） |
 | `check_data.py` | 数据是不是那份数据？split 有没有泄漏？（`--verify-files` 查 sha256） |
 | `check_invariants.py` | 指标/标签/padding/汇总口径的实现对不对？ |
 | `check_repro.py` | 同一台机器连跑两次，结果是否逐比特一致？ |
@@ -62,7 +64,7 @@ bash scripts/sync.sh          # 先跑全部闸门，全绿才推送；有一项
 
 - **一件事做完就推，不要攒到"整个阶段结束"。** 一次多余的推送没有代价，一次没推的丢失是全部代价。
 - **`check_all.sh` 每次都会报磁盘余量与未推送量**（低于 3G 转红，可用 `DISK_WARN_GB` 调）。这是**警告不是闸门**——闸门红了 `sync.sh` 就不推，而磁盘紧张恰恰是最该推的时候。
-- **磁盘紧张时先腾空间再训练**：`pip cache purge`（本次腾出 1.2G）、`rm -rf mmsa_runs`、`outputs/**/best.pt`。`.venv` 本身 7.2G（torch + CUDA），整个盘只有 16G。
+- **磁盘紧张时先腾空间再训练**：`pip cache purge`、`rm -rf mmsa_runs`、`outputs/**/best.pt`。`.venv` 本身 7.2G（torch + CUDA）。当前这台盘大得多（938G，43G 可用），前两台只有 16G。
 - **下载 MOSEI 之前先看余量**，它比 MOSI（879MB）大得多，很可能就是下一次把盘写满的东西。
 
 ## 结果如何持久化
