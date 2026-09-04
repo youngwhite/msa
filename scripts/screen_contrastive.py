@@ -102,8 +102,17 @@ def run_one(candidate: str | None, epochs: int, force: bool,
     group = group_name(candidate, lambda_)
     directory = OUTPUTS / group
     if directory.exists() and not force:
-        print(f"  {group}: already on disk, skipping (use --force to redo)")
-        return
+        # Complete means all the seeds, not just the directory. A sweep killed
+        # partway leaves a group with some of them, and skipping on existence
+        # alone would silently fold an n=4 group into a test that says n=5 --
+        # which is exactly what a `screen_rnc_l0p03` with four seeds did after
+        # this sweep was killed for memory.
+        present = sorted(path.name for path in directory.glob("seed*"))
+        if len(present) == len(SEEDS):
+            print(f"  {group}: already on disk, skipping (use --force to redo)")
+            return
+        print(f"  {group}: incomplete ({len(present)}/{len(SEEDS)} seeds: "
+              f"{' '.join(present)}), redoing")
     command = [
         str(PYTHON), str(TRAIN), *BACKBONE,
         "--seeds", *SEEDS, "--epochs", str(epochs),
@@ -140,6 +149,10 @@ def read_group(candidate: str | None, lambda_: float = BASE_LAMBDA) -> dict | No
             if key.startswith("loss_"):
                 terms.setdefault(key, []).append(value)
     if not seeds:
+        return None
+    if len(seeds) != len(SEEDS):
+        print(f"    warning: {directory.name} has {len(seeds)} seed(s), expected "
+              f"{len(SEEDS)} — excluded from the table", file=sys.stderr)
         return None
     return {
         "candidate": candidate or "control",
