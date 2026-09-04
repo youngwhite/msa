@@ -41,6 +41,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import numpy as np
+
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "scripts"))
 
@@ -55,28 +57,44 @@ from _stats import (  # noqa: E402
 OUTPUTS = REPO / "outputs"
 PYTHON = REPO / ".venv" / "bin" / "python"
 TRAIN = REPO / "scripts" / "train.py"
-REPORT = REPO / "docs" / "mmim_diagnostic.json"
+
 
 SEEDS = [str(s) for s in range(100, 120)]
 FDR_Q = 0.10
-ARMS = {
-    "mmim_contrast_on": ["--model", "mmim"],
-    "mmim_contrast_off": ["--model", "mmim", "--model-arg", "contrast=False"],
-}
-CONTROL_ARM = "mmim_contrast_off"
+#: The two arms, by the only thing that differs between them.
+ARMS = {"on": [], "off": ["--model-arg", "contrast=False"]}
+CONTROL = "off"
 
 
-def run_one(arm: str, force: bool) -> None:
-    directory = OUTPUTS / arm
+def group_name(arm: str, dataset: str) -> str:
+    """MOSI's groups keep their original unsuffixed names.
+
+    They were produced before this script took a dataset, and renaming them
+    would orphan committed results that docs/experiments.md points at. Every
+    other dataset is suffixed.
+    """
+    base = f"mmim_contrast_{arm}"
+    return base if dataset == "mosi" else f"{base}_{dataset}"
+
+
+def report_path(dataset: str) -> Path:
+    stem = "mmim_diagnostic" if dataset == "mosi" else f"mmim_diagnostic_{dataset}"
+    return REPO / "docs" / f"{stem}.json"
+
+
+def run_one(arm: str, dataset: str, epochs: int, force: bool) -> None:
+    directory = OUTPUTS / group_name(arm, dataset)
     if directory.exists() and not force:
         present = sorted(p.name for p in directory.glob("seed*"))
         if len(present) == len(SEEDS):
             print(f"  {arm}: already on disk, skipping")
             return
         print(f"  {arm}: incomplete ({len(present)}/{len(SEEDS)}), redoing")
-    command = [str(PYTHON), str(TRAIN), *ARMS[arm], "--seeds", *SEEDS,
-               "--run-group", arm, "--quiet"]
-    print(f"  {arm}: {' '.join(ARMS[arm])}")
+    group = group_name(arm, dataset)
+    command = [str(PYTHON), str(TRAIN), "--model", "mmim", "--dataset", dataset,
+               "--epochs", str(epochs), *ARMS[arm], "--seeds", *SEEDS,
+               "--run-group", group, "--quiet"]
+    print(f"  {group}: {' '.join(ARMS[arm]) or 'MMIM as published'}")
     result = subprocess.run(command, cwd=REPO, capture_output=True, text=True)
     if result.returncode != 0:
         print(f"    FAILED (exit {result.returncode})")
@@ -84,15 +102,36 @@ def run_one(arm: str, force: bool) -> None:
         print(result.stderr.strip()[-800:])
 
 
-def report() -> int:
-    arms = {name: read_group(OUTPUTS / name, len(SEEDS)) for name in ARMS}
+def epochs_used(arm: str, dataset: str) -> tuple[int, int, int]:
+    """(median epochs, max epochs, runs that hit the cap) for one arm.
+
+    Checked rather than assumed: an arm truncated by the epoch cap is a third
+    explanation for a null result, alongside power and the flag not working. On
+    MOSI this was verified by hand; here it is part of the report.
+    """
+    lengths, capped = [], 0
+    directory = OUTPUTS / group_name(arm, dataset)
+    for path in sorted(directory.glob("seed*/result.json")):
+        result = json.loads(path.read_text())
+        n = len(result["history"])
+        lengths.append(n)
+        if n >= result["cli"].get("epochs", 10**9):
+            capped += 1
+    if not lengths:
+        return 0, 0, 0
+    return int(np.median(lengths)), max(lengths), capped
+
+
+def report(dataset: str) -> int:
+    arms = {arm: read_group(OUTPUTS / group_name(arm, dataset), len(SEEDS))
+            for arm in ARMS}
     if any(v is None for v in arms.values()):
-        missing = [k for k, v in arms.items() if v is None]
+        missing = [group_name(k, dataset) for k, v in arms.items() if v is None]
         print(f"Incomplete: {', '.join(missing)}. Run `mmim_diagnostic.py run`.")
         return 1
 
-    control = arms[CONTROL_ARM]
-    subject = arms["mmim_contrast_on"]
+    control = arms[CONTROL]
+    subject = arms["on"]
     outcomes = {
         metric: welch_one_sided(subject["valid"][metric]["per_seed"],
                                 control["valid"][metric]["per_seed"], metric)
@@ -104,12 +143,12 @@ def report() -> int:
     for metric, is_rejected in zip(METRICS, rejected, strict=True):
         outcomes[metric]["bh_significant"] = bool(is_rejected)
 
-    print(f"MMIM, seeds {SEEDS[0]}-{SEEDS[-1]} (n={len(SEEDS)})")
+    print(f"MMIM on {dataset}, seeds {SEEDS[0]}-{SEEDS[-1]} (n={len(SEEDS)})")
     print(f"criterion fixed before these runs: Welch one-sided, BH q={FDR_Q}, "
           f"{len(METRICS)} tests\n")
-    for name in ("mmim_contrast_off", "mmim_contrast_on"):
+    for name in ("off", "on"):
         data = arms[name]
-        print(f"  {name:20s}"
+        print(f"  {group_name(name, dataset):26s}"
               f"mae {data['valid']['mae']['mean']:.4f} ± {data['valid']['mae']['sd']:.4f}"
               f"   corr {data['valid']['corr']['mean']:.4f} ± "
               f"{data['valid']['corr']['sd']:.4f}")
@@ -123,8 +162,22 @@ def report() -> int:
               f"{o['cohens_d']:+7.2f}{mde:9.4f}   "
               f"{'yes' if o['bh_significant'] else 'no'}")
 
+    print("\ntraining length (an arm cut short by the epoch cap would be a third "
+          "explanation):")
+    truncated = []
+    for arm in ARMS:
+        median, longest, capped = epochs_used(arm, dataset)
+        print(f"  {group_name(arm, dataset):26s}median {median}  max {longest}  "
+              f"hit the cap: {capped}/{len(SEEDS)}")
+        if capped:
+            truncated.append(group_name(arm, dataset))
+
     detected = [m for m in METRICS if outcomes[m]["bh_significant"]]
     print()
+    if truncated:
+        print(f"!! {', '.join(truncated)} had runs stopped by --epochs, not by early "
+              f"stopping.\n   Raise --epochs and rerun before reading the verdict "
+              f"below.\n")
     if detected:
         print(f"DETECTED on {', '.join(detected)}. This protocol can resolve a")
         print("contrastive effect of this class, so phase 2's negative results on TFN")
@@ -135,15 +188,19 @@ def report() -> int:
         print("phase-2 conclusion here therefore reads 'inconclusive', not 'no effect',")
         print("and the next step is the dataset, not another loss.")
 
-    REPORT.parent.mkdir(parents=True, exist_ok=True)
-    REPORT.write_text(json.dumps({
-        "seeds": [int(s) for s in SEEDS], "control_arm": CONTROL_ARM,
+    out = report_path(dataset)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps({
+        "dataset": dataset,
+        "seeds": [int(s) for s in SEEDS], "control_arm": group_name(CONTROL, dataset),
+        "epoch_cap_hits": {group_name(a, dataset): epochs_used(a, dataset)[2]
+                           for a in ARMS},
         "criterion": {"test": "Welch one-sided, unpaired",
                       "correction": f"Benjamini-Hochberg q={FDR_Q}",
                       "n_tests": len(METRICS)},
         "arms": arms, "outcomes": outcomes, "detected_on": detected,
     }, indent=2, default=float) + "\n")
-    print(f"\nwrote {REPORT.relative_to(REPO)}")
+    print(f"\nwrote {out.relative_to(REPO)}")
     return 0
 
 
@@ -151,14 +208,17 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("command", choices=("run", "report"))
+    ap.add_argument("--dataset", default="mosi", choices=("mosi", "mosei"))
+    ap.add_argument("--epochs", type=int, default=40,
+                    help="cap, not a target: early stopping ends every run well "
+                         "short of it on MOSI, and the report says if it ever binds")
     ap.add_argument("--force", action="store_true")
     args = ap.parse_args()
     if args.command == "report":
-        return report()
-    print(f"== {len(ARMS)} arms x {len(SEEDS)} seeds "
-          f"(~300s each, so about {len(ARMS) * len(SEEDS) * 300 / 3600:.1f}h) ==")
+        return report(args.dataset)
+    print(f"== {len(ARMS)} arms x {len(SEEDS)} seeds on {args.dataset} ==")
     for arm in ARMS:
-        run_one(arm, args.force)
+        run_one(arm, args.dataset, args.epochs, args.force)
     print("\nDone. `mmim_diagnostic.py report` for the verdict.")
     return 0
 

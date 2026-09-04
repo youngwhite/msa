@@ -93,6 +93,8 @@ RUN_GROUPS+=(
     confirm_combo
     mmim_contrast_off
     mmim_contrast_on
+    mmim_contrast_off_mosei
+    mmim_contrast_on_mosei
 )
 
 # TFN reproduces MMSA's reported MOSI result, so those groups use MMSA's
@@ -129,6 +131,10 @@ args_for() {
         echo "--model mmim --seeds $WEIGHT_SEEDS" ;;
     mmim_contrast_off)
         echo "--model mmim --seeds $WEIGHT_SEEDS --model-arg contrast=False" ;;
+    mmim_contrast_on_mosei)
+        echo "--model mmim --dataset mosei --seeds $WEIGHT_SEEDS" ;;
+    mmim_contrast_off_mosei)
+        echo "--model mmim --dataset mosei --seeds $WEIGHT_SEEDS --model-arg contrast=False" ;;
     screen_*)
         # screen_<candidate>, or screen_<candidate>_l<lambda> with the decimal
         # point written as `p` so it survives being a directory name. No
