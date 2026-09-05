@@ -163,7 +163,7 @@ def report(dataset: str) -> int:
           f"{len(METRICS)} tests\n")
     for name in ("off", "on"):
         data = arms[name]
-        print(f"  {group_name(name, dataset):26s}"
+        print(f"  {group_name(name, dataset):32s}"
               f"mae {data['valid']['mae']['mean']:.4f} ± {data['valid']['mae']['sd']:.4f}"
               f"   corr {data['valid']['corr']['mean']:.4f} ± "
               f"{data['valid']['corr']['sd']:.4f}")
@@ -182,7 +182,7 @@ def report(dataset: str) -> int:
     truncated = []
     for arm in ARMS:
         median, longest, capped = epochs_used(arm, dataset)
-        print(f"  {group_name(arm, dataset):26s}median {median}  max {longest}  "
+        print(f"  {group_name(arm, dataset):32s}median {median}  max {longest}  "
               f"hit the cap: {capped}/{len(SEEDS)}")
         if capped:
             truncated.append(group_name(arm, dataset))

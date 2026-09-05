@@ -605,3 +605,33 @@ MMIM 比 TFN 强得多（0.694 vs 0.867 MAE）且 seed 标准差更小（0.0139 
 `acc2_has0` 是唯一变差的指标，按实测填入未做平滑，原因见 [`investigations.md#mosei-seed-noise`](investigations.md#mosei-seed-noise)。
 
 重现：`bash scripts/reproduce_all.sh lf_lstm_mosei_cuda`
+
+
+## 协议诊断（正确配置）：MMIM 自带的对比项在 unaligned 下同样测不出（2026-09-05）
+
+`--model mmim --dataset mosi --unaligned`，seeds 100-119（n=20），判据于运行前定稿。这是替代上文那节作废结果的正式版本；组名把数据设置写进去了，见 [`investigations.md#mmim-diagnostic-aligned`](investigations.md#mmim-diagnostic-aligned)。
+
+| 臂 | valid MAE | valid Corr | 轮数中位数 | 撞轮数上限 |
+|---|---|---|---|---|
+| `mmim_diag_mosi_unaligned_off`（仅 L1） | **0.6929 ± 0.0119** | **0.8087 ± 0.0072** | 21 | 0/20 |
+| `mmim_diag_mosi_unaligned_on`（论文默认） | 0.6975 ± 0.0142 | 0.8065 ± 0.0078 | 18 | 0/20 |
+
+| 指标 | Δ (on − off) | p | d | MDE | BH |
+|---|---|---|---|---|---|
+| mae | **−0.0046** | 0.861 | −0.35 | 0.0105 | no |
+| corr | **−0.0022** | 0.817 | −0.29 | 0.0060 | no |
+
+**未测出。** 开关方向仍是反的（带对比项略差），两个方向都远在检出线内。
+
+### 与作废那版的对比：数据设置没有改变裁定
+
+| | Δmae | p | Δcorr | p | MDE |
+|---|---|---|---|---|---|
+| **unaligned（正确）** | −0.0046 | 0.861 | −0.0022 | 0.817 | 0.0105 |
+| aligned（作废） | −0.0042 | 0.809 | −0.0010 | 0.668 | 0.0120 |
+
+两组数字高度一致。**这本身是一条有用的信息**：那个配置错误虽然必须修（诊断问的正是"已知有效的对比项能否被测出"，而对比项恰好作用在受该设置影响的表征上），但**它并没有改变结论**。第 2 阶段由该诊断推出的改写因此成立，且现在建立在正确配置上。
+
+保留的排除项与作废那版相同，且都在正确配置下重新成立：轮数上限未截断任何 run（0/20，现由脚本自动检查）；MDE 0.0105 是本阶段最紧的检出条件之一。
+
+重现：`scripts/mmim_diagnostic.py run --dataset mosi` 然后 `report --dataset mosi`。
