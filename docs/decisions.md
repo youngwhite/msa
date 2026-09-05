@@ -566,3 +566,9 @@ seeds 100-119（n=20），其余协议不变。判据：验证集 MAE/Corr，Wel
 已否决：先用 5 个 seed 探（见上）；换更长的 `--epochs`（MOSI 上 0/20 撞到 40 轮上限，报告现在会自动检查这一项并在撞上限时拒绝给出裁定）。
 
 复查条件：若本次测得出，第 2 阶段十四候选与自适应权重实验都应在 MOSEI 上重做——**且更便宜**（5 seed 优于 MOSI 的 20 seed）。
+
+**2026-09-05 修正**：本条写下时未指明数据设置，而首次实现漏传了 `--unaligned`。MMIM 取 unaligned（MMSA 配置 `need_data_aligned: false`，第 1 阶段验收亦然），MOSI 上已按正确配置重跑并确认裁定未变。MOSEI 这一轮同样用 unaligned，组名 `mmim_diag_mosei_unaligned_{on,off}`。
+
+**成本按实测重估**：MMIM 在 MOSEI 上 aligned 单 seed 实测 820s，是 MOSI 的 **6.0 倍**（LF-LSTM 是 3.1 倍）——**轻量模型的数据量倍数不能外推到重型模型**，这条本身值得记。unaligned 只会更慢（pickle 13.65GB，audio/vision 500 帧而非 50），40 次运行预计 **13 小时以上**。
+
+**已知风险**：本机已两次因内存被后台杀掉长任务（λ 扫描一次、MOSEI aligned 诊断一次）。unaligned 需把 13.65GB pickle 读入并转成约 8.5GB 张量，风险更高。缓解是脚本按 seed 数判断组是否完整、被杀后可续跑而不会把残缺组当成已完成。

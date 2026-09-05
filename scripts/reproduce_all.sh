@@ -95,6 +95,8 @@ RUN_GROUPS+=(
     mmim_contrast_on
     mmim_diag_mosi_unaligned_off
     mmim_diag_mosi_unaligned_on
+    mmim_diag_mosei_unaligned_off
+    mmim_diag_mosei_unaligned_on
 )
 
 # TFN reproduces MMSA's reported MOSI result, so those groups use MMSA's
@@ -138,6 +140,10 @@ args_for() {
         echo "--model mmim --dataset mosi --unaligned --seeds $WEIGHT_SEEDS" ;;
     mmim_diag_mosi_unaligned_off)
         echo "--model mmim --dataset mosi --unaligned --seeds $WEIGHT_SEEDS --model-arg contrast=False" ;;
+    mmim_diag_mosei_unaligned_on)
+        echo "--model mmim --dataset mosei --unaligned --seeds $WEIGHT_SEEDS" ;;
+    mmim_diag_mosei_unaligned_off)
+        echo "--model mmim --dataset mosei --unaligned --seeds $WEIGHT_SEEDS --model-arg contrast=False" ;;
     screen_*)
         # screen_<candidate>, or screen_<candidate>_l<lambda> with the decimal
         # point written as `p` so it survives being a directory name. No
