@@ -179,6 +179,14 @@ def build_dataloaders(
             persistent_workers=num_workers > 0,
         )
     check_matches_spec(datasets, spec)
+    # Release the raw pickle now that every split holds its own tensors. The
+    # cache exists so the three splits share one read, and past that point it is
+    # pure cost: MOSEI's unaligned features are 12.6GB as unpickled (audio and
+    # vision are float64 in the file) on top of the 7.9GB of float32 tensors
+    # built from them, and holding both is what got three long runs killed for
+    # memory on this machine. Nothing numerical depends on it -- a later call
+    # simply reads the file again.
+    load_pickle.cache_clear()
     return loaders, spec
 
 

@@ -53,6 +53,7 @@ from _stats import (  # noqa: E402
     read_group,
     welch_one_sided,
 )
+from train_parallel import rebuild_summary  # noqa: E402
 
 OUTPUTS = REPO / "outputs"
 PYTHON = REPO / ".venv" / "bin" / "python"
@@ -87,24 +88,45 @@ def report_path(dataset: str) -> Path:
     return REPO / "docs" / f"mmim_diagnostic_{dataset}_{SETTING}.json"
 
 
-def run_one(arm: str, dataset: str, epochs: int, force: bool) -> None:
+def missing_seeds(arm: str, dataset: str) -> list[str]:
+    """Which seeds this group still needs.
+
+    Per seed rather than per group. MOSEI's unaligned runs take a quarter of an
+    hour each and this machine has killed three long jobs for memory, so
+    "redo the whole group if it is incomplete" throws away hours at a time.
+    A seed is complete when its result.json exists; a directory holding only a
+    checkpoint from a run killed mid-training is not.
+    """
     directory = OUTPUTS / group_name(arm, dataset)
-    if directory.exists() and not force:
-        present = sorted(p.name for p in directory.glob("seed*"))
-        if len(present) == len(SEEDS):
-            print(f"  {arm}: already on disk, skipping")
-            return
-        print(f"  {arm}: incomplete ({len(present)}/{len(SEEDS)}), redoing")
+    return [s for s in SEEDS if not (directory / f"seed{s}" / "result.json").exists()]
+
+
+def run_one(arm: str, dataset: str, epochs: int, force: bool) -> None:
     group = group_name(arm, dataset)
+    wanted = SEEDS if force else missing_seeds(arm, dataset)
+    if not wanted:
+        print(f"  {group}: all {len(SEEDS)} seeds on disk, skipping")
+        return
+    if len(wanted) < len(SEEDS):
+        print(f"  {group}: resuming, {len(wanted)} seed(s) left "
+              f"({' '.join(wanted)})")
+    else:
+        print(f"  {group}: {' '.join(ARMS[arm]) or 'MMIM as published'}")
+
     command = [str(PYTHON), str(TRAIN), "--model", "mmim", "--dataset", dataset,
-               *SETTING_ARGS, "--epochs", str(epochs), *ARMS[arm], "--seeds", *SEEDS,
+               *SETTING_ARGS, "--epochs", str(epochs), *ARMS[arm], "--seeds", *wanted,
                "--run-group", group, "--quiet"]
-    print(f"  {group}: {' '.join(ARMS[arm]) or 'MMIM as published'}")
     result = subprocess.run(command, cwd=REPO, capture_output=True, text=True)
     if result.returncode != 0:
         print(f"    FAILED (exit {result.returncode})")
         print("\n".join(result.stdout.strip().splitlines()[-8:]))
         print(result.stderr.strip()[-800:])
+        return
+    # train.py writes a summary.json covering only the seeds it just ran, so a
+    # resumed group would otherwise carry a summary over a subset of itself.
+    if len(wanted) < len(SEEDS):
+        rebuild_summary(OUTPUTS / group)
+        print(f"    rebuilt summary.json over all {len(SEEDS)} seeds")
 
 
 def epochs_used(arm: str, dataset: str) -> tuple[int, int, int]:
