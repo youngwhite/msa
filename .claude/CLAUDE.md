@@ -13,6 +13,7 @@
 - GPU 是 RTX 3090（Ampere sm_86，2026-09-04 起；此前 RTX 5080、更早 RTX 5070 Ti，都是 Blackwell sm_120）。**PyTorch 用 cu128 轮子**——sm_120 的机器必须如此（PyPI 默认版本没有 sm_120 kernel），sm_86 也兼容，所以这条不随机器改
 - 数据集（都不入库，sha256 记在 `DatasetSpec.file_sha256`）：`datasets/CMU-MOSI/` 879MB、`datasets/CMU-MOSEI/` **18GB**（aligned 4.7G + unaligned 13.7G）。**`bash scripts/fetch_dataset.sh [mosi|mosei|all]` 下载并校验**。两个坑写在脚本头注释里：不要 `gdown --folder` 整个发布目录（会递归几千个 .mp4 并被 Drive 500 掐断）；超过几 GB 的文件 gdown 处理不了 Drive 的病毒扫描中间页，要走确认令牌 + curl
 - **MOSEI 的维度与 MOSI 不同**：audio 74（MOSI 是 5）、vision 35（MOSI 是 20），split 16326/1871/4659
+- **特征经 `datasets/**/.f32cache/` 的 float32 内存映射旁路读取**（不入库，按需自动重建，见 `src/msa/features.py`）。pickle 里音视频是 float64，直接建张量会两份并存——MOSEI unaligned 实测峰值 22.9GB，把四次长任务喂给了内存看门狗。现在峰值 0.5GB、加载 1s。**MOSEI 的旁路占 8GB 磁盘**，当前余量已降到 15G，训练前先看余量
 - **`NOISE_FLOOR` 按数据集分层**（`check_acceptance.py`），**MOSEI 故意留空**——未测量的数据集会抛异常而不是回退到 MOSI 的值。那个地板是放宽判据的，借用别的数据集等于对判据做了一次没人测量过的改动。用 MOSEI 做验收前必须先测它自己的 LF-LSTM seed 方差
 - **换机器**：`bash scripts/setup.sh` 建环境 + 校验数据 + 跑闸门；完整步骤见 `docs/migration.md`
 - **参照环境**：`bash scripts/setup_mmsa_reference.sh` 重建 `.mmsa-reference/`（不入库，换机器必丢）。**不重建的代价是约定 5 的等价检查静默失效**——它 SKIP 时也记 PASS。路径解析在 `scripts/_reference_paths.py`，不需要 export 任何变量

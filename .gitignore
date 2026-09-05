@@ -17,3 +17,7 @@ mmsa_runs/
 # MMSA reference checkout + its transformers 4.x environment (250MB of wheels
 # and someone else's project). Rebuilt by scripts/setup_mmsa_reference.sh.
 .mmsa-reference/
+
+# float32 sidecars for the feature pickles: derived, large (MOSEI unaligned is
+# ~8GB), and rebuilt on demand by msa.features.
+datasets/**/.f32cache/

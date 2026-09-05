@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pickle
+import warnings
 from functools import lru_cache
 from pathlib import Path
 
@@ -10,6 +11,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset, RandomSampler
 
+from . import features
 from .config import DatasetSpec, get_dataset_spec
 from .device import supports_pin_memory
 from .repro import seed_worker
@@ -71,27 +73,32 @@ class MMSADataset(Dataset):
         self.split = split
         self.aligned = aligned
 
-        path = spec.aligned_pkl if aligned else spec.unaligned_pkl
-        data = load_pickle(path)
-        if split not in data:
-            raise KeyError(f"{path} has splits {list(data)}, no {split!r}")
-        d = data[split]
+        # Read through the float32 sidecar rather than the pickle: the pickle
+        # stores audio and vision as float64, so building tensors from it holds
+        # both copies at once -- 22.9GB measured on MOSEI unaligned, which is
+        # what got several long runs killed for memory. See msa.features.
+        d = features.load(spec, split, aligned)
 
-        self.text = torch.from_numpy(_clean(d["text"]).astype(np.float32))
-        self.audio = torch.from_numpy(_clean(d["audio"]).astype(np.float32))
-        self.vision = torch.from_numpy(_clean(d["vision"]).astype(np.float32))
-        self.text_bert = torch.from_numpy(np.asarray(d["text_bert"]).astype(np.int64))
-        self.labels = torch.from_numpy(
-            np.asarray(d["regression_labels"]).astype(np.float32)
-        )
-        self.ids = list(d["id"])
+        # The arrays are memory-mapped, and these tensors share that mapping:
+        # a batch pages in only the rows it indexes. torch warns because a
+        # read-only mapping is not writable, which is precisely the property
+        # wanted here -- nothing writes to a dataset (see `_build_dataset`).
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message=".*non-writable.*")
+            self.text = torch.from_numpy(d["text"])
+            self.audio = torch.from_numpy(d["audio"])
+            self.vision = torch.from_numpy(d["vision"])
+            self.text_bert = torch.from_numpy(d["text_bert"])
+            self.labels = torch.from_numpy(d["regression_labels"])
+        self.ids = list(d["id"])   # plain lists in the sidecar, not arrays
         self.raw_text = list(d["raw_text"])
         self.annotations = list(d["annotations"])
 
         # Number of real BERT tokens; the rest of the 50 steps are [PAD], whose
         # embeddings are *not* zero, so consumers must not read past this.
         # text_bert rows are (input_ids, attention_mask, token_type_ids).
-        self.text_lengths = self.text_bert[:, 1, :].sum(dim=1).clamp(min=1).long()
+        # Materialised deliberately: it is (N,) and every batch reads it.
+        self.text_lengths = self.text_bert[:, 1, :].sum(dim=1).clamp(min=1).long().clone()
 
         # 7-way class index, precomputed once: round to the nearest integer score
         # in [-3, 3] and shift to 0..6. Unused by the regression baselines, kept
@@ -104,12 +111,12 @@ class MMSADataset(Dataset):
             self.audio_lengths = self.text_lengths.clone()
             self.vision_lengths = self.text_lengths.clone()
         else:
-            self.audio_lengths = torch.tensor(d["audio_lengths"], dtype=torch.long).clamp(
-                min=1, max=self.audio.shape[1]
-            )
-            self.vision_lengths = torch.tensor(d["vision_lengths"], dtype=torch.long).clamp(
-                min=1, max=self.vision.shape[1]
-            )
+            self.audio_lengths = torch.tensor(
+                np.asarray(d["audio_lengths"]), dtype=torch.long
+            ).clamp(min=1, max=self.audio.shape[1])
+            self.vision_lengths = torch.tensor(
+                np.asarray(d["vision_lengths"]), dtype=torch.long
+            ).clamp(min=1, max=self.vision.shape[1])
 
     def __len__(self) -> int:
         return len(self.labels)
@@ -200,10 +207,8 @@ def build_dataloaders(
             persistent_workers=num_workers > 0,
         )
     check_matches_spec(datasets, spec)
-    # Release the raw pickle. Every split now holds its own float32 tensors, and
-    # `_build_dataset` keeps those, so the unpickled dict is dead weight: MOSEI's
-    # unaligned features are 12.6GB unpickled (audio and vision are float64 in
-    # the file) on top of the 7.9GB of tensors built from them.
+    # Only a sidecar *build* reads the pickle now, and once built it is never
+    # needed again, so nothing should keep 12.6GB of float64 alive afterwards.
     load_pickle.cache_clear()
     return loaders, spec
 
