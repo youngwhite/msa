@@ -1856,3 +1856,34 @@ n=20   0.0310    0.0039
 `NOISE_FLOOR` 是「在任何验收运行存在之前」登记的（`check_acceptance.py` 注释），其后未按已入库的组重新推导。两个都不是主判据指标，mae/corr 精确一致。
 
 **未改动。** 改 `NOISE_FLOOR` 就是改验收判据，不能作为一次顺手的清理来做——若要改，应先记决策再动手，且需说明为什么在 14 组已通过验收之后改动它是安全的。记录于此以免下一个人以为它是精确复现出来的。
+
+
+## <a id="mmim-diagnostic-aligned"></a>协议诊断跑在了错误的数据设置上（2026-09-05）— 已作废重跑
+
+### 错误本身
+
+`scripts/mmim_diagnostic.py` 的第一版**没有传 `--unaligned`**，于是整个诊断跑在 aligned 数据上。
+
+- MMSA 对 MMIM 的配置是 `need_data_aligned: false`
+- 第 1 阶段验收 MMIM 的 `mmim_mosi` 组用的是 `--unaligned`
+- **`CLAUDE.md` 约定 5 的核对清单里明确列着 `aligned/unaligned`**
+
+逐项比对其余超参（lr、weight-decay、batch-size、grad-clip、patience），**只有这一项不同**；`--epochs 40` 与已验收组的 200 在 MOSI 上无差别（0/20 撞上限）。
+
+### 为什么这不是小事
+
+MMIM 的整体表现在两种设置下接近（测试 MAE 0.7452 unaligned 对 0.7393 aligned，在噪声内），所以不是灾难性的。但诊断问的是"**一个已知有效的对比项**能否被本协议测出"，而 MMIM 的 CPC 与互信息项作用在三模态融合表征上——aligned 时 audio/vision 是词级对齐的 50 帧，unaligned 时是 375/500 帧带真实长度。**这个差异恰好落在那些对比项作用的地方。**
+
+因此第一版诊断测的是「MMIM 在 aligned 数据上的对比项」，不是「MMIM 如已发表」。由它推出的「第 2 阶段全部改写为不确定」，依据被削弱，需要用正确设置重新验证。
+
+### 处理
+
+- **aligned 那两组（`mmim_contrast_on` / `mmim_contrast_off`）保留原样**，不删不改名。它们诚实记录了跑过什么，`cli.run_group` 与目录名一致，将来还可以用来回答「aligned 与 unaligned 下诊断结论是否相同」。
+- 正确的诊断改用把数据设置写进组名的命名：**`mmim_diag_{dataset}_{setting}_{arm}`**。一次配置写错的重跑会落到不同目录，而不是静默覆盖一个正确的结果。
+- `report` 现在会**逐个 seed 核对 `result.json` 里的 `aligned` 字段**是否与本诊断声明的设置一致，不一致就拒绝出裁定。
+- MOSEI 那次未完成的 aligned 运行（6/20）已删除——配置错误且不完整，留着只会被误用。
+
+### 顺带记两条流程上的失误
+
+1. **我在提交代码之前就把实验起来了。** 约定 3 要求进文档的数字来自干净工作树，那批 run 会带 `dirty=true`。已停止并清除输出，改为先提交再跑。
+2. **`pkill -f` 的模式匹配到了发起它的那条命令本身**，把自己也杀了。停止后台训练要按 PID，不要按命令行模式。

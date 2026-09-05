@@ -550,7 +550,10 @@ n=40/臂，合并 100-119 与 120-139：
 重现：`scripts/confirm_combination.py run` 然后 `report`。
 
 
-## 协议诊断：MMIM 自带的对比项也测不出来（2026-09-05）
+## 协议诊断：MMIM 自带的对比项也测不出来（2026-09-05）— **本节结果已作废**
+
+> **作废说明（2026-09-05 当日）**：本节的两组运行**没有传 `--unaligned`**，跑在了 MMIM 从未被验证过的数据设置上（MMSA 配置为 `need_data_aligned: false`，第 1 阶段验收也用 unaligned）。诊断问的是「已知有效的对比项能否被测出」，而 MMIM 的 CPC 与互信息项恰好作用在受该设置影响的融合表征上，所以本节结论不能支撑由它推出的改写。正确设置的重跑见下文，原因见 [`investigations.md#mmim-diagnostic-aligned`](investigations.md#mmim-diagnostic-aligned)。数据保留在 `outputs/mmim_contrast_{on,off}`，未删除。
+
 
 MMIM 的 InfoNCE（CPC）与互信息下界项**有原论文消融支持**，已在本仓库复现并通过验收。用它的 `contrast` 开关整体开/关，检验本协议能否测出一个已知有效的对比损失。seeds 100-119（n=20），判据于运行前定稿。
 

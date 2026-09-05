@@ -65,21 +65,26 @@ FDR_Q = 0.10
 ARMS = {"on": [], "off": ["--model-arg", "contrast=False"]}
 CONTROL = "off"
 
+#: MMIM takes **unaligned** data. MMSA's config says `need_data_aligned: false`,
+#: and the accepted `mmim_mosi` group in this repository was run with
+#: `--unaligned`; convention 5's checklist lists aligned/unaligned by name.
+#:
+#: The first version of this script omitted the flag, so the whole first
+#: diagnostic ran MMIM in a data setting it was never validated in. That is why
+#: the setting is now part of every group name -- a mis-specified rerun would
+#: land in a differently named directory instead of silently overwriting a
+#: correct one. The `mmim_contrast_{on,off}` groups are that first attempt, kept
+#: as the record; see docs/investigations.md#mmim-diagnostic-aligned.
+SETTING_ARGS = ["--unaligned"]
+SETTING = "unaligned"
+
 
 def group_name(arm: str, dataset: str) -> str:
-    """MOSI's groups keep their original unsuffixed names.
-
-    They were produced before this script took a dataset, and renaming them
-    would orphan committed results that docs/experiments.md points at. Every
-    other dataset is suffixed.
-    """
-    base = f"mmim_contrast_{arm}"
-    return base if dataset == "mosi" else f"{base}_{dataset}"
+    return f"mmim_diag_{dataset}_{SETTING}_{arm}"
 
 
 def report_path(dataset: str) -> Path:
-    stem = "mmim_diagnostic" if dataset == "mosi" else f"mmim_diagnostic_{dataset}"
-    return REPO / "docs" / f"{stem}.json"
+    return REPO / "docs" / f"mmim_diagnostic_{dataset}_{SETTING}.json"
 
 
 def run_one(arm: str, dataset: str, epochs: int, force: bool) -> None:
@@ -92,7 +97,7 @@ def run_one(arm: str, dataset: str, epochs: int, force: bool) -> None:
         print(f"  {arm}: incomplete ({len(present)}/{len(SEEDS)}), redoing")
     group = group_name(arm, dataset)
     command = [str(PYTHON), str(TRAIN), "--model", "mmim", "--dataset", dataset,
-               "--epochs", str(epochs), *ARMS[arm], "--seeds", *SEEDS,
+               *SETTING_ARGS, "--epochs", str(epochs), *ARMS[arm], "--seeds", *SEEDS,
                "--run-group", group, "--quiet"]
     print(f"  {group}: {' '.join(ARMS[arm]) or 'MMIM as published'}")
     result = subprocess.run(command, cwd=REPO, capture_output=True, text=True)
@@ -130,6 +135,15 @@ def report(dataset: str) -> int:
         print(f"Incomplete: {', '.join(missing)}. Run `mmim_diagnostic.py run`.")
         return 1
 
+    for arm in ARMS:
+        directory = OUTPUTS / group_name(arm, dataset)
+        for path in sorted(directory.glob("seed*/result.json")):
+            record = json.loads(path.read_text())
+            if record["aligned"] is (SETTING == "unaligned"):
+                print(f"{path.parent} was run aligned={record['aligned']}, but this "
+                      f"diagnostic is {SETTING}. Delete the group and rerun.")
+                return 1
+
     control = arms[CONTROL]
     subject = arms["on"]
     outcomes = {
@@ -143,7 +157,8 @@ def report(dataset: str) -> int:
     for metric, is_rejected in zip(METRICS, rejected, strict=True):
         outcomes[metric]["bh_significant"] = bool(is_rejected)
 
-    print(f"MMIM on {dataset}, seeds {SEEDS[0]}-{SEEDS[-1]} (n={len(SEEDS)})")
+    print(f"MMIM on {dataset} ({SETTING}), seeds {SEEDS[0]}-{SEEDS[-1]} "
+          f"(n={len(SEEDS)})")
     print(f"criterion fixed before these runs: Welch one-sided, BH q={FDR_Q}, "
           f"{len(METRICS)} tests\n")
     for name in ("off", "on"):
