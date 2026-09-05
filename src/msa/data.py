@@ -139,6 +139,27 @@ class MMSADataset(Dataset):
         }
 
 
+@lru_cache(maxsize=6)   # three splits x aligned/unaligned
+def _build_dataset(dataset: str, split: str, aligned: bool) -> MMSADataset:
+    """One split's tensors, reused across seeds in the same process.
+
+    The cache sits here rather than on the pickle deliberately. `train.py` calls
+    `build_dataloaders` once per seed, so caching the *unpickled dict* and
+    releasing it each time turns one 20.5GB peak into one per seed -- which is
+    worse, not better, on a machine that has killed three runs for memory.
+    Caching the built tensors means the peak happens once and later seeds reuse
+    7.9GB.
+
+    Safe to share because `MMSADataset` is read-only once constructed: it
+    exposes only `__len__`, `__getitem__` and `feature_dims`, and the one model
+    that rewrites its own targets during training (Self-MM) keeps them in module
+    buffers, not in the dataset. What stays per-seed is the sampler, which
+    `build_dataloaders` builds fresh, so batch order is still a function of the
+    seed alone.
+    """
+    return MMSADataset(get_dataset_spec(dataset), split, aligned=aligned)
+
+
 def build_dataloaders(
     dataset: str = "mosi",
     aligned: bool = True,
@@ -160,7 +181,7 @@ def build_dataloaders(
     pin = supports_pin_memory(device) if device is not None else False
     loaders, datasets = {}, {}
     for split in SPLITS:
-        ds = MMSADataset(spec, split, aligned=aligned)
+        ds = _build_dataset(dataset, split, aligned)
         datasets[split] = ds
         sampler = None
         if split == "train":
@@ -179,13 +200,10 @@ def build_dataloaders(
             persistent_workers=num_workers > 0,
         )
     check_matches_spec(datasets, spec)
-    # Release the raw pickle now that every split holds its own tensors. The
-    # cache exists so the three splits share one read, and past that point it is
-    # pure cost: MOSEI's unaligned features are 12.6GB as unpickled (audio and
-    # vision are float64 in the file) on top of the 7.9GB of float32 tensors
-    # built from them, and holding both is what got three long runs killed for
-    # memory on this machine. Nothing numerical depends on it -- a later call
-    # simply reads the file again.
+    # Release the raw pickle. Every split now holds its own float32 tensors, and
+    # `_build_dataset` keeps those, so the unpickled dict is dead weight: MOSEI's
+    # unaligned features are 12.6GB unpickled (audio and vision are float64 in
+    # the file) on top of the 7.9GB of tensors built from them.
     load_pickle.cache_clear()
     return loaders, spec
 
