@@ -55,6 +55,11 @@ from _reference_paths import mmsa_shim, mmsa_src  # noqa: E402
 MMSA_SRC = mmsa_src()
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATASETS = PROJECT_ROOT / "datasets" / "CMU-MOSI" / "Processed"
+#: Where each dataset's pickles live, by MMSA's own name for it.
+FEATURE_ROOT = {
+    "mosi": PROJECT_ROOT / "datasets" / "CMU-MOSI" / "Processed",
+    "mosei": PROJECT_ROOT / "datasets" / "CMU-MOSEI" / "Processed",
+}
 DEFAULT_OUT = PROJECT_ROOT / "mmsa_runs"
 RUNS_PATH = PROJECT_ROOT / "docs" / "mmsa_code_runs_mosi.json"
 
@@ -77,8 +82,22 @@ METRIC_KEYS = {
 RESULT_LINE = re.compile(r"Result for seed (\d+): (\{.*\})")
 
 
-def run(model: str, seeds: list[int], out_root: Path) -> None:
-    """Run MMSA's own model on our MOSI pickles, its own default config."""
+def run(model: str, seeds: list[int], out_root: Path, dataset: str = "mosi",
+        overrides: dict | None = None, tag: str | None = None) -> None:
+    """Run MMSA's own model on our pickles, under its own default config.
+
+    `overrides` goes into MMSA's `config`, which `args.update(config)` applies
+    after its own defaults -- the same door `featurePath` already goes through.
+    It exists so the contrast switch can be flipped inside MMSA's implementation
+    rather than only in ours, which is what makes "does MMSA's own code show the
+    same harm" answerable.
+
+    MMSA's config declares `seq_lens` per dataset and gets it wrong for MOSI
+    ([50, 500, 375] against actual audio 375 / vision 500). It never matters:
+    run.py:321 overwrites the field from the loaded features. Noted because the
+    obvious worry -- that MMSA would truncate MOSEI's 500-frame vision to the
+    375 its config claims -- does not happen.
+    """
     import torch
 
     # Device plumbing only: run.py calls set_device unconditionally, which fails
@@ -100,17 +119,19 @@ def run(model: str, seeds: list[int], out_root: Path) -> None:
     sys.path.insert(0, str(MMSA_SRC))
     from MMSA import MMSA_run
 
-    features = DATASETS / f"{FEATURES_FOR[model]}_50.pkl"
-    out = out_root / model
+    features = FEATURE_ROOT[dataset] / f"{FEATURES_FOR[model]}_50.pkl"
+    out = out_root / (tag or f"{dataset}_{model}")
     out.mkdir(parents=True, exist_ok=True)
-    print(f"MMSA {model}/mosi on {features.name}, seeds {seeds}", flush=True)
+    config = {"featurePath": str(features), **(overrides or {})}
+    print(f"MMSA {model}/{dataset} on {features.name}, seeds {seeds}, "
+          f"config {overrides or '{}'}", flush=True)
     MMSA_run(
         model_name=model,
-        dataset_name="mosi",
+        dataset_name=dataset,
         # featurePath goes through the public config argument because
         # args.update(config) runs after the path is joined. Same pickle our own
         # runs read, byte for byte.
-        config={"featurePath": str(features)},
+        config=config,
         seeds=seeds,
         gpu_ids=[0] if torch.cuda.is_available() else [],
         num_workers=0,
@@ -240,6 +261,12 @@ def main() -> None:
     sub = ap.add_subparsers(dest="command", required=True)
     run_cmd = sub.add_parser("run", help="run MMSA on some seeds")
     run_cmd.add_argument("model", choices=sorted(FEATURES_FOR))
+    run_cmd.add_argument("--dataset", default="mosi", choices=sorted(FEATURE_ROOT))
+    run_cmd.add_argument("--tag", default=None,
+                         help="output subdirectory (default: <dataset>_<model>)")
+    run_cmd.add_argument("--set", action="append", default=[], metavar="KEY=VALUE",
+                         help="override one of MMSA's config values, e.g. "
+                              "contrast=False")
     run_cmd.add_argument("seeds", nargs="+", type=int)
     collect_cmd = sub.add_parser("collect", help="parse logs into docs/")
     collect_cmd.add_argument("--also", type=Path, nargs="*", default=[],
@@ -248,7 +275,11 @@ def main() -> None:
 
     if args.command == "run":
         sys.path.insert(0, str(mmsa_shim()))
-        run(args.model, args.seeds, args.out)
+        overrides = {}
+        for item in args.set:
+            key, _, value = item.partition("=")
+            overrides[key] = ast.literal_eval(value)
+        run(args.model, args.seeds, args.out, args.dataset, overrides, args.tag)
     else:
         collect(args.out, args.also)
 
