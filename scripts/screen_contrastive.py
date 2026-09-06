@@ -88,13 +88,19 @@ def lambda_tag(value: float) -> str:
     return f"{value:g}".replace(".", "p")
 
 
+#: Set by main(); MOSI's groups keep their original unprefixed names so the
+#: committed results docs/experiments.md points at are not orphaned.
+DATASET = "mosi"
+
+
 def group_name(candidate: str | None, lambda_: float = BASE_LAMBDA) -> str:
     """The control has no contrastive term, so lambda does not apply to it."""
+    prefix = "screen" if DATASET == "mosi" else f"screen_{DATASET}"
     if candidate is None:
-        return "screen_control"
+        return f"{prefix}_control"
     if lambda_ == BASE_LAMBDA:
-        return f"screen_{candidate}"
-    return f"screen_{candidate}_l{lambda_tag(lambda_)}"
+        return f"{prefix}_{candidate}"
+    return f"{prefix}_{candidate}_l{lambda_tag(lambda_)}"
 
 
 def run_one(candidate: str | None, epochs: int, force: bool,
@@ -114,7 +120,7 @@ def run_one(candidate: str | None, epochs: int, force: bool,
         print(f"  {group}: incomplete ({len(present)}/{len(SEEDS)} seeds: "
               f"{' '.join(present)}), redoing")
     command = [
-        str(PYTHON), str(TRAIN), *BACKBONE,
+        str(PYTHON), str(TRAIN), *BACKBONE, "--dataset", DATASET,
         "--seeds", *SEEDS, "--epochs", str(epochs),
         "--run-group", group, "--quiet",
     ]
@@ -220,7 +226,9 @@ def report(candidates: list[str], lambdas: list[float]) -> int:
         print("No control run on disk. Run `screen_contrastive.py run` first.")
         return 1
 
-    tests, rows = [], []
+    from scipy import stats
+
+    tests, two_sided_tests, rows = [], [], []
     for name in candidates:
         for lambda_ in lambdas:
             data = read_group(name, lambda_)
@@ -233,13 +241,25 @@ def report(candidates: list[str], lambdas: list[float]) -> int:
                     control["valid"][metric]["per_seed"],
                     metric,
                 )
+                # Two-sided as well. The one-sided test asks "does it help" and
+                # scores a significantly *harmful* candidate at p near 1, which
+                # prints as a plain "drop" -- the same blind spot that made the
+                # MMIM diagnostic report NOT DETECTED against an effect of
+                # |d|=1.39 (investigations.md#mosei-contrast-harmful). Harm is a
+                # finding here too, not an absence.
+                _, p_two = stats.ttest_ind(
+                    data["valid"][metric]["per_seed"],
+                    control["valid"][metric]["per_seed"], equal_var=False,
+                )
                 entry["metrics"][metric] = {
                     "improvement": improvement,
                     "p_one_sided": p_one,
+                    "p_two_sided": float(p_two),
                     "clears_floor": bool(improvement >= EFFECT_FLOOR[metric]),
                     "seed_corr": seed_correlation(data, control, metric),
                 }
                 tests.append((len(rows), metric, p_one))
+                two_sided_tests.append((len(rows), metric, float(p_two)))
             rows.append(entry)
 
     if not rows:
@@ -249,6 +269,11 @@ def report(candidates: list[str], lambdas: list[float]) -> int:
     rejected = benjamini_hochberg([p for _, _, p in tests], FDR_Q)
     for (row_index, metric, _), is_rejected in zip(tests, rejected, strict=True):
         rows[row_index]["metrics"][metric]["bh_significant"] = bool(is_rejected)
+    two_rejected = benjamini_hochberg([p for _, _, p in two_sided_tests], FDR_Q)
+    for (row_index, metric, _), is_rejected in zip(
+        two_sided_tests, two_rejected, strict=True
+    ):
+        rows[row_index]["metrics"][metric]["bh_any_direction"] = bool(is_rejected)
 
     control_se = {
         m: float(control["valid"][m]["sd"] / np.sqrt(len(control["seeds"])))
@@ -276,8 +301,8 @@ def report(candidates: list[str], lambdas: list[float]) -> int:
           f"{control['valid']['corr']['sd']:.4f}   "
           f"SE mae {control_se['mae']:.4f} corr {control_se['corr']:.4f}\n")
 
-    header = (f"{'candidate':15s}{'lam':>6s}{'Δmae':>9s}{'p':>8s}"
-              f"{'Δcorr':>9s}{'p':>8s}  verdict")
+    header = (f"{'candidate':15s}{'lam':>6s}{'Δmae':>9s}{'p2':>10s}"
+              f"{'Δcorr':>9s}{'p2':>10s}  effect     verdict")
     print(header)
     print("-" * len(header))
     rows.sort(key=lambda e: min(
@@ -294,11 +319,18 @@ def report(candidates: list[str], lambdas: list[float]) -> int:
             "sig-but-filtered" if marks else "")
         if entry["keep"]:
             kept.append((data["candidate"], data["lambda"]))
+        directions = []
+        for metric in METRICS:
+            if info[metric]["bh_any_direction"]:
+                directions.append(
+                    f"{metric}:{'+' if info[metric]['improvement'] > 0 else '-'}"
+                )
+        effect = ",".join(directions) if directions else "none"
         print(
             f"{data['candidate']:15s}{data['lambda']:6g}"
-            f"{info['mae']['improvement']:+9.4f}{info['mae']['p_one_sided']:8.3f}"
-            f"{info['corr']['improvement']:+9.4f}{info['corr']['p_one_sided']:8.3f}"
-            f"  {note}"
+            f"{info['mae']['improvement']:+9.4f}{info['mae']['p_two_sided']:10.2e}"
+            f"{info['corr']['improvement']:+9.4f}{info['corr']['p_two_sided']:10.2e}"
+            f"  {effect:9s}  {note}"
         )
 
     correlations = [
@@ -318,8 +350,11 @@ def report(candidates: list[str], lambdas: list[float]) -> int:
               f"(median {float(np.median(correlations)):+.2f}) — "
               f"the diagnostic for whether a paired test would have been valid")
 
-    REPORT.parent.mkdir(parents=True, exist_ok=True)
-    REPORT.write_text(json.dumps({
+    out = (REPORT if DATASET == "mosi"
+           else REPORT.with_name(f"contrastive_screen_{DATASET}.json"))
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps({
+        "dataset": DATASET,
         "backbone": BACKBONE,
         "lambdas": lambdas,
         "seeds": [int(s) for s in SEEDS],
@@ -338,7 +373,7 @@ def report(candidates: list[str], lambdas: list[float]) -> int:
         ],
         "kept": [{"candidate": c, "lambda": lam} for c, lam in kept],
     }, indent=2) + "\n")
-    print(f"\nwrote {REPORT.relative_to(REPO)}")
+    print(f"\nwrote {out.relative_to(REPO)}")
     return 0
 
 
@@ -474,6 +509,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("command", choices=("run", "report", "combine"))
+    ap.add_argument("--dataset", default="mosi", choices=("mosi", "mosei"))
     ap.add_argument("--epochs", type=int, default=40)
     ap.add_argument("--only", nargs="+", default=None, help="a subset of candidates")
     ap.add_argument("--lambdas", type=float, nargs="+", default=list(DEFAULT_LAMBDAS),
@@ -482,6 +518,8 @@ def main() -> int:
     ap.add_argument("--force", action="store_true", help="retrain groups already on disk")
     args = ap.parse_args()
 
+    global DATASET
+    DATASET = args.dataset
     candidates = args.only or available_losses()
     if args.command == "report":
         return report(candidates, args.lambdas)

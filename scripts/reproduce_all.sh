@@ -114,6 +114,11 @@ COMBO="--contrastive hcl infonce simsiam supcon --contrastive-lambda 0.1"
 
 args_for() {
     case "$1" in
+    screen_mosei_control)
+        echo "$TFN_BACKBONE --dataset mosei --seeds 42 43 44 45 46" ;;
+    screen_mosei_*)
+        _cand=${1#screen_mosei_}
+        echo "$TFN_BACKBONE --dataset mosei --seeds 42 43 44 45 46 --contrastive $_cand --contrastive-lambda 0.1" ;;
     screen_control)
         echo "$SCREEN_BACKBONE" ;;
     weight_control)
