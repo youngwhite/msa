@@ -179,6 +179,29 @@ def report(dataset: str) -> int:
     for metric, is_rejected in zip(METRICS, rejected, strict=True):
         outcomes[metric]["bh_significant"] = bool(is_rejected)
 
+    # The pre-registered test is one-sided for improvement and answers "does the
+    # contrastive term help". What this diagnostic exists to ask is different:
+    # "can this protocol resolve an effect of this class at all". A term that
+    # significantly *hurts* answers yes, while the one-sided test scores it
+    # p=1.0 -- which printed NOT DETECTED on MOSEI against an effect of
+    # |d|=1.39. So the two-sided test is reported alongside. It adds a
+    # direction, not a looser threshold: the pre-registered comparison is
+    # untouched and still shown.
+    from scipy import stats
+
+    two_sided = []
+    for metric in METRICS:
+        _, p_two = stats.ttest_ind(
+            subject["valid"][metric]["per_seed"],
+            control["valid"][metric]["per_seed"], equal_var=False,
+        )
+        outcomes[metric]["p_two_sided"] = float(p_two)
+        two_sided.append(float(p_two))
+    for metric, is_rejected in zip(
+        METRICS, benjamini_hochberg(two_sided, FDR_Q), strict=True
+    ):
+        outcomes[metric]["bh_any_direction"] = bool(is_rejected)
+
     print(f"MMIM on {dataset} ({SETTING}), seeds {SEEDS[0]}-{SEEDS[-1]} "
           f"(n={len(SEEDS)})")
     print(f"criterion fixed before these runs: Welch one-sided, BH q={FDR_Q}, "
@@ -190,14 +213,19 @@ def report(dataset: str) -> int:
               f"   corr {data['valid']['corr']['mean']:.4f} ± "
               f"{data['valid']['corr']['sd']:.4f}")
 
-    print(f"\n{'metric':8s}{'Δ (on - off)':>15s}{'p':>8s}{'d':>7s}{'MDE':>9s}   BH")
+    print(f"\n{'metric':8s}{'Δ (on - off)':>15s}{'d':>7s}{'MDE':>9s}"
+          f"{'p (helps)':>12s}{'p (either)':>12s}   effect?")
     for metric in METRICS:
         o = outcomes[metric]
         mde = minimum_detectable_effect(o["pooled_sd"], len(SEEDS))
         o["mde"] = mde
-        print(f"{metric:8s}{o['improvement']:+15.4f}{o['p_one_sided']:8.4f}"
-              f"{o['cohens_d']:+7.2f}{mde:9.4f}   "
-              f"{'yes' if o['bh_significant'] else 'no'}")
+        verdict = ("none" if not o["bh_any_direction"]
+                   else "HELPS" if o["improvement"] > 0 else "HURTS")
+        print(f"{metric:8s}{o['improvement']:+15.4f}{o['cohens_d']:+7.2f}{mde:9.4f}"
+              f"{o['p_one_sided']:12.4f}{o['p_two_sided']:12.2e}   {verdict}")
+    print(f"  'p (helps)' is the pre-registered one-sided test; 'p (either)' is "
+          f"two-sided. Both\n  BH-corrected at q={FDR_Q} over {len(METRICS)} "
+          f"tests each.")
 
     print("\ntraining length (an arm cut short by the epoch cap would be a third "
           "explanation):")
@@ -210,20 +238,30 @@ def report(dataset: str) -> int:
             truncated.append(group_name(arm, dataset))
 
     detected = [m for m in METRICS if outcomes[m]["bh_significant"]]
+    resolved = [m for m in METRICS if outcomes[m]["bh_any_direction"]]
+    harmful = [m for m in resolved if outcomes[m]["improvement"] < 0]
     print()
     if truncated:
         print(f"!! {', '.join(truncated)} had runs stopped by --epochs, not by early "
               f"stopping.\n   Raise --epochs and rerun before reading the verdict "
               f"below.\n")
     if detected:
-        print(f"DETECTED on {', '.join(detected)}. This protocol can resolve a")
-        print("contrastive effect of this class, so phase 2's negative results on TFN")
+        print(f"HELPS, on {', '.join(detected)}. The protocol resolves an effect of")
+        print("this class and it is the one the paper claims, so phase 2's negatives")
         print("are about those candidates rather than about the setup.")
+    elif harmful:
+        print(f"RESOLVED, BUT HARMFUL, on {', '.join(harmful)}. The protocol clearly")
+        print(f"detects an effect of this class on {dataset} -- which is what this")
+        print("diagnostic asked -- and it runs against the published claim. Results")
+        print("here are therefore not limited by resolution. The finding itself needs")
+        print("explaining before it is a claim: this port is validated on MOSI only,")
+        print("and MMSA's own code has not been run on this dataset for comparison.")
     else:
-        print("NOT DETECTED. A contrastive objective with the original paper's own")
-        print("ablation behind it is invisible under this protocol on MOSI. Every")
-        print("phase-2 conclusion here therefore reads 'inconclusive', not 'no effect',")
-        print("and the next step is the dataset, not another loss.")
+        print(f"NOT DETECTED on {dataset}. A contrastive objective with the original")
+        print("paper's own ablation behind it is invisible under this protocol here.")
+        print("Conclusions on this dataset read 'inconclusive', not 'no effect', and")
+        print("the next move is resolution -- more seeds or more data -- not another")
+        print("loss.")
 
     out = report_path(dataset)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -236,6 +274,7 @@ def report(dataset: str) -> int:
                       "correction": f"Benjamini-Hochberg q={FDR_Q}",
                       "n_tests": len(METRICS)},
         "arms": arms, "outcomes": outcomes, "detected_on": detected,
+        "resolved_on": resolved, "harmful_on": harmful,
     }, indent=2, default=float) + "\n")
     print(f"\nwrote {out.relative_to(REPO)}")
     return 0

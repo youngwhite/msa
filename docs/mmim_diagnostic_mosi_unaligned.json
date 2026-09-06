@@ -201,6 +201,8 @@
       "cohens_d": -0.3474758504598544,
       "pooled_sd": 0.01311296295464339,
       "bh_significant": false,
+      "p_two_sided": 0.278974701091943,
+      "bh_any_direction": false,
       "mde": 0.010520703716702145
     },
     "corr": {
@@ -209,8 +211,12 @@
       "cohens_d": -0.28959854445510447,
       "pooled_sd": 0.0074793743700546115,
       "bh_significant": false,
+      "p_two_sided": 0.36558854892326165,
+      "bh_any_direction": false,
       "mde": 0.006000801039842506
     }
   },
-  "detected_on": []
+  "detected_on": [],
+  "resolved_on": [],
+  "harmful_on": []
 }
