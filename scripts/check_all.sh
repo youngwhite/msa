@@ -72,6 +72,7 @@ run "per-model acceptance" $PY scripts/check_acceptance.py --all
 run "aggregate acceptance" $PY scripts/aggregate_acceptance.py --reference code
 # Skips itself when MMSA is not checked out, so a fresh clone still goes green.
 run "almt equivalence"     $PY scripts/check_almt_equivalence.py
+run "mmim equivalence"     $PY scripts/check_mmim_equivalence.py
 if [ "$FAST" != "--fast" ]; then
     run "reproducibility (lf_lstm)" $PY scripts/check_repro.py --epochs 1
     run "reproducibility (tfn)"     $PY scripts/check_repro.py --model tfn --epochs 1

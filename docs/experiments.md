@@ -672,6 +672,8 @@ MMIM 比 TFN 强得多（0.694 vs 0.867 MAE）且 seed 标准差更小（0.0139 
 - **MMSA 自己的代码没有在 MOSEI 上跑过。** 参照环境已在本机重建，所以这件事做得到，是下一步的首选。
 - 超参用的是 MMSA 自己的配置，且**它对 MOSI 与 MOSEI 逐字段相同**（已核对），所以不是"拿 MOSI 的超参套 MOSEI"。
 
-在这些限定被消除之前，正确的表述是：**在本项目的 MMIM 实现与协议下，MMSA 配置的对比项在 MOSEI 上显著有害**——而不是"MMIM 的对比学习无效"。
+> **2026-09-06 更新：数值等价测试已把"实现"这一层限定拆掉。** `check_mmim_equivalence.py` 复制 52 个参数张量后，`M` / `nce` / `lld` 三项最大绝对差均为 `0.000e+00`——**模型定义与 MMSA 完全一致，两个对比项本身也逐比特一致**。因此 |d|≈1.1 的差距只可能来自训练协议；而 on/off 对照是**同协议内受控**的（两臂共用协议与同一模型，唯一变量是开关），协议差异影响绝对数值、不影响两臂之差。详见 [`investigations.md#mmim-equivalence`](investigations.md#mmim-equivalence)。
+
+现在正确的表述是：**MMIM 已发表架构的对比项，在本项目的训练协议下、在 MOSEI 上显著有害。** 仍保留的限定是：与 MMSA 的协议差异尚未定位，故不能断言在 MMSA 自己的协议下也会如此。
 
 重现：`scripts/mmim_diagnostic.py run --dataset mosei` 然后 `report --dataset mosei`。
