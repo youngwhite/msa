@@ -97,6 +97,7 @@ RUN_GROUPS+=(
     mmim_diag_mosi_unaligned_on
     mmim_diag_mosei_unaligned_off
     mmim_diag_mosei_unaligned_on
+    mmim_diag_mosei_unaligned_on_mmsasel
 )
 
 # TFN reproduces MMSA's reported MOSI result, so those groups use MMSA's
@@ -144,6 +145,10 @@ args_for() {
         echo "--model mmim --dataset mosei --unaligned --seeds $WEIGHT_SEEDS" ;;
     mmim_diag_mosei_unaligned_off)
         echo "--model mmim --dataset mosei --unaligned --seeds $WEIGHT_SEEDS --model-arg contrast=False" ;;
+    # Diagnostic: does MMSA's blunter validation selection account for the gap
+    # against its own code on MOSEI? See investigations.md#mmim-mosei-selection-test.
+    mmim_diag_mosei_unaligned_on_mmsasel)
+        echo "--model mmim --dataset mosei --unaligned --seeds $(seq -s' ' 100 109) --select-reduction mmsa" ;;
     screen_*)
         # screen_<candidate>, or screen_<candidate>_l<lambda> with the decimal
         # point written as `p` so it survives being a directory name. No

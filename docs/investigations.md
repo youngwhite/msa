@@ -2054,3 +2054,34 @@ if i_batch > self.args.mem_size:
 1. **查清发现 3 的来源。** 这是最有价值的一步——它同时影响有害性结论的可信度。可查方向：验证选择量在 MOSEI 上的实际影响（可直接测）、`update_epochs` 梯度累积、早停在 11 轮 vs MMSA 轮数上的差异。
 2. **修 MMSA 的日志 bug 并跑 off 臂**（改动仅一行、只影响日志），同时**另跑一个把熵项也关掉的变体**以对齐我们的语义。两个变体都跑才说得清。
 3. 若发现 3 查明为协议差异而非实现 bug，则有害性结论可在"本项目协议下"的限定内成立。
+
+
+## <a id="mmim-mosei-selection-test"></a>检验：选择量差异能否解释 MOSEI 上与参照的 1 个标准差（2026-09-06）
+
+### 已排除的（都很便宜，先做的）
+
+| 候选 | 结论 |
+|---|---|
+| `update_epochs=2`（梯度累积） | **不适用**——它在 MMSA 配置里，而 MMSA 的 MMIM trainer 从不读它（grep 为空，移植注释早已记录） |
+| 选中轮次差异 | **不是**——MMSA 总轮数中位数 12 / best 4，我们 11 / 3 |
+| NaN/Inf 清洗差异 | **不是**——两个数据集的 unaligned 音视频**都没有非有限值**（0/604M、0/285M）。顺带修正：`_clean` 的注释说「MMSA 的音视频带 NaN/Inf」，在这两份数据上不成立 |
+| 数据预处理 | **一致**——MMSA 只把 audio 的 `-inf` 置零（该数据上是空操作），长度字段读的是同一份 `audio_lengths` |
+| 三个学习率 | **一致**——MMSA 的 main 1e-3 / bert 5e-5 / mmilb 1e-3、decay 1e-4，我们的 `param_groups` 逐项对应 |
+
+### 待检验的假设
+
+差异在**方向**上随数据集变（MOSI 我们差、MOSEI 我们好），但**量级都是约 1 个标准差**。已记录的选择量差异恰好是这种形状：MMSA 的验证损失是**逐 batch 平均**且 `round(·,4)` 后比较，早停因此**更钝**。
+
+> **钝的选择在小验证集上可能反而更稳**（MOSI valid 仅 229 条，锐利选择容易过拟合验证集），**在大验证集上则吃亏**（MOSEI valid 1871 条）。
+
+`--select-reduction mmsa` 正是 `round(sum(batch_maes)/len(batch_maes), 4)`，可直接复现 MMSA 的选择量。
+
+### 预测（在运行之前定死）
+
+我们的 MMIM 在 MOSEI 上、contrast=True、seeds 100-109，改用 `--select-reduction mmsa` 重跑：
+
+- 当前（sample 选择）test MAE **0.5774**，MMSA 是 **0.5912**，差 −0.0138。
+- **若选择量是原因**：MAE 应向 0.5912 移动，即变差约 0.014，残余差距应小于 0.005。
+- **若不是**：MAE 移动应小于 0.005，残余差距仍在 0.010 以上。
+
+组名 `mmim_diag_mosei_unaligned_on_mmsasel`。**这是诊断，不改变任何既有判据**。
