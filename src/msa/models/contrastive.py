@@ -181,3 +181,17 @@ class ContrastiveModel(MSAModel):
         self, outputs: dict[str, torch.Tensor], batch: dict[str, torch.Tensor], epoch: int
     ) -> None:
         self.base.on_train_batch_end(outputs, batch, epoch)
+
+    def auxiliary_optimizer(self, lr: float, weight_decay: float):
+        """Forwarded, or the wrapped model loses a whole training stage.
+
+        MMIM optimises its mutual-information bound in a separate pass over the
+        training data, and the trainer asks the model for that optimiser. Without
+        this delegation, wrapping MMIM would silently return None and disable it
+        -- harmless for `contrast=False`, where MMIM returns None anyway, and a
+        silent change to the model for anything else.
+        """
+        return self.base.auxiliary_optimizer(lr, weight_decay)
+
+    def auxiliary_loss(self, batch: dict[str, torch.Tensor]) -> torch.Tensor:
+        return self.base.auxiliary_loss(batch)

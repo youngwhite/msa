@@ -328,7 +328,12 @@ class MMIM(MSAModel):
                + self.cpc_zv(vision, representation)
                + self.cpc_za(audio, representation))
         return {"M": prediction, "lld": lld, "nce": nce, "entropy": entropy,
-                "samples": samples}
+                "samples": samples,
+                # Pooled per-modality vectors, so `models.contrastive` can attach
+                # an auxiliary objective at the same place MMIM's own CPC and MI
+                # terms act. Extra keys only: nothing here reads them, and the
+                # prediction hash is unchanged.
+                "feature_t": text, "feature_a": audio, "feature_v": vision}
 
     def compute_loss(
         self, outputs: dict[str, torch.Tensor], batch: dict[str, torch.Tensor]

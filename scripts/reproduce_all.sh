@@ -97,6 +97,10 @@ RUN_GROUPS+=(
     mmim_diag_mosi_unaligned_on
     mmim_diag_mosei_unaligned_off
     mmim_diag_mosei_unaligned_on
+    mmimscreen_mosei_infonce
+    mmimscreen_mosei_dcl
+    mmimscreen_mosei_vicreg
+    mmimscreen_mosei_rnc
     mmim_diag_mosei_unaligned_on_mmsasel
 )
 
@@ -152,6 +156,10 @@ args_for() {
         echo "--model mmim --dataset mosi --unaligned --seeds $WEIGHT_SEEDS --model-arg contrast=False" ;;
     mmim_diag_mosei_unaligned_on)
         echo "--model mmim --dataset mosei --unaligned --seeds $WEIGHT_SEEDS" ;;
+    # Elimination on a test bed known to react; see decisions.md 2026-09-07.
+    mmimscreen_mosei_*)
+        _c=${1#mmimscreen_mosei_}
+        echo "--model mmim --dataset mosei --unaligned --model-arg contrast=False --seeds $(seq -s' ' 100 109) --contrastive $_c --contrastive-lambda 0.5" ;;
     mmim_diag_mosei_unaligned_off)
         echo "--model mmim --dataset mosei --unaligned --seeds $WEIGHT_SEEDS --model-arg contrast=False" ;;
     # Diagnostic: does MMSA's blunter validation selection account for the gap
