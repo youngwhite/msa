@@ -1,0 +1,239 @@
+{
+  "model": "tfn",
+  "dataset": "CMU-MOSEI",
+  "aligned": false,
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "cli": {
+    "list_models": false,
+    "model": "tfn",
+    "dataset": "mosei",
+    "unaligned": true,
+    "seeds": [
+      42,
+      43,
+      44,
+      45,
+      46
+    ],
+    "epochs": 40,
+    "batch_size": 32,
+    "lr": 0.001,
+    "weight_decay": 0.0,
+    "grad_clip": 1.0,
+    "clip_mode": "norm",
+    "optimizer": "adam",
+    "lr_schedule": "none",
+    "lr_schedule_factor": 0.1,
+    "lr_schedule_patience": 5,
+    "accumulate_steps": 1,
+    "patience": 8,
+    "select_on": "mae",
+    "select_reduction": "sample",
+    "model_arg": [],
+    "num_workers": 0,
+    "num_threads": null,
+    "device": "auto",
+    "deterministic": true,
+    "deterministic_warn_only": false,
+    "keep_checkpoint": false,
+    "run_group": "screen_mosei_nt_xent",
+    "quiet": true,
+    "list_losses": false,
+    "contrastive": [
+      "nt_xent"
+    ],
+    "contrastive_lambda": 0.1,
+    "contrastive_arg": [],
+    "projection_dim": 64,
+    "weight_scheme": "equal",
+    "weight_window": 10,
+    "weight_floor": 0.05,
+    "favour": null,
+    "favour_target": 0.7,
+    "favour_end_fraction": 1.0,
+    "normalise_terms": true
+  },
+  "model_kwargs": {},
+  "config": {
+    "epochs": 40,
+    "lr": 0.001,
+    "weight_decay": 0.0,
+    "grad_clip": 1.0,
+    "clip_mode": "norm",
+    "optimizer": "adam",
+    "lr_schedule": "none",
+    "lr_schedule_factor": 0.1,
+    "lr_schedule_patience": 5,
+    "accumulate_steps": 1,
+    "patience": 8,
+    "select_on": "mae",
+    "select_reduction": "sample",
+    "seed": 42,
+    "keep_checkpoint": false
+  },
+  "env": {
+    "python": "3.12.3",
+    "platform": "Linux-6.8.0-117-generic-x86_64-with-glibc2.35",
+    "machine": "x86_64",
+    "torch": "2.11.0+cu128",
+    "numpy": "2.5.1",
+    "transformers": "5.14.1",
+    "cuda_version": "12.8",
+    "cuda_available": true,
+    "mps_available": false,
+    "cpu": "12th Gen Intel(R) Core(TM) i9-12900K",
+    "cpu_capability": "AVX2",
+    "cpu_threads": 16,
+    "cudnn_version": 91900,
+    "cudnn_deterministic": true,
+    "cublas_workspace_config": ":4096:8",
+    "deterministic_algorithms": true,
+    "git": {
+      "commit": "19ee6b7291f70cf9831b06619196c4a73405353d",
+      "dirty": false
+    },
+    "device": "cuda",
+    "device_description": "cuda:0 NVIDIA GeForce RTX 3090 (sm_86)"
+  },
+  "summary": {
+    "mae": {
+      "mean": 0.5515255485290518,
+      "std": 0.004976399741218218,
+      "min": 0.544649541074177,
+      "max": 0.5558659607445792,
+      "n": 5,
+      "per_seed": {
+        "42": 0.5558659607445792,
+        "43": 0.544649541074177,
+        "44": 0.5543418166418141,
+        "45": 0.5549185395682158,
+        "46": 0.5478518846164729
+      }
+    },
+    "mse": {
+      "mean": 0.5629171252408128,
+      "std": 0.00833593990153704,
+      "min": 0.5508299216409335,
+      "max": 0.5725135786729673,
+      "n": 5,
+      "per_seed": {
+        "42": 0.5673211655362169,
+        "43": 0.5508299216409335,
+        "44": 0.5650045938696451,
+        "45": 0.5725135786729673,
+        "46": 0.5589163664843014
+      }
+    },
+    "corr": {
+      "mean": 0.7398998550698701,
+      "std": 0.00274414139294743,
+      "min": 0.7366212065294527,
+      "max": 0.7431866219798494,
+      "n": 5,
+      "per_seed": {
+        "42": 0.7414904860870671,
+        "43": 0.7431866219798494,
+        "44": 0.7366212065294527,
+        "45": 0.7375576310429305,
+        "46": 0.7406433297100505
+      }
+    },
+    "acc7": {
+      "mean": 0.5259068469628676,
+      "std": 0.00626765987962792,
+      "min": 0.5183515775917579,
+      "max": 0.5342348143378407,
+      "n": 5,
+      "per_seed": {
+        "42": 0.5211418759390427,
+        "43": 0.527795664305645,
+        "44": 0.5183515775917579,
+        "45": 0.5280103026400516,
+        "46": 0.5342348143378407
+      }
+    },
+    "acc5": {
+      "mean": 0.5414037347070187,
+      "std": 0.00564951581931302,
+      "min": 0.5344494526722473,
+      "max": 0.5475423910710453,
+      "n": 5,
+      "per_seed": {
+        "42": 0.536810474350719,
+        "43": 0.5423910710452887,
+        "44": 0.5344494526722473,
+        "45": 0.5458252843957931,
+        "46": 0.5475423910710453
+      }
+    },
+    "acc2_has0": {
+      "mean": 0.8203477141017386,
+      "std": 0.02604607666703925,
+      "min": 0.7862202189311011,
+      "max": 0.840952994204765,
+      "n": 5,
+      "per_seed": {
+        "42": 0.7982399656578665,
+        "43": 0.8388066108606997,
+        "44": 0.840952994204765,
+        "45": 0.8375187808542606,
+        "46": 0.7862202189311011
+      }
+    },
+    "f1_has0": {
+      "mean": 0.8191991079214882,
+      "std": 0.01956665417619871,
+      "min": 0.7934550466573992,
+      "max": 0.8373559594246621,
+      "n": 5,
+      "per_seed": {
+        "42": 0.8032619502011309,
+        "43": 0.8289245115039051,
+        "44": 0.8373559594246621,
+        "45": 0.8329980718203434,
+        "46": 0.7934550466573992
+      }
+    },
+    "acc2_non0": {
+      "mean": 0.8318657127132637,
+      "std": 0.010244639773795418,
+      "min": 0.8150798018712163,
+      "max": 0.8398458998348927,
+      "n": 5,
+      "per_seed": {
+        "42": 0.8390203632361035,
+        "43": 0.8150798018712163,
+        "44": 0.8359933957072097,
+        "45": 0.8293891029168959,
+        "46": 0.8398458998348927
+      }
+    },
+    "f1_non0": {
+      "mean": 0.8268557761352232,
+      "std": 0.014805875279848144,
+      "min": 0.8033979456278556,
+      "max": 0.8400127978051861,
+      "n": 5,
+      "per_seed": {
+        "42": 0.8380208342770267,
+        "43": 0.8033979456278556,
+        "44": 0.8301950406921537,
+        "45": 0.8226522622738937,
+        "46": 0.8400127978051861
+      }
+    }
+  },
+  "checksums": {
+    "42": "525b731a566eb057",
+    "43": "94de24d85a9ef609",
+    "44": "6127c2e87bdff9d0",
+    "45": "0e3798307cd38af5",
+    "46": "f54bc00e59523912"
+  }
+}

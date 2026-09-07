@@ -116,6 +116,10 @@ args_for() {
     case "$1" in
     screen_mosei_control)
         echo "$TFN_BACKBONE --dataset mosei --seeds 42 43 44 45 46" ;;
+    # Diagnostic: is the screen's 5-seed control a lucky draw? See
+    # investigations.md#mosei-screen-control-precision.
+    screen_mosei_control_n20)
+        echo "$TFN_BACKBONE --dataset mosei --seeds $(seq -s' ' 42 61)" ;;
     screen_mosei_*)
         _cand=${1#screen_mosei_}
         echo "$TFN_BACKBONE --dataset mosei --seeds 42 43 44 45 46 --contrastive $_cand --contrastive-lambda 0.1" ;;
