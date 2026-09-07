@@ -37,6 +37,7 @@
 | 2026-09-05 | MOSEI 上重做 MMIM 诊断，20 seed，判据与两种读法同 MOSI 那次 |
 | 2026-09-06 | 十四候选初筛在 MOSEI 上重跑；判据沿用，另加有害方向的报告 |
 | 2026-09-07 | 淘汰改在 MMIM(contrast=off)/MOSEI 上做；4 个候选按机制选，λ 校准到 0.5 |
+| 2026-09-07 | `dcl` 的正向线索用第二批 seed 确认，两臂各 20 个新 seed |
 
 
 ## 2026-07-25 基础环境
@@ -628,3 +629,25 @@ MOSEI 上同一检验能测出 |d|=1.39 的效应（[`investigations.md#mosei-co
 **保留的限定**：结果仍是 λ=0.5 特定的，且绑定 MMIM 这一个骨干。
 
 顺带修掉的两处：MMIM 的 `forward` 现在返回 `feature_t/a/v`（加键，惰性——等价测试仍 `0.000e+00`、预测哈希不变）；`ContrastiveModel` 现在转发 `auxiliary_optimizer` 与 `auxiliary_loss`，否则包住 `contrast=True` 的 MMIM 会**静默关掉它的互信息支路**（对本次 `contrast=False` 无害，但是个潜在 bug）。
+
+
+### 2026-09-07 `dcl` 的正向线索用第二批 seed 确认
+
+背景：MMIM(contrast=off)/MOSEI 的淘汰轮**按判据全部淘汰**（BH 8 检验拒绝 0），但四个候选**全部向好**，`dcl` 达 Δmae +0.0100（原始双侧 p=0.037）、Δcorr +0.0103（p=0.090）。
+
+选项：A 就此当结论／B 用第二批独立 seed 确认／C 视为噪声不追
+
+裁定：**B。**
+
+设计（在任何一次运行之前定稿）：
+
+- 两臂：`dclconfirm_mosei_control`（MMIM contrast=off）与 `dclconfirm_mosei_dcl`（+ dcl，λ=0.5）。
+- **seeds 120-139**，与产生线索的 100-119 不重叠。**两臂都重跑**，使对照与候选处于同一批 seed，而不是沿用筛选轮的对照。
+- 只两个指标共 **2 个检验**，Welch + BH q=0.10。其余协议不变。
+- 成本 40 次运行 × 820s ≈ 9 小时。
+
+依据：该效应量（0.0100）几乎正落在筛选轮的检出线上（MDE 0.0129）——**这正是最需要独立重复的位置**。而本项目在同一位置已经错过一次：TFN/MOSI 上「四项组合优于纯 L1」+0.0131、原始 p=0.045，第三批 seed 上符号翻转（`experiments.md` 确认那节）。n=20 时 MDE 0.0089 < 0.0100，分辨力够。
+
+已否决：A（见上，且原始 p 未过校正）；C（这是本阶段唯一的正向信号，值得一次 9 小时的确认）；沿用筛选轮的对照（对照与候选跨 seed 批次，正是 [`investigations.md#seed-batch-variation`](investigations.md#seed-batch-variation) 记下要避免的）。
+
+复查条件：若不成立，记为「一次未重复的观察」，**`dcl` 不进入组合步骤**。若成立，它是本阶段第一个正向结果，也是组合的第一块材料——但仍绑定 MMIM、MOSEI 与 λ=0.5 三个条件。

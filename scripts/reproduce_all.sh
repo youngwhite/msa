@@ -101,6 +101,8 @@ RUN_GROUPS+=(
     mmimscreen_mosei_dcl
     mmimscreen_mosei_vicreg
     mmimscreen_mosei_rnc
+    dclconfirm_mosei_control
+    dclconfirm_mosei_dcl
     mmim_diag_mosei_unaligned_on_mmsasel
 )
 
@@ -157,6 +159,10 @@ args_for() {
     mmim_diag_mosei_unaligned_on)
         echo "--model mmim --dataset mosei --unaligned --seeds $WEIGHT_SEEDS" ;;
     # Elimination on a test bed known to react; see decisions.md 2026-09-07.
+    dclconfirm_mosei_control)
+        echo "--model mmim --dataset mosei --unaligned --model-arg contrast=False --seeds $(seq -s' ' 120 139)" ;;
+    dclconfirm_mosei_dcl)
+        echo "--model mmim --dataset mosei --unaligned --model-arg contrast=False --seeds $(seq -s' ' 120 139) --contrastive dcl --contrastive-lambda 0.5" ;;
     mmimscreen_mosei_*)
         _c=${1#mmimscreen_mosei_}
         echo "--model mmim --dataset mosei --unaligned --model-arg contrast=False --seeds $(seq -s' ' 100 109) --contrastive $_c --contrastive-lambda 0.5" ;;
