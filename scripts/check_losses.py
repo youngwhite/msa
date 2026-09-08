@@ -148,6 +148,42 @@ def check(name: str) -> list[str]:
     return problems
 
 
+def check_label_dcl_degeneracy() -> list[str]:
+    """With every weight at 1, `label_dcl` must be exactly `dcl`.
+
+    That degeneracy is what makes the new loss's experiment interpretable: its
+    control is a term already confirmed on this setup, and the only difference
+    between them is the label weighting. Asserted numerically rather than read
+    off the derivation, because the whole design rests on it.
+
+    Forced by `w_min=1.0`, which clamps every weight to 1 regardless of the
+    labels -- the cleanest way to switch the mechanism off without touching the
+    label distances.
+    """
+    problems = []
+    views, labels = make_views()
+    plain = get_loss_class("dcl")(temperature=0.1).to(DEVICE)
+    degenerate = get_loss_class("label_dcl")(temperature=0.1, w_min=1.0).to(DEVICE)
+    with torch.no_grad():
+        a = float(plain(views, labels))
+        b = float(degenerate(views, labels))
+    if abs(a - b) > 1e-6:
+        problems.append(f"label_dcl with w_min=1 gives {b:.8f}, dcl gives {a:.8f}")
+
+    # And with weighting live it must differ, or the mechanism does nothing.
+    active = get_loss_class("label_dcl")(
+        temperature=0.1, distance_scale=1.0, w_min=0.05
+    ).to(DEVICE)
+    with torch.no_grad():
+        c = float(active(views, labels))
+    if abs(c - a) < 1e-6:
+        problems.append(
+            f"label_dcl with weighting live is identical to dcl ({c:.8f}); the "
+            f"label weighting is inert on this batch"
+        )
+    return problems
+
+
 def check_composite() -> list[str]:
     """The properties the weighted combination has to have to be interpretable.
 
@@ -266,6 +302,13 @@ def main() -> int:
         if problems:
             failed[name] = problems
 
+    print("\n== label_dcl degeneracy ==")
+    degeneracy = check_label_dcl_degeneracy()
+    for problem in degeneracy:
+        print(f"  FAIL {problem}")
+    if not degeneracy:
+        print("  ok   w_min=1 reproduces dcl exactly; weighting live changes it")
+
     print("\n== weighted combination ==")
     composite = check_composite()
     for problem in composite:
@@ -275,7 +318,9 @@ def main() -> int:
               "moves when it should")
 
     print()
-    if failed or composite:
+    if degeneracy:
+        print(f"{len(degeneracy)} problem(s) in label_dcl's degeneracy")
+    if failed or composite or degeneracy:
         if failed:
             print(f"{len(failed)} objective(s) failed: {', '.join(sorted(failed))}")
         if composite:

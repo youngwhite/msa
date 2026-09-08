@@ -9,6 +9,7 @@ from .contrastive import (
     DecoupledContrastive,
     HardNegativeContrastive,
     InfoNCE,
+    LabelWeightedDecoupledContrastive,
     MaxMargin,
     NTXent,
     RankNContrast,
@@ -22,7 +23,8 @@ from .registry import available_losses, build_loss, get_loss_class, register_los
 __all__ = [
     "ContrastiveLoss",
     "AlignmentUniformity", "ArcFace", "BarlowTwins", "ContrastivePredictiveCoding",
-    "DecoupledContrastive", "HardNegativeContrastive", "InfoNCE", "MaxMargin", "NTXent",
+    "DecoupledContrastive", "HardNegativeContrastive", "InfoNCE",
+    "LabelWeightedDecoupledContrastive", "MaxMargin", "NTXent",
     "RankNContrast", "SimSiam", "SupervisedContrastive", "TripletMargin", "VICReg",
     "available_losses", "build_loss", "get_loss_class", "register_loss",
 ]

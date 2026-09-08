@@ -174,6 +174,81 @@ class DecoupledContrastive(ContrastiveLoss):
         return 0.5 * (self._directional(a, b) + self._directional(b, a))
 
 
+@register_loss("label_dcl")
+class LabelWeightedDecoupledContrastive(ContrastiveLoss):
+    """Decoupled contrast whose negatives are weighted by label distance.
+
+    Designed for this project's measurements rather than from the literature, so
+    the reasoning is here in full:
+
+    * `dcl` is the only single term this phase confirmed (+0.0056 MAE on
+      MMIM/MOSEI, replicated on a second seed batch), and `infonce` -- the same
+      objective with the positive left in the denominator -- did not confirm. So
+      the decoupled form is what this builds on.
+    * The label-aware objectives have not paid off. `supcon` must bin a
+      continuous target, which asserts that 0.9 and 1.1 belong to different
+      classes; `rnc` uses only the *ordering* of label distances, treating a gap
+      of 0.1 the same as a gap of 3.0. Neither confirmed.
+    * The cross-modal family, `dcl` included, ignores labels entirely: two clips
+      with the same sentiment are pushed apart as hard as two opposites.
+
+    **On a continuous target "negative" is a matter of degree, and every existing
+    objective here makes it binary or ordinal.** So each negative is weighted by
+    how far its label actually is from the anchor's:
+
+        L_i = -sim(x_i, y_i)/T + log sum_{j!=i} w_ij * exp(sim(x_i, y_j)/T)
+        w_ij = clamp(|y_i - y_j| / d0, w_min, 1)
+
+    Clips with nearby labels are down-weighted as negatives; only clips far apart
+    in sentiment are pushed at full strength. Positives stay cross-modal (the
+    same clip's other views), so no binning enters anywhere.
+
+    **With every w_ij at 1 this is exactly `dcl`**, which is the point: its
+    control is a term already confirmed on this setup, and the difference between
+    them is precisely the label weighting. `scripts/check_losses.py` asserts that
+    degeneracy numerically rather than trusting the derivation.
+
+    `w_min` exists for the same reason the composite scheme has a weight floor:
+    MOSEI has many exactly-zero labels, so a batch can hold several identical
+    ones, and a row whose every weight is zero has an empty denominator and an
+    infinite loss.
+    """
+
+    uses_continuous_labels = True
+
+    def __init__(self, temperature: float = 0.1, distance_scale: float = 1.0,
+                 w_min: float = 0.05):
+        super().__init__()
+        if not 0.0 < w_min <= 1.0:
+            raise ValueError(f"w_min must be in (0, 1], got {w_min}")
+        self.temperature, self.distance_scale, self.w_min = (
+            temperature, distance_scale, w_min
+        )
+
+    def _log_weights(self, labels: torch.Tensor) -> torch.Tensor:
+        distance = (labels.reshape(-1, 1) - labels.reshape(1, -1)).abs()
+        weight = (distance / self.distance_scale).clamp(self.w_min, 1.0)
+        log_weight = weight.log()
+        # The diagonal is excluded by the -inf in the similarity matrix; zero it
+        # so the sum of two -inf terms never appears.
+        log_weight.fill_diagonal_(0.0)
+        return log_weight
+
+    def _directional(self, a: torch.Tensor, b: torch.Tensor,
+                     log_weight: torch.Tensor) -> torch.Tensor:
+        sim = a @ b.t() / self.temperature
+        positive = sim.diagonal()
+        negatives = sim.clone()
+        negatives.fill_diagonal_(float("-inf"))
+        return (-positive + torch.logsumexp(negatives + log_weight, dim=1)).mean()
+
+    def pair_loss(self, x, y, labels):
+        a, b = _normalise(x), _normalise(y)
+        log_weight = self._log_weights(labels)
+        return 0.5 * (self._directional(a, b, log_weight)
+                      + self._directional(b, a, log_weight))
+
+
 @register_loss("hcl")
 class HardNegativeContrastive(ContrastiveLoss):
     """Hard-negative sampling for contrastive learning (Robinson et al. 2021).
