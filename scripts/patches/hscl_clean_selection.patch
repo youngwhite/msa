@@ -1,0 +1,11 @@
+--- a/src/solver.py
++++ b/src/solver.py
+@@ -212,7 +212,7 @@
+                 # update best validation
+                 patience = self.hp.patience
+                 best_valid = val_loss
+-                if test_loss < best_mae:
++                if True:  # clean-selection arm: validation only
+                     best_epoch = epoch
+                     best_mae = test_loss
+                     if self.hp.dataset in ["mosei_senti", "mosei"]:
