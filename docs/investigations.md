@@ -2227,3 +2227,53 @@ MOSEI 上 14 候选、λ=0.1、seeds 42-46：**BH 28 个检验拒绝 0 个**（�
 ### 对「架构对比」实验的影响
 
 原估算「14 模型 × 5 seed ≈ 27 小时」只算了算力。**实际还需先把 13 个模型的 MOSEI 超参逐一移植到我们的 CLI 与 `model-arg` 上**——这是约定 5 要求的工作量，且移植错误会静默产出一张错的排序表。规划时必须把这部分算进去。
+
+## MMSA 的 `unaligned_50.pkl`，记录长度之外不是零 {#mmsa-padding-not-zero}
+
+**2026-09-10。** 给 HSCL 写 SDK 布局适配器时发现的。
+
+`unaligned_50.pkl` 里音视频张量是定长的（vision 500 帧、audio 375 帧），真实长度
+记在 `vision_lengths` / `audio_lengths`。自然的假设是"长度之外补零"。**不是。**
+
+| split / 模态 | 记录长度之外仍有非零帧 | 序列内部含全零帧 |
+|---|---|---|
+| train vision | 180 / 1284 | 1 |
+| train audio | 43 / 1284 | 0 |
+| valid vision | 16 / 229 | 0 |
+| valid audio | 5 / 229 | 0 |
+| test vision | 104 / 686 | 1 |
+| test audio | 23 / 686 | 0 |
+
+合计 vision 300/2199、audio 71/2199 条序列的尾部带着残值。
+
+**对我们自己没有影响**：`msa/data.py` 一直把 `*_lengths` 传给模型，模型按它 pack /
+遮罩，那段残值从没进过任何一次训练。`*_lengths` 是权威。
+
+**对移植别人的代码有影响，而且是静默的。** SDK/MMIM 那一系的代码普遍不读长度字段，
+而是**从数据里猜**——HSCL 的 `get_length` 就是 `x.shape[1] - (sum(x, -1) == 0).sum(1)`，
+数非全零帧。喂原样数据它会**多**数出来（300 条），紧接着的 `x[L - length:, :]` 就把
+真实帧的开头切掉了。两边指标一差，会先去怀疑模型。
+
+因此 `scripts/adapt_features_sdk.py` 按记录长度**先截断清零、再左移**，让 SDK 那条
+不变式（真实序列之外全零）真的成立。残留 2/2199 条序列内部本来就有一帧全零，清零后
+它仍会少数 1 帧——那是那个启发式自身的界，喂它原版 SDK pickle 也一样，不补。
+
+这条归入约定 5 清单里的 "padding/池化" 一项，是它的一个新实例：**不只是"补在哪一端"，
+还有"补的到底是不是零"。**
+
+## ConFEDE 发布版少建一个目录 {#confede-missing-ckpt-dir}
+
+**2026-09-10。** `config.py` 对 `model_path` 和 `result_path` 调了 `check_dir`
+（即 `makedirs`），但对 `encoder_path = 'ckpt/fea_encoder/'` 没调。三个编码器的
+`save_model` 都往那里写，于是文本预训练在第一次 MAE 改善时 `torch.save` 抛
+`RuntimeError: Parent directory ckpt/fea_encoder does not exist`。
+
+**是继承的还是二次实现引入的？** 这里没有这个问题——ConFEDE 就是原作者实现
+（`XpastaX/ConFEDE`），所以这是发布版自身的缺陷。原作者机器上那个目录大概本来就在。
+
+处理：`mkdir -p ckpt/fea_encoder`，**不改源码**。跑法记在
+`.mmsa-reference/papers/README.md`。
+
+值得记的是这个 bug 的形态——它**不在第一轮就炸**。`check` 初值是 10000，直到评测
+真正跑出一个 MAE 才触发保存，中间已经烧掉了几十轮。前台跑一次看见指标在动就以为
+"跑通了"是不够的，得跑到它落盘。
