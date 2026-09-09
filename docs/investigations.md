@@ -2277,3 +2277,82 @@ MOSEI 上 14 候选、λ=0.1、seeds 42-46：**BH 28 个检验拒绝 0 个**（�
 值得记的是这个 bug 的形态——它**不在第一轮就炸**。`check` 初值是 10000，直到评测
 真正跑出一个 MAE 才触发保存，中间已经烧掉了几十轮。前台跑一次看见指标在动就以为
 "跑通了"是不够的，得跑到它落盘。
+
+## HSCL 的模型选择读了测试集 {#hscl-test-leak}
+
+**2026-09-10。** 跑通 HSCL（MMM 2024，`Turdidae810/HSCL`）后读它的 `solver.py`
+发现的。`train_and_eval` 的选择逻辑是：
+
+```python
+if val_loss < best_valid:
+    best_valid = val_loss
+    if test_loss < best_mae:        # ← 测试集损失参与决定选哪一轮
+        best_epoch = epoch
+        best_mae = test_loss
+        best_results = results      # ← 最终上报的就是这一轮的测试集预测
+```
+
+**最终上报的那一轮，要同时满足"验证集变好"和"测试集变好"。** 这是测试集泄漏进
+模型选择，违反本项目约定 2，而且它抬高的正是论文要报的那些数字。
+
+seed 1111（它的默认）那次运行里能直接看到这件事发生：
+
+| 轮 | valid loss | test loss | 是否被选为 best |
+|---|---|---|---|
+| 14 | 0.7095 | **0.7197** | ✅ 上报的就是这一轮 |
+| 17 | 0.7063 | 0.7207 | ❌ 验证更好，但测试更差 |
+| 19 | 0.7052 | 0.7286 | ❌ 同上 |
+| 20 | **0.7031** | 0.7282 | ❌ 同上 |
+
+**纯按验证集选，该选第 20 轮**（valid 0.7031 是全程最低），它的测试损失是 0.7282，
+比上报的 0.7197 差。也就是说这个机制在这一次运行里就值约 0.008 的测试损失，方向
+必然是让论文数字更好——它只在测试集变好时才更新。
+
+这不是"作者作弊"的指控，这类写法在这个领域的开源代码里很常见（往往是从别人的
+模板继承来的）。但它决定了**这些数字不能与干净协议下的数字并列**，而这恰好是
+`benchmark_contrastive.md` 分档的又一条理由——**这一条还是在有代码的 A 档里发现的，
+C 档那四篇没有代码，连查都查不了。**
+
+处理方式：as-released 那一版**照它原样跑、原样报**（那才是它论文数字的含义），另做
+一个只看验证集的对照臂，差值单独报，两者绝不混。对照臂需要改它的源码，因此以
+`.patch` 文件入库，diff 可审——这与 `compat/` 里那些 API 兼容补丁是两件不同的事，
+不要混在一起。
+
+顺带记两个形态问题：
+
+- **`--multiseed` 是个不生效的开关。** `config.py` 声明了它，`logs.py` 会把它打进
+  日志（`multiseed: True`），**但全仓库没有任何地方读它**。看日志会以为跑了多 seed，
+  实际是单 seed（默认 1111）。这是约定 5 清单里"声明了但不生效"的第四种形态：
+  不是层，是命令行开关，而且它**留下了让人误信的日志痕迹**。多 seed 只能靠外面循环
+  `--seed` 实现。
+- **它不落盘任何结果文件**，指标只打在 stdout。所以外层驱动必须自己存日志再解析。
+
+## HSCL 与 ConFEDE 的两处 torch 兼容改动 {#paper-repro-compat}
+
+**2026-09-10。** 都在 `.mmsa-reference/compat/`，论文源码逐字节未改，理由与
+`mmsa_reference.py` 给 MMSA 打 `ReduceLROnPlateau(verbose=)` 的补丁相同：API 变更，
+不是算术。
+
+**ConFEDE**：① `DataLoader(prefetch_factor=2, num_workers=0)` 旧版忽略、新版报错；
+② `main.py` 写死 `cuda:1`，改为覆盖 `config.DEVICE`。**② 走过一次弯路**：先给
+`torch.device` 打猴子补丁，结果 transformers 内部 `isinstance(x, torch.device)` 失败。
+另有一个发布版缺陷见 `#confede-missing-ckpt-dir`。
+
+**HSCL**：根因是 `main.py` 里 `torch.set_default_tensor_type('torch.cuda.FloatTensor')`
+这一个已废弃的写法，它有两个后果。
+
+① `DataLoader(shuffle=True)` 内部 `torch.randperm` 被派发到 cuda，而 sampler 的
+生成器在 CPU → `Expected a 'cuda' device type for generator but found 'cpu'`。
+**两个看着可行、实则会改变实验的修法没有采用**：删掉那行（会让若干不写 device 的
+`torch.zeros` 换设备）；新建 `torch.Generator(device='cuda')` 传进去（它不被
+`torch.manual_seed` 播种，shuffle 顺序就不再由 seed 决定，**把可复现实验变成不可
+复现的**，而 seed 正是这次要报的东西）。采用的是把 `torch.cuda.default_generators[0]`
+交给 DataLoader——那正是 torch 1.8 下实际用到、且被 `manual_seed` 播种的那个生成器。
+已验证同 seed 两次 `randperm` 相同、换 seed 则不同。
+
+② **HSCL 从不把模型搬到 GPU**，`solver.py` 只 `.cuda()` 数据，模型参数落在哪全靠
+那个默认张量类型。transformers 2.10 的 `from_pretrained` 尊重它，4.x 按 checkpoint
+所在（CPU）加载 → BERT embedding 权重在 CPU、索引在 cuda。因此包一层
+`BertModel.from_pretrained` 搬到当前默认设备。**这不是"顺手加个 `.to(cuda)`"**——
+它恢复的是原版里由默认张量类型决定的那个位置，所以默认张量类型没被改（CPU 上跑）时
+它什么也不做。

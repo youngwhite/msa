@@ -9,8 +9,11 @@ pickle，键名与我们的 `unaligned_50.pkl` 不同。**不改它的源码，�
 1. `id`：我们是 `<U16` 的 `'03bSnISJMiM$_$11'`，SDK 是 bytes、形状 (N,1)，
    HSCL 取 `[:,0]` 再 `decode('utf-8')`，然后用正则 `(.*)_(.*)` 拆成
    video/clip 去 CSV 里查。`$_$` 分隔符会让那个正则拆错，所以写成 `video_clip`。
-2. `labels`：我们是 `regression_labels` 形状 (N,)，SDK 是 `labels` 形状 (N,1)。
-   HSCL 还有一条 `if labels.size(1) == 7` 的分支专给 MOSEI，(N,1) 走不到。
+2. `labels`：我们是 `regression_labels` 形状 (N,)，SDK 是 **(N, 1, 1)**。多出来的
+   那一维不是冗余，是被读的：HSCL 的 `collate_fn` 取 `sample[1]`（于是拿到 (1,1)）、
+   `torch.cat(dim=0)` 成 (B,1)，再判 `if labels.size(1) == 7` 来识别 MOSEI——SDK 的
+   MOSEI 标签是 (N,1,7)，七种情绪，取第 0 列作情感强度。写成 (N,1) 的话
+   `cat` 会压成一维，`size(1)` 直接 IndexError。
 3. **补零方向要反过来，而且先得真的把零补上。** HSCL 用 `x[L - length:, :]` 取
    序列，也就是假定补零在**前端**（SDK/MMIM 的约定）。我们这份 MMSA 特征是
    **后端**放数据。直接喂过去，它取到的是纯零。这是约定 5 列的那类协议差异
@@ -94,8 +97,9 @@ def convert(source: Path, destination: Path) -> None:
              for identifier in split["id"]],
             dtype=object,
         )
+        # (N, 1, 1)，不是 (N, 1)——理由在模块文档串第 2 条。
         labels = np.asarray(split["regression_labels"],
-                            dtype=np.float32).reshape(-1, 1)
+                            dtype=np.float32).reshape(-1, 1, 1)
 
         converted[sdk_split] = {
             "vision": left_pad(vision, vision_lengths),
