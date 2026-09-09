@@ -25,6 +25,10 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     lf_lstm_mosi_cpu
     lf_lstm_mosei_cuda
     tfn_mosei_mmsacfg
+    pretrain_mosei_self_mm
+    transfer_mosi_scratch
+    transfer_mosi_full
+    transfer_mosi_frozen
     abl_lf_padded
     abl_lf_unaligned_masked
     abl_lf_unaligned_padded
@@ -115,6 +119,8 @@ RUN_GROUPS+=(
 # hyper-parameters (lr 1e-3, no weight decay) rather than this repo's defaults.
 #: TFN with MMSA's hyper-parameters, which is what the screen is built on.
 SCREEN_BACKBONE="--model tfn --unaligned --lr 1e-3 --weight-decay 0 --seeds 42 43 44 45 46"
+#: Self-MM under the hyper-parameters phase 1 accepted it with, minus the seeds.
+SELF_MM_MOSI="--model self_mm --unaligned --device cuda --lr 1e-3 --weight-decay 0.001 --batch-size 16 --grad-clip 0 --epochs 200 --patience 8 --accumulate-steps 4"
 #: The same backbone, but seeds 100-119 for the weighting arms and 120-139 for
 #: their confirmation. Three disjoint seed sets on purpose: 42-46 chose the four
 #: terms, so reusing them downstream would confirm this work's own selection.
@@ -133,6 +139,16 @@ args_for() {
     # MOSI's, which is fine as a fixed backbone for screening losses but wrong
     # as a statement about what TFN achieves on MOSEI. See
     # investigations.md#mosei-hyperparams-differ.
+    # MOSEI -> MOSI transfer. See decisions.md 2026-09-09. The pretrain group
+    # keeps its checkpoint because the two transfer arms initialise from it.
+    pretrain_mosei_self_mm)
+        echo "--model self_mm --dataset mosei --unaligned --seeds 1000 --keep-checkpoint" ;;
+    transfer_mosi_scratch)
+        echo "$SELF_MM_MOSI --seeds $(seq -s' ' 42 61)" ;;
+    transfer_mosi_full)
+        echo "$SELF_MM_MOSI --seeds $(seq -s' ' 42 61) --init-from outputs/pretrain_mosei_self_mm/seed1000/best.pt" ;;
+    transfer_mosi_frozen)
+        echo "$SELF_MM_MOSI --seeds $(seq -s' ' 42 61) --init-from outputs/pretrain_mosei_self_mm/seed1000/best.pt --freeze-prefix encoder --freeze-prefix audio_model --freeze-prefix vision_model" ;;
     tfn_mosei_mmsacfg)
         echo "--model tfn --dataset mosei --unaligned --seeds $(seq -s' ' 42 61) --device cuda --lr 5e-3 --weight-decay 0 --grad-clip 0 --batch-size 128 --epochs 200 --model-arg text_hidden=128 --model-arg audio_hidden=16 --model-arg vision_hidden=128 --model-arg text_out=128 --model-arg post_fusion_dim=16 --model-arg text_dropout=0.4 --model-arg audio_dropout=0.4 --model-arg vision_dropout=0.4 --model-arg post_fusion_dropout=0.4" ;;
     screen_mosei_control_n20)

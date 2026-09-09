@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+from pathlib import Path
 
 import torch
 
@@ -108,6 +109,23 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--run-group", default=None,
                     help="output subdirectory (default: <model>_<dataset>_<device>)")
     ap.add_argument("--quiet", action="store_true", help="suppress per-epoch lines")
+    ap.add_argument("--freeze-prefix", action="append", default=[], metavar="PREFIX",
+                    help="freeze every parameter whose name starts with PREFIX "
+                         "(repeatable). Used with --init-from to fine-tune only "
+                         "the head on top of transferred features. How many "
+                         "parameters were frozen is printed and recorded, since a "
+                         "prefix that matches nothing would silently train "
+                         "everything")
+    ap.add_argument("--init-from", default=None, metavar="CHECKPOINT",
+                    help="initialise from an existing checkpoint, copying only the "
+                         "tensors whose names and shapes match. Intended for "
+                         "cross-dataset transfer: MOSEI's audio and vision are 74 "
+                         "and 35 dimensional against MOSI's 5 and 20, so those "
+                         "encoders' first layers cannot transfer and are left at "
+                         "their fresh initialisation. What was copied and what was "
+                         "skipped is printed and written into result.json — a "
+                         "silent partial load would look exactly like a successful "
+                         "one")
 
     contrastive = ap.add_argument_group(
         "contrastive auxiliary loss",
@@ -158,6 +176,79 @@ def build_parser() -> argparse.ArgumentParser:
                                   "set a weight is not a share of influence and one "
                                   "lambda is not comparable across candidates")
     return ap
+
+
+def freeze_parameters(model, prefixes: list[str]) -> dict:
+    """Set requires_grad=False on every parameter under one of `prefixes`.
+
+    Recorded for the same reason the transfer is: a prefix that matches nothing
+    trains the whole model while the command line says otherwise, and the
+    numbers would not show it.
+    """
+    frozen, counts = 0, {}
+    for prefix in prefixes:
+        matched = 0
+        for name, parameter in model.named_parameters():
+            if name.startswith(prefix) and parameter.requires_grad:
+                parameter.requires_grad = False
+                matched += parameter.numel()
+        counts[prefix] = matched
+        frozen += matched
+        if matched == 0:
+            raise SystemExit(
+                f"--freeze-prefix {prefix!r} matched no parameter. Available "
+                f"top-level names: {[n for n, _ in model.named_children()]}"
+            )
+    total = sum(p.numel() for p in model.parameters())
+    trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"froze {frozen/1e6:.2f}M of {total/1e6:.2f}M parameters; "
+          f"{trainable/1e6:.2f}M trainable")
+    for prefix, matched in counts.items():
+        print(f"    {prefix}: {matched/1e6:.2f}M")
+    return {"prefixes": counts, "frozen": frozen, "trainable": trainable,
+            "total": total}
+
+
+def transfer_weights(model, checkpoint: Path) -> dict:
+    """Copy the shape-compatible tensors from `checkpoint` into `model`.
+
+    Returns a record of what happened, which goes into result.json. The record is
+    the point: a transfer that silently copies nothing produces exactly the same
+    numbers as no transfer at all, and the difference would be invisible.
+    """
+    state = torch.load(checkpoint, map_location="cpu", weights_only=True)
+    if "state_dict" in state:
+        state = state["state_dict"]
+    target = model.state_dict()
+
+    copied, shape_mismatch, absent = [], [], []
+    for name, tensor in target.items():
+        if name not in state:
+            absent.append(name)
+        elif state[name].shape != tensor.shape:
+            shape_mismatch.append(
+                f"{name}: checkpoint {tuple(state[name].shape)} vs "
+                f"model {tuple(tensor.shape)}"
+            )
+        else:
+            target[name] = state[name]
+            copied.append(name)
+    model.load_state_dict(target)
+
+    print(f"init-from {checkpoint}: copied {len(copied)}/{len(target)} tensors, "
+          f"{len(shape_mismatch)} shape mismatch, {len(absent)} absent")
+    for line in shape_mismatch:
+        print(f"    skipped (shape): {line}")
+    for name in absent:
+        print(f"    skipped (absent): {name}")
+    if not copied:
+        raise SystemExit(
+            f"--init-from {checkpoint} copied nothing; every tensor was skipped. "
+            f"That would train from scratch while looking like a transfer."
+        )
+    return {"checkpoint": str(checkpoint), "copied": len(copied),
+            "total": len(target), "shape_mismatch": shape_mismatch,
+            "absent": absent}
 
 
 def build_contrastive(args, model, batch, spec) -> object:
@@ -244,6 +335,12 @@ def main() -> None:
             device=device,
         )
         model = build_model(args.model, spec, **model_kwargs).to(device)
+        transfer = None
+        if args.init_from:
+            transfer = transfer_weights(model, Path(args.init_from))
+        frozen = None
+        if args.freeze_prefix:
+            frozen = freeze_parameters(model, args.freeze_prefix)
         if args.contrastive:
             probe = next(iter(loaders["train"]))
             probe = {k: v.to(device) for k, v in probe.items()
@@ -299,6 +396,8 @@ def main() -> None:
             "model_kwargs": model_kwargs,
             "aligned": not args.unaligned,
             "batch_size": args.batch_size,
+            "init_from": transfer,
+            "frozen": frozen,
         })
         results.append(result)
 
