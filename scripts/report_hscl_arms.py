@@ -4,9 +4,13 @@ HSCL 不落盘任何结果文件，指标只打在 stdout（见
 `investigations.md#hscl-test-leak`），所以这里解析日志。它在每个"best"轮都打一遍
 那个指标块、最后再打一遍，**取最后一次**才是它上报的数字。
 
-两臂的训练轨迹逐轮相同（补丁没碰早停），唯一差别是哪一轮被上报，因此这里用配对
-检验——与本项目别处用 Welch 非配对的理由正相反：那些地方是加了损失项、整条轨迹都
-变了，这里是同一条轨迹上换了个读数点。
+检验用**非配对 Welch**，与本仓库别处一致。
+
+这里原本用的是配对检验，前提是"补丁只改上报轮次、两臂轨迹逐轮相同"。**那个前提
+是错的**：实测 seed 42 第 1 轮两臂就不同，而第 1 轮那行打印在任何 save 分支之前，
+所以不是补丁造成的——HSCL 在固定 seed 下本身就不可复现，见
+`investigations.md#hscl-nondeterministic`。因此两臂之差里混进了运行间噪声，配对的
+前提不成立。
 """
 
 from __future__ import annotations
@@ -79,9 +83,9 @@ def main(directory: Path) -> int:
             cells += f"{values.mean():>10.4f} ±{values.std(ddof=1):<6.4f}"
         print(f"{arm:<14}{cells}")
 
-    print("\n发布版的选择规则值多少（配对，同一条训练轨迹上换读数点）")
+    print("\n发布版的选择规则值多少（非配对 Welch；差里含运行间噪声，见模块文档串）")
     print(f"{'metric':<12}{'as_released':>13}{'clean':>10}{'差':>10}"
-          f"{'配对 p':>10}  方向")
+          f"{'p 双侧':>10}  方向")
     from scipy import stats
     for metric in metrics:
         released = np.array([arms["as_released"][s][metric] for s in shared])
@@ -91,14 +95,17 @@ def main(directory: Path) -> int:
             print(f"{metric:<12}{released.mean():>13.4f}{clean.mean():>10.4f}"
                   f"{0.0:>10.4f}{'—':>10}  两臂逐 seed 完全相同")
             continue
-        _, p_two = stats.ttest_rel(released, clean)
+        _, p_two = stats.ttest_ind(released, clean, equal_var=False)
         better = ("发布版更好" if (difference.mean() < 0) == (metric in LOWER_IS_BETTER)
                   else "发布版更差")
         print(f"{metric:<12}{released.mean():>13.4f}{clean.mean():>10.4f}"
               f"{difference.mean():>+10.4f}{p_two:>10.4f}  {better}")
 
-    print("\n预期方向是「发布版更好」——那个门槛只在测试集变好时才更新。若在某个指标上"
-          "\n出现相反方向，说明该指标与被用作门槛的 test_loss 不同向，不构成反例。")
+    print("\n方向不要凭机制推断——我推错过一次。发布版的接受集是 clean 的子集"
+          "（要求验证改善**且**测试改善），\n所以它上报的轮次不晚于 clean，"
+          "那个合取条件会让它提早冻结在训练不足的一轮上。门槛作用在测试 MSE 上、"
+          "\n确实压低了所选轮次的测试 MSE，但论文报的是 MAE / Corr / Acc。"
+          "两半各自的数字见 scripts/hscl_selection_trace.py。")
     return 0
 
 

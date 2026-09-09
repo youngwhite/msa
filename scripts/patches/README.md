@@ -18,9 +18,17 @@ HSCL 发布版的模型选择读了测试集——上报的那一轮必须同时
 
 - `best_mae = test_loss` 留着不删。它不再参与选择，只是记账；删掉会让 diff 变大，
   而 diff 越小越好审。
-- `patience` 的重置在外层 `if val_loss < best_valid` 里，补丁没碰它，**所以早停行为
-  与原版逐轮一致**。唯一变的是"哪一轮被上报"。这是把这条改动当成可解释对照臂的前提：
-  两臂的训练轨迹相同，只有选择规则不同。
+- `patience` 的重置在外层 `if val_loss < best_valid` 里，补丁没碰它，所以补丁**没有
+  引入**任何训练侧改动，唯一变的是"哪一轮被上报"。
+
+  > **2026-09-10 更正。** 这里原本写的是"所以两臂的训练轨迹逐轮相同"，并据此在
+  > `report_hscl_arms.py` 里用了配对检验。**那是一个没有验证的假设，而它是错的。**
+  > 实测两臂在 **seed 42 的第 1 轮**就不同（valid 1.1794 对 1.1824），而第 1 轮那行
+  > 打印在任何 save 分支之前，所以不可能是补丁造成的——**HSCL 的运行在固定 seed 下
+  > 也不可复现**（`cudnn.deterministic=True` 只管 cuDNN 卷积，管不到 BERT /
+  > TransformerEncoder 反向里的原子加，而 `use_deterministic_algorithms` 它从未设置）。
+  > 见 `docs/investigations.md#hscl-nondeterministic`。检验已改为非配对 Welch，与本
+  > 仓库别处一致；代价是两臂之差里混进了运行间噪声，报告时必须连这一点一起说。
 
 怎么用（HSCL 那份是 git clone，跑完 `git checkout` 就能回到发布版）：
 
