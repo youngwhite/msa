@@ -444,3 +444,18 @@ fi
 
 printf '\n\033[1m=== comparing against the committed predictions ===\033[0m\n'
 $PY scripts/check_reproduction.py
+
+# 论文原作者代码的复现（ConFEDE、HSCL）**不在这个脚本里**，是有意的。
+#
+# 约定是"进入文档的实验必须能从这个脚本重现"，而这两篇的重现路径不同：
+#
+#   bash scripts/setup_paper_repros.sh      # clone + 数据适配（一次）
+#   bash scripts/run_hscl_arms.sh           # HSCL 两臂各 5 seed，约 25 分钟
+#   # ConFEDE：见 setup_paper_repros.sh 末尾打印的两条命令，约 2.5 小时
+#
+# 不并进来的三个理由：① 本脚本的预算是约 25 分钟，ConFEDE 一篇就是它的六倍；
+# ② 它们跑的是 .mmsa-reference/ 里的别人的代码，而那个目录不入库、换机器必须先
+# 重建，并进来会让本脚本在新机器上必红——而它的红是用来看回归的；③ 它们不产出
+# outputs/<group>/result.json，check_reproduction.py 的比对口径对它们不适用。
+#
+# 数字与判定在 docs/benchmark_contrastive.md。
