@@ -2181,3 +2181,37 @@ MOSEI 上 14 候选、λ=0.1、seeds 42-46：**BH 28 个检验拒绝 0 个**（�
 - **若 20-seed 对照的 MAE 比 5-seed 高（更差）约 0.002** → 5-seed 对照抽到了好样本，模式是假象，正确表述回到「14 个候选与对照没有可检出差异」。
 
 **这是诊断，不改动预注册的初筛判据。** 原 5-seed 对照组保留不动，新组另立，两者都入库。
+
+
+## <a id="mosei-hyperparams-differ"></a>MMSA 对 14 个模型中的 13 个在 MOSEI 上用了不同超参（2026-09-09）
+
+### 现象
+
+为规划「架构演进在 MOSEI 上是否成立」而对比 MMSA 的 `config_regression.json`，逐模型 diff `datasetParams.mosi` 与 `datasetParams.mosei`：
+
+| 模型 | 差异项数 | 模型 | 差异项数 |
+|---|---|---|---|
+| tetfn | **16** | graph_mfn | 8 |
+| mult | **11** | lf_dnn | 5 |
+| mfn | 9 | misa | 5 |
+| self_mm | 8 | lmf | 4 |
+| tfn | 6 | almt | 3 |
+| ef_lstm | 6 | bert_mag | 2 |
+| | | cenet | 1 |
+| | | **mmim** | **0（完全相同）** |
+
+差异不是小数点级的：MulT 的 `batch_size` 16→4、`learning_rate` 0.002→0.0005；TFN 的 `batch_size` 32→128、`learning_rate` 0.001→0.005、`text_out` 32→128、`post_fusion_dim` 64→16。TETFN 甚至把 `train_samples` 写进配置（1284→16326），根本不可跨数据集复用。
+
+### 两个后果
+
+**MMIM 侧的全部工作不受影响**——它是唯一两个数据集配置完全相同的模型，我们用的正是它。第 2 阶段所有 MMIM 结论成立。
+
+**TFN 在 MOSEI 上的数字配置不对。** `screen_mosei_control*` 用的是 MOSI 的超参（lr 1e-3、默认隐层维度）。这个数字被用在了给老师的材料里，作为「损失工程的收益只是追平一个 2017 年模型」的对照，**该对照因此需要修正后重新评估**。
+
+顺带核对清楚的第三点：第 1 阶段验收 TFN 用的是 `use_lengths=False mask_pooling=False`（**逐比特忠实**版），而 MOSEI 上跑的是默认值（仓库的改进版）。这一项**不是错误**——回答「简单架构能到什么水平」时应当用我们最好的 TFN，而非忠实复现 MMSA 缺陷的那一版。修正运行沿用默认值，只换超参。
+
+`need_normalized: true` 出现在 tfn / lmf / lf_dnn / mfn 四个模型上。它**不是特征标准化，而是把音视频在时间维压成 1 帧**——本仓库早已记录（`storyline.md` 讨论 MFN 那节），且 TFN 的 `mask_pooling` 标志正是针对它的、有文档的有意偏离。**非新问题。**
+
+### 对「架构对比」实验的影响
+
+原估算「14 模型 × 5 seed ≈ 27 小时」只算了算力。**实际还需先把 13 个模型的 MOSEI 超参逐一移植到我们的 CLI 与 `model-arg` 上**——这是约定 5 要求的工作量，且移植错误会静默产出一张错的排序表。规划时必须把这部分算进去。

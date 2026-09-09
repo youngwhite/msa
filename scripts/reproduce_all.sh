@@ -24,6 +24,7 @@ RUN_GROUPS=(  # note: not GROUPS — that is a read-only bash builtin (the user'
     lf_lstm_mosi_cuda
     lf_lstm_mosi_cpu
     lf_lstm_mosei_cuda
+    tfn_mosei_mmsacfg
     abl_lf_padded
     abl_lf_unaligned_masked
     abl_lf_unaligned_padded
@@ -128,6 +129,12 @@ args_for() {
         echo "$TFN_BACKBONE --dataset mosei --seeds 42 43 44 45 46" ;;
     # Diagnostic: is the screen's 5-seed control a lucky draw? See
     # investigations.md#mosei-screen-control-precision.
+    # TFN under MMSA's *MOSEI* hyper-parameters. The screen_mosei_* groups use
+    # MOSI's, which is fine as a fixed backbone for screening losses but wrong
+    # as a statement about what TFN achieves on MOSEI. See
+    # investigations.md#mosei-hyperparams-differ.
+    tfn_mosei_mmsacfg)
+        echo "--model tfn --dataset mosei --unaligned --seeds $(seq -s' ' 42 61) --device cuda --lr 5e-3 --weight-decay 0 --grad-clip 0 --batch-size 128 --epochs 200 --model-arg text_hidden=128 --model-arg audio_hidden=16 --model-arg vision_hidden=128 --model-arg text_out=128 --model-arg post_fusion_dim=16 --model-arg text_dropout=0.4 --model-arg audio_dropout=0.4 --model-arg vision_dropout=0.4 --model-arg post_fusion_dropout=0.4" ;;
     screen_mosei_control_n20)
         echo "$TFN_BACKBONE --dataset mosei --seeds $(seq -s' ' 42 61)" ;;
     screen_mosei_*)
