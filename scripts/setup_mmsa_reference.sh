@@ -72,11 +72,15 @@ PACKAGES=(
     "einops==0.8.2"             # ALMT
     "easydict==1.13"            # MMSA's config objects
     "nvidia-ml-py3==7.352.0"    # MMSA/utils/functions.py imports pynvml at module level
+    "matplotlib==3.11.1"        # UniMSE's modules/adapters.py imports pyplot at module level
 )
-# pytorch_transformers is CENET's, and is long dead: it declares torch, which
-# must not be installed here. --no-deps, then its own imports by hand.
-NO_DEPS=("pytorch-transformers==1.2.0")
-NO_DEPS_SUPPORT=("boto3==1.43.62" "sentencepiece==0.2.2" "sacremoses==0.1.1")
+# These declare torch, which must not be installed here (see the shim comment
+# below). --no-deps, then their own imports by hand.
+#   pytorch_transformers  CENET's, long dead
+#   pytorch_metric_learning  ConFEDE's sample-level contrastive losses
+NO_DEPS=("pytorch-transformers==1.2.0" "pytorch-metric-learning==0.9.99")
+NO_DEPS_SUPPORT=("boto3==1.43.62" "sentencepiece==0.2.2" "sacremoses==0.1.1"
+                 "scikit-learn==1.9.0" "tqdm==4.67.1")
 
 echo "==> MMSA checkout at $MMSA_DIR"
 if [ -d "$MMSA_DIR/.git" ]; then
@@ -93,10 +97,18 @@ PIP="$ENV_DIR/bin/pip"
 "$PIP" install --quiet --no-deps "${NO_DEPS[@]}"
 "$PIP" install --quiet "${NO_DEPS_SUPPORT[@]}"
 
-# The shim: symlinks to everything in that environment except numpy and pip.
-# numpy is excluded so MMSA's models see the same array library as ours -- two
-# numpy copies on one sys.path is the kind of thing that produces a difference
-# nobody can attribute afterwards.
+# The shim: symlinks to everything in that environment except numpy, torch and
+# pip. numpy and torch are excluded so the reference implementations see the same
+# array and tensor libraries as ours -- two copies of either on one sys.path is
+# the kind of thing that produces a difference nobody can attribute afterwards,
+# and a reference run is only worth having when both sides share one torch.
+#
+# The torch exclusion is defensive, not decorative. Every torch-declaring package
+# above is installed --no-deps for this reason, but that is easy to forget when
+# adding one: installing pytorch-metric-learning for ConFEDE without --no-deps
+# pulled torch into this environment, and a later rebuild of the shim linked it,
+# silently shadowing ours. Keep both halves -- --no-deps on the install, and the
+# exclusion here -- so forgetting one is not enough to break it.
 echo "==> shim at $SHIM_DIR"
 SITE=$("$ENV_DIR/bin/python" -c "import sysconfig; print(sysconfig.get_paths()['purelib'])")
 rm -rf "$SHIM_DIR"
@@ -105,10 +117,19 @@ for entry in "$SITE"/*; do
     name=$(basename "$entry")
     case "$name" in
         numpy|numpy.libs|numpy-*|pip|pip-*|__pycache__|*.pth) continue ;;
+        torch|torch-*|torchvision|torchvision-*|torchvision.libs|torchgen) continue ;;
+        functorch|triton|triton-*|nvidia|nvidia_c*|nvidia_n*|cuda|cuda_*) continue ;;
     esac
     ln -s "$entry" "$SHIM_DIR/$name"
 done
 echo "    $(find "$SHIM_DIR" -maxdepth 1 -mindepth 1 | wc -l) entries linked"
+
+# Prove the exclusion held rather than trusting the case list above.
+torch_from=$(PYTHONPATH="$SHIM_DIR" .venv/bin/python -c "import torch; print(torch.__file__)")
+case "$torch_from" in
+    "$PWD/.venv/"*) echo "    torch resolves to our venv: ok" ;;
+    *) echo "    torch resolves to $torch_from -- NOT our venv" >&2; exit 1 ;;
+esac
 
 # Proof, not assumption: this is the gate that was down, so run it. It exits
 # non-zero on a real mismatch and prints SKIP if either half is still missing --

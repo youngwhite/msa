@@ -2437,3 +2437,51 @@ seed 43 也一样，第 2 轮起就分岔。
 逐比特一致"，且 LF-LSTM 默认路径的预测哈希 `172967c7dced83b2` 贯穿多次重构未变。
 **这不是我们比谁讲究——是没有这道闸门，"改动 A 带来了 0.005 的提升"这句话根本无法
 成立**，而这一整个阶段看到的正是这句话被反复说出来。
+
+## 我把 torch 装进了参照环境，然后又把它链进了 shim {#shim-torch-leak}
+
+**2026-09-10。** 自己造的，记下来因为它**静默**，而且是这套参照环境唯一想防的那件事。
+
+### 怎么发生的
+
+两步，中间隔了几个小时：
+
+1. 为 ConFEDE 装 `pytorch-metric-learning==0.9.99` 时**没加 `--no-deps`**。它声明
+   `torch` 与 `torchvision`，于是 pip 把 torch 2.14 装进了 `.mmsa-reference/env/`。
+   当时我只把需要的几个包手工链进 shim、**没链 torch**，所以 ConFEDE 与 HSCL 的运行
+   都用的是主 venv 的 torch（日志里的 traceback 路径可证），**那批结果不受影响**。
+2. 为 UniMSE 装 matplotlib 后，我照抄 `setup_mmsa_reference.sh` 的排除列表写了个
+   循环去补链新包。那个列表**只排除 numpy 和 pip**——因为它写成的时候环境里根本
+   没有 torch。于是循环把 `torch` 链进了 shim，**shadow 掉了主 venv 的那一份**。
+
+发现是因为一条 traceback 里出现了 `.mmsa-reference/env/shim/torch/nn/modules/rnn.py`。
+**没有那条 traceback，我不会知道。** 两边的版本号恰好都是 2.14.0，所以任何"打印
+torch.__version__"式的检查都会通过。
+
+### 为什么这件事严重
+
+`setup_mmsa_reference.sh` 的注释早就把理由写清楚了，说的是 numpy：
+
+> 同一条 sys.path 上有两份，正是那种事后没人能归因的差异来源。
+
+而 torch 比 numpy 更甚——**参照运行只有在两边共用同一个张量库时才有意义**。那个脚本
+把 `pytorch_transformers` 装成 `--no-deps` 的唯一理由就是"它声明了 torch，而 torch
+不能装在这里"。**设计意图一直是明确的，是我在加包时没跟上。**
+
+### 修法：两半都要，忘掉一半不足以破坏它
+
+1. `pytorch-metric-learning` 移进 `NO_DEPS`（它和 `pytorch_transformers` 一样声明
+   torch），配套的 `scikit-learn` / `tqdm` 进 `NO_DEPS_SUPPORT`；matplotlib 进
+   `PACKAGES`（UniMSE 的 `modules/adapters.py` 在模块层 import pyplot）。
+2. shim 的排除列表补上 `torch*` / `torchvision*` / `torchgen` / `functorch` /
+   `triton*` / `nvidia*` / `cuda*`。
+3. **加一道自证**：建完 shim 后用它 `import torch`，检查 `torch.__file__` 是否落在
+   `.venv/` 下，不是就 `exit 1`。
+
+第 3 条是这次真正的教训。第 1、2 条各自都是"记得做某件事"，而这一次失败恰恰是因为
+第 1 条被忘了；**排除列表和 `--no-deps` 是同一件事的两个说法，忘掉任何一个都会重演**。
+所以要有一条不依赖记性的检查。
+
+已验证修复后 `check_mmim_equivalence.py` 仍报 `EQUIVALENT`（最大绝对差 `0.000e+00`），
+且 torch / numpy 来自主 venv、transformers / matplotlib / pytorch_metric_learning
+来自 shim。
