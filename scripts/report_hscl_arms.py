@@ -23,6 +23,8 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from _stats import minimum_detectable_effect  # noqa: E402
+
 ARMS = ("as_released", "clean")
 PATTERNS = {
     "mae": re.compile(r"^MAE:\s+([0-9.]+)", re.M),
@@ -85,7 +87,7 @@ def main(directory: Path) -> int:
 
     print("\n发布版的选择规则值多少（非配对 Welch；差里含运行间噪声，见模块文档串）")
     print(f"{'metric':<12}{'as_released':>13}{'clean':>10}{'差':>10}"
-          f"{'p 双侧':>10}  方向")
+          f"{'p 双侧':>10}{'MDE':>10}  方向")
     from scipy import stats
     for metric in metrics:
         released = np.array([arms["as_released"][s][metric] for s in shared])
@@ -93,13 +95,16 @@ def main(directory: Path) -> int:
         difference = released - clean
         if np.allclose(difference, 0):
             print(f"{metric:<12}{released.mean():>13.4f}{clean.mean():>10.4f}"
-                  f"{0.0:>10.4f}{'—':>10}  两臂逐 seed 完全相同")
+                  f"{0.0:>10.4f}{'—':>10}{'—':>10}  两臂逐 seed 完全相同")
             continue
         _, p_two = stats.ttest_ind(released, clean, equal_var=False)
+        pooled = float(np.sqrt((np.var(released, ddof=1) + np.var(clean, ddof=1)) / 2))
+        mde = minimum_detectable_effect(pooled, len(shared))
         better = ("发布版更好" if (difference.mean() < 0) == (metric in LOWER_IS_BETTER)
                   else "发布版更差")
+        resolved = "" if abs(difference.mean()) >= mde else "（效应小于 MDE，方向不可读）"
         print(f"{metric:<12}{released.mean():>13.4f}{clean.mean():>10.4f}"
-              f"{difference.mean():>+10.4f}{p_two:>10.4f}  {better}")
+              f"{difference.mean():>+10.4f}{p_two:>10.4f}{mde:>10.4f}  {better}{resolved}")
 
     print("\n方向不要凭机制推断——我推错过一次。发布版的接受集是 clean 的子集"
           "（要求验证改善**且**测试改善），\n所以它上报的轮次不晚于 clean，"

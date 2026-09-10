@@ -155,9 +155,18 @@ Acc-7 45.04 / Acc-2 82.80–84.91）。**但它的模型选择读了测试集**�
 [`investigations.md#hscl-test-leak`](investigations.md#hscl-test-leak)，因此这个数字
 只能与"同样读了测试集"的数字比。
 
-正在跑两臂各 5 seed（seeds 42-46）：`as_released` 与 `clean`（只按验证集选，
-差别是 `scripts/patches/hscl_clean_selection.patch` 那一行）。用
-`bash scripts/run_hscl_arms.sh` 重现，报告用 `scripts/report_hscl_arms.py`。
+两臂各 5 seed（seeds 42-46）跑完，**结论是测不出来**：六个指标的观测效应全部
+小于各自的 MDE（MAE 差 +0.0057，MDE 0.0338），方向不可读。要分辨那 0.0057，
+每臂需 n≈143、共约 12 小时——**那个数字本身就是结论**。完整表格与我在这上面
+抢跑两次的记录见 [`investigations.md#hscl-test-leak`](investigations.md#hscl-test-leak)。
+
+**更要紧的是查这件事时撞见的**：HSCL **固定 seed 也不可复现**。同一份发布版代码、
+同一个 seed、连跑两次，20 轮里 0 轮逐位相同，上报 MAE 差 **0.0079**——比这张对标表里
+好几个"改进"还大（MMCL 相对 MMIM 是 0.005）。见
+[`investigations.md#hscl-nondeterministic`](investigations.md#hscl-nondeterministic)。
+
+用 `bash scripts/run_hscl_arms.sh` 重现，报告用 `scripts/report_hscl_arms.py`，
+选择轨迹用 `scripts/hscl_selection_trace.py`。
 
 它的论文报告值**取不到**：MMM 2024 在 Springer 付费墙后，README 也没列。所以
 "与论文报告值比"这一栏对它是空的，而**这恰好让 clean 臂那个差值成为唯一能说明

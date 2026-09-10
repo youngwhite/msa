@@ -197,165 +197,117 @@ If your task is similar to the task the model of the checkpoint was trained on, 
 /home/impulse/wang2/msa/.mmsa-reference/papers/HSCL/src/modules/encoders.py:123: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.self_attn.batch_first was not True(use batch_first for better inference performance)
   self.transformer_encoder = TransformerEncoder(encoder_layers, nlayers)
 --------------------------------------------------
-Epoch  1 | Time 7.1125 sec | Valid Loss 0.9519 | Test Loss 1.0024
+Epoch  1 | Time 7.0851 sec | Valid Loss 1.1825 | Test Loss 1.1080
 --------------------------------------------------
-MAE:  1.0023912
-Correlation Coefficient:  0.6803788233150049
-mult_acc_7:  0.30903790087463556
-mult_acc_5:  0.3323615160349854
-F1 score all/non0: 0.8067/0.8197 over 686/656
-Accuracy all/non0: 0.8061/0.8186
---------------------------------------------------
-Saved model at pre_trained_models/MM.pt!
---------------------------------------------------
-Epoch  2 | Time 6.8577 sec | Valid Loss 0.8404 | Test Loss 0.9282
---------------------------------------------------
-MAE:  0.92823315
-Correlation Coefficient:  0.7548614653112172
-mult_acc_7:  0.35276967930029157
-mult_acc_5:  0.3892128279883382
-F1 score all/non0: 0.7934/0.8044 over 686/656
-Accuracy all/non0: 0.793/0.8034
+MAE:  1.1080021
+Correlation Coefficient:  0.5535661403717289
+mult_acc_7:  0.24927113702623907
+mult_acc_5:  0.26676384839650147
+F1 score all/non0: 0.7048/0.7353 over 686/656
+Accuracy all/non0: 0.7259/0.753
 --------------------------------------------------
 Saved model at pre_trained_models/MM.pt!
 --------------------------------------------------
-Epoch  3 | Time 6.9385 sec | Valid Loss 0.8049 | Test Loss 0.7712
+Epoch  2 | Time 6.8529 sec | Valid Loss 0.8616 | Test Loss 0.8989
 --------------------------------------------------
-MAE:  0.7711516
-Correlation Coefficient:  0.768808403837118
-mult_acc_7:  0.4489795918367347
-mult_acc_5:  0.5174927113702624
-F1 score all/non0: 0.8222/0.8438 over 686/656
-Accuracy all/non0: 0.8236/0.8445
---------------------------------------------------
-Saved model at pre_trained_models/MM.pt!
---------------------------------------------------
-Epoch  4 | Time 6.8325 sec | Valid Loss 0.7519 | Test Loss 0.8248
---------------------------------------------------
-MAE:  0.8247814
-Correlation Coefficient:  0.7739569192894331
-mult_acc_7:  0.41836734693877553
-mult_acc_5:  0.48250728862973763
-F1 score all/non0: 0.8081/0.8212 over 686/656
-Accuracy all/non0: 0.8076/0.8201
+MAE:  0.898879
+Correlation Coefficient:  0.7369664017835673
+mult_acc_7:  0.3469387755102041
+mult_acc_5:  0.3717201166180758
+F1 score all/non0: 0.8057/0.8283 over 686/656
+Accuracy all/non0: 0.8076/0.8293
 --------------------------------------------------
 Saved model at pre_trained_models/MM.pt!
 --------------------------------------------------
-Epoch  5 | Time 6.8232 sec | Valid Loss 0.7443 | Test Loss 0.7772
+Epoch  3 | Time 6.9469 sec | Valid Loss 0.8153 | Test Loss 0.7729
 --------------------------------------------------
-MAE:  0.7771962
-Correlation Coefficient:  0.7624548055781398
-mult_acc_7:  0.4387755102040816
-mult_acc_5:  0.5087463556851312
-F1 score all/non0: 0.8109/0.8257 over 686/656
-Accuracy all/non0: 0.8105/0.8247
---------------------------------------------------
-Saved model at pre_trained_models/MM.pt!
---------------------------------------------------
-Epoch  6 | Time 6.8214 sec | Valid Loss 0.7706 | Test Loss 0.7434
---------------------------------------------------
---------------------------------------------------
-Epoch  7 | Time 6.8365 sec | Valid Loss 0.7487 | Test Loss 0.7651
---------------------------------------------------
---------------------------------------------------
-Epoch  8 | Time 6.8152 sec | Valid Loss 0.7295 | Test Loss 0.7700
---------------------------------------------------
-MAE:  0.7700172
-Correlation Coefficient:  0.7836171928140946
-mult_acc_7:  0.4139941690962099
-mult_acc_5:  0.48104956268221577
-F1 score all/non0: 0.8194/0.8361 over 686/656
-Accuracy all/non0: 0.8192/0.8354
+MAE:  0.77294546
+Correlation Coefficient:  0.7718957020105164
+mult_acc_7:  0.40233236151603496
+mult_acc_5:  0.4402332361516035
+F1 score all/non0: 0.8178/0.8442 over 686/656
+Accuracy all/non0: 0.8207/0.846
 --------------------------------------------------
 Saved model at pre_trained_models/MM.pt!
 --------------------------------------------------
-Epoch  9 | Time 6.8391 sec | Valid Loss 0.7337 | Test Loss 0.7191
+Epoch  4 | Time 6.8939 sec | Valid Loss 0.8722 | Test Loss 0.8558
 --------------------------------------------------
 --------------------------------------------------
-Epoch 10 | Time 6.8060 sec | Valid Loss 0.7261 | Test Loss 0.7218
+Epoch  5 | Time 6.8116 sec | Valid Loss 0.7345 | Test Loss 0.7424
 --------------------------------------------------
-MAE:  0.7218022
-Correlation Coefficient:  0.7899320182855596
-mult_acc_7:  0.43440233236151604
-mult_acc_5:  0.5043731778425656
-F1 score all/non0: 0.833/0.8552 over 686/656
-Accuracy all/non0: 0.8353/0.8567
---------------------------------------------------
-Saved model at pre_trained_models/MM.pt!
---------------------------------------------------
-Epoch 11 | Time 6.8161 sec | Valid Loss 0.7244 | Test Loss 0.7156
---------------------------------------------------
-MAE:  0.7155655
-Correlation Coefficient:  0.7928923922835306
-mult_acc_7:  0.4402332361516035
-mult_acc_5:  0.5102040816326531
-F1 score all/non0: 0.8255/0.8457 over 686/656
-Accuracy all/non0: 0.8265/0.846
+MAE:  0.74236155
+Correlation Coefficient:  0.7802683213656462
+mult_acc_7:  0.4329446064139942
+mult_acc_5:  0.5072886297376094
+F1 score all/non0: 0.8344/0.8518 over 686/656
+Accuracy all/non0: 0.8353/0.8521
 --------------------------------------------------
 Saved model at pre_trained_models/MM.pt!
 --------------------------------------------------
-Epoch 12 | Time 6.8175 sec | Valid Loss 0.7093 | Test Loss 0.7311
---------------------------------------------------
-MAE:  0.7310797
-Correlation Coefficient:  0.796921111823852
-mult_acc_7:  0.4358600583090379
-mult_acc_5:  0.4970845481049563
-F1 score all/non0: 0.8312/0.85 over 686/656
-Accuracy all/non0: 0.8324/0.8506
---------------------------------------------------
-Saved model at pre_trained_models/MM.pt!
---------------------------------------------------
-Epoch 13 | Time 6.9386 sec | Valid Loss 0.6877 | Test Loss 0.7298
---------------------------------------------------
-MAE:  0.72976345
-Correlation Coefficient:  0.7967255903392466
-mult_acc_7:  0.4489795918367347
-mult_acc_5:  0.5131195335276968
-F1 score all/non0: 0.8283/0.8437 over 686/656
-Accuracy all/non0: 0.828/0.843
---------------------------------------------------
-Saved model at pre_trained_models/MM.pt!
---------------------------------------------------
-Epoch 14 | Time 6.8246 sec | Valid Loss 0.7006 | Test Loss 0.7354
+Epoch  6 | Time 6.8351 sec | Valid Loss 0.8076 | Test Loss 0.7969
 --------------------------------------------------
 --------------------------------------------------
-Epoch 15 | Time 6.8328 sec | Valid Loss 0.6891 | Test Loss 0.7121
+Epoch  7 | Time 6.8883 sec | Valid Loss 0.7375 | Test Loss 0.7590
 --------------------------------------------------
 --------------------------------------------------
-Epoch 16 | Time 6.8360 sec | Valid Loss 0.6938 | Test Loss 0.7131
+Epoch  8 | Time 6.8397 sec | Valid Loss 0.7753 | Test Loss 0.7909
 --------------------------------------------------
 --------------------------------------------------
-Epoch 17 | Time 6.8322 sec | Valid Loss 0.6961 | Test Loss 0.7163
+Epoch  9 | Time 6.8415 sec | Valid Loss 0.7178 | Test Loss 0.7516
 --------------------------------------------------
 --------------------------------------------------
-Epoch 18 | Time 6.8085 sec | Valid Loss 0.6894 | Test Loss 0.7242
+Epoch 10 | Time 6.8216 sec | Valid Loss 0.7481 | Test Loss 0.7877
 --------------------------------------------------
 --------------------------------------------------
-Epoch 19 | Time 6.8345 sec | Valid Loss 0.6840 | Test Loss 0.7237
+Epoch 11 | Time 6.8154 sec | Valid Loss 0.7434 | Test Loss 0.7373
 --------------------------------------------------
-MAE:  0.7236826
-Correlation Coefficient:  0.7918074094145211
-mult_acc_7:  0.446064139941691
-mult_acc_5:  0.5087463556851312
-F1 score all/non0: 0.8305/0.8492 over 686/656
-Accuracy all/non0: 0.8309/0.8491
+--------------------------------------------------
+Epoch 12 | Time 6.9339 sec | Valid Loss 0.6952 | Test Loss 0.7162
+--------------------------------------------------
+MAE:  0.7162183
+Correlation Coefficient:  0.7962115379021989
+mult_acc_7:  0.46647230320699706
+mult_acc_5:  0.5291545189504373
+F1 score all/non0: 0.8245/0.8445 over 686/656
+Accuracy all/non0: 0.8251/0.8445
 --------------------------------------------------
 Saved model at pre_trained_models/MM.pt!
 --------------------------------------------------
-Epoch 20 | Time 6.8281 sec | Valid Loss 0.6839 | Test Loss 0.7179
+Epoch 13 | Time 6.8264 sec | Valid Loss 0.7197 | Test Loss 0.7464
 --------------------------------------------------
-MAE:  0.71794176
-Correlation Coefficient:  0.7921785267072647
-mult_acc_7:  0.4446064139941691
-mult_acc_5:  0.5102040816326531
-F1 score all/non0: 0.8257/0.8443 over 686/656
-Accuracy all/non0: 0.8265/0.8445
+--------------------------------------------------
+Epoch 14 | Time 6.8173 sec | Valid Loss 0.6964 | Test Loss 0.7014
+--------------------------------------------------
+--------------------------------------------------
+Epoch 15 | Time 6.8454 sec | Valid Loss 0.6885 | Test Loss 0.7019
+--------------------------------------------------
+MAE:  0.7018907
+Correlation Coefficient:  0.7998849066887004
+mult_acc_7:  0.4897959183673469
+mult_acc_5:  0.5524781341107872
+F1 score all/non0: 0.824/0.8441 over 686/656
+Accuracy all/non0: 0.8251/0.8445
 --------------------------------------------------
 Saved model at pre_trained_models/MM.pt!
-MAE:  0.71794176
-Correlation Coefficient:  0.7921785267072647
-mult_acc_7:  0.4446064139941691
-mult_acc_5:  0.5102040816326531
-F1 score all/non0: 0.8257/0.8443 over 686/656
-Accuracy all/non0: 0.8265/0.8445
+--------------------------------------------------
+Epoch 16 | Time 6.8742 sec | Valid Loss 0.6966 | Test Loss 0.7037
+--------------------------------------------------
+--------------------------------------------------
+Epoch 17 | Time 6.8187 sec | Valid Loss 0.6976 | Test Loss 0.7036
+--------------------------------------------------
+--------------------------------------------------
+Epoch 18 | Time 6.8307 sec | Valid Loss 0.7044 | Test Loss 0.7212
+--------------------------------------------------
+--------------------------------------------------
+Epoch 19 | Time 6.8430 sec | Valid Loss 0.6947 | Test Loss 0.7035
+--------------------------------------------------
+--------------------------------------------------
+Epoch 20 | Time 6.8105 sec | Valid Loss 0.6970 | Test Loss 0.7133
+--------------------------------------------------
+MAE:  0.7018907
+Correlation Coefficient:  0.7998849066887004
+mult_acc_7:  0.4897959183673469
+mult_acc_5:  0.5524781341107872
+F1 score all/non0: 0.824/0.8441 over 686/656
+Accuracy all/non0: 0.8251/0.8445
 --------------------------------------------------
