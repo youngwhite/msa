@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<title>多模态情感分析：工作故事线</title>
+<style>
+@page { size: A4; margin: 19mm 17mm 17mm; @bottom-center { content: counter(page); font-size: 9pt; color: #999; } }
+@page :first { margin-top: 26mm; }
+body { font-family: "Noto Serif CJK SC", "Source Han Serif SC", serif; font-size: 10.5pt; line-height: 1.68; color: #1a1a1a; }
+h1 { font-size: 19pt; margin: 0 0 3pt; }
+.sub { color: #666; font-size: 9.5pt; margin-bottom: 4pt; }
+.lede { font-size: 10.5pt; background: #f3f3f3; border-left: 3px solid #1a1a1a; padding: 9pt 12pt; margin: 14pt 0 20pt; }
+.lede p { margin: 4pt 0; }
+h2 { font-size: 13.5pt; margin: 22pt 0 8pt; padding-bottom: 3pt; border-bottom: 1.5px solid #1a1a1a; page-break-after: avoid; }
+h3 { font-size: 11pt; margin: 14pt 0 4pt; page-break-after: avoid; }
+p { margin: 6pt 0; }
+table { border-collapse: collapse; width: 100%; font-size: 8.8pt; margin: 8pt 0 10pt; page-break-inside: avoid; }
+th, td { border: .5px solid #bbb; padding: 3pt 5pt; text-align: right; }
+th { background: #efefef; font-weight: 600; text-align: center; }
+td:first-child, th:first-child { text-align: left; }
+tbody tr:nth-child(even) { background: #fafafa; }
+.num { font-family: "DejaVu Sans Mono", monospace; font-size: 8.3pt; }
+.good { color: #0a5d00; font-weight: 600; } .bad { color: #9b1010; font-weight: 600; }
+.box { border-left: 3px solid #1a1a1a; background: #f6f6f6; padding: 7pt 11pt; margin: 10pt 0; page-break-inside: avoid; }
+.box.key { border-left-color: #0a5d00; background: #f2f7f1; }
+.box.warn { border-left-color: #9b1010; background: #fdf4f4; }
+.box p:first-child { margin-top: 0; } .box p:last-child { margin-bottom: 0; }
+code { font-family: "DejaVu Sans Mono", monospace; font-size: 8.5pt; background: #efefef; padding: 0 2pt; }
+ul, ol { margin: 5pt 0 8pt; padding-left: 17pt; } li { margin: 2.5pt 0; }
+.foot { margin-top: 18pt; padding-top: 6pt; border-top: .5px solid #ccc; font-size: 8.5pt; color: #666; }
+.tier { display: inline-block; width: 14pt; text-align: center; font-weight: 700; border-radius: 2pt; color: #fff; font-size: 8pt; }
+.tA { background: #0a5d00; } .tB { background: #8a6d00; } .tC { background: #777; }
+</style></head><body>
+
+<h1>多模态情感分析：工作故事线</h1>
+<div class="sub">CMU-MOSI / CMU-MOSEI &nbsp;·&nbsp; 截至 2026-09-10 &nbsp;·&nbsp; 1271 次已入库运行 · 154 个实验组 · 17 个模型 · 16 个对比损失</div>
+
+<div class="lede">
+<p><strong>一句话：这三个阶段合起来测出了同一件事——这个方向上"改进"的报告口径，
+普遍宽于测量精度本身。</strong></p>
+<p>第 1 阶段复现 14 个模型，发现<strong>八年技术演进里只有一次真实跃升</strong>，
+且它来自编码器换代而非融合结构。第 2 阶段按这个线索去改损失函数，
+<strong>16 个对比损失、三批独立 seed、判据全部先立后测，结论是负面且可信的</strong>。
+第 3 阶段转去对标 8 篇含对比学习的论文，<strong>直接量到了那个"口径"有多宽</strong>：
+同一篇已发表方法在两篇论文里差 0.038，而我们在 MOSI 上的分辨极限是 0.013。</p>
+<p><strong>这不是"没做出提升"的托词。</strong>负面结论之所以值钱，是因为它建立在
+12 道自动闸门、逐比特可复现性、以及预注册判据之上——而这三样东西，正是被对标的
+那些论文里普遍缺失的。</p>
+</div>
+
+<h2>第 1 阶段：把这条技术演进重新测一遍</h2>
+
+<p>复现 14 个模型（2017–2023），参照 MMSA（THUIAR）。三个它未登记的模型
+（BERT-MAG / MMIM / ALMT）改用<strong>我们自己跑它的代码</strong>作参照，因此带方差。</p>
+
+<h3>结论一：整体不只打平，是超过</h3>
+
+<p>逐模型全过不等于整体打平——逐模型判据看不见跨模型的系统性偏置。
+跨模型聚合判据（<strong>先立后测</strong>）：</p>
+
+<table>
+<thead><tr><th>被检验方</th><th>参照</th><th>MAE Z</th><th>Corr Z</th><th></th></tr></thead>
+<tbody class="num">
+<tr><td><strong>我们</strong></td><td><strong>MMSA 的代码</strong>（14 模型 × 10 seed）</td>
+<td class="good">−2.21 (p=0.027)</td><td class="good">−3.17 (p=0.0015)</td><td>超过</td></tr>
+<tr><td>我们</td><td>MMSA 公开表</td><td>+7.52</td><td>+6.96</td><td>落后</td></tr>
+<tr><td>MMSA 的代码</td><td>MMSA 公开表</td><td>+8.54</td><td>+11.28</td><td>落后<strong>更多</strong></td></tr>
+</tbody></table>
+
+<p><strong>对能复现的基准，我们超过它；对那张不能复现的表，两份实现都落后，
+而我们更接近。</strong>把 MMSA 自己的代码跑遍十一个模型后发现——
+<strong>其中九个，它的代码达不到它自己发表的 Corr</strong>（差 0.003–0.033）。
+更稳健的符号检验是 3/14 更差、p=0.057，所以严格表述为"至少打平，方向一致偏向我们"。</p>
+
+<h3>结论二：八年演进里只有一次真实跃升</h3>
+
+<p>配对 bootstrap（2000 次重采样）检验相邻台阶，图景与榜单排序<strong>很不一样</strong>：</p>
+
+<table>
+<thead><tr><th>台阶</th><th>MAE</th><th>Corr</th><th>判定</th></tr></thead>
+<tbody class="num">
+<tr><td>TFN → LMF (2018)</td><td>p=0.993</td><td>p=0.485</td><td>无显著差异</td></tr>
+<tr><td>TFN → MFN (2018)</td><td>p=0.674</td><td>p=0.855</td><td>无显著差异</td></tr>
+<tr><td>TFN → MulT (2019)</td><td class="good">p=0.006</td><td class="good">p=0.015</td><td>显著</td></tr>
+<tr><td>MulT → MISA (2020)</td><td class="good">p&lt;0.001</td><td class="good">p&lt;0.001</td><td>显著</td></tr>
+<tr><td>MISA → Self-MM (2021)</td><td class="good">p&lt;0.001</td><td class="good">p=0.026</td><td>显著</td></tr>
+<tr><td>Self-MM → CENET (2022)</td><td class="bad">p=0.038（更差）</td><td>p=0.755</td><td><strong>倒退</strong></td></tr>
+<tr><td>Self-MM → TETFN (2023)</td><td>p=0.197</td><td>p=0.870</td><td>无显著差异</td></tr>
+</tbody></table>
+
+<div class="box key"><p><strong>把两件事合起来读。</strong>真正显著的三步里，中间那一步恰好是
+"开始微调 BERT"。而我们加的<strong>纯文本对照组</strong>给出了这一步的性质：
+纯文本微调 BERT <strong>显著优于 MulT 及此前全部冻结特征模型</strong>，与 MISA 在
+Corr 和 Acc-2 上<strong>统计不可区分</strong>。</p>
+<p>于是这条八年演进在 MOSI 上的形状是：<strong>冻结特征时代（2017–2019）内部无显著进步
+→ 换成微调文本编码器（2020–2021）带来唯一一次真实跃升 → 此后（2022–2023）进入平台期。
+融合结构的设计贡献，远小于编码器换代。</strong></p></div>
+
+<h3>方法论上最贵的三课</h3>
+
+<ol>
+<li><strong>复现组必须是忠实移植。</strong>验收组带着我们自己的改进，会让"复现是否到位"
+与"我们的改动是否有益"混为一谈——TFN 和 LMF 都因此被<strong>误判为未复现</strong>。</li>
+<li><strong>只对照二次实现，会忠实复现它偏离论文的地方。</strong>MulT 的位置编码就是这么
+丢的：原作者无条件启用，MMSA 加了默认关闭的开关且从未开启，我们照抄。</li>
+<li><strong>重写而非转抄的模型，必须做权重复制的数值等价测试。</strong>ALMT 的一个错误版本
+指标<strong>全面优于</strong>参照却通过了验收，是这条测试抓出来的。<strong>比参照"更好"
+要与"更差"同等力度排查。</strong></li>
+</ol>
+
+<h2>第 2 阶段：顺着线索去改损失函数</h2>
+
+<p>第 1 阶段既然指出"融合结构的贡献小于编码器换代"，那就换个杠杆试：
+<strong>16 个对比学习损失全部跑通 → 筛选 → 构造加权总损失 → 基于梯度变化率的自适应权重</strong>。</p>
+
+<h3>做了什么，以及结论</h3>
+
+<table>
+<thead><tr><th>环节</th><th>规模</th><th>结论</th></tr></thead>
+<tbody>
+<tr><td>对比损失初筛（TFN / MOSI）</td><td>14 候选 × 5 seed，28 个检验</td><td class="bad">BH q=0.10 下拒绝 0 个</td></tr>
+<tr><td>λ 扫描</td><td>——</td><td class="bad">检出力不足，MDE 0.076 对观测 0.017</td></tr>
+<tr><td>自适应权重 vs 固定权重</td><td>三种权重方案</td><td class="bad">不可区分</td></tr>
+<tr><td>换 MMIM 骨干（MOSEI，槽位已证灵敏）</td><td>4 候选 × 10 seed</td><td class="bad">预注册判据下全部淘汰</td></tr>
+<tr><td>自设计损失 <code>label_dcl</code></td><td>三批独立 seed，共 60 次运行</td><td class="bad">与退化形式 <code>dcl</code> 统计不可区分</td></tr>
+<tr><td>MOSEI→MOSI 迁移（换数据量而非损失）</td><td>3 臂 × 20 seed</td><td class="bad">d=0.22，p=0.24，MDE 0.0112</td></tr>
+</tbody></table>
+
+<div class="box warn"><p><strong>为什么这个负面结论是可信的，而不是"没调好"。</strong></p>
+<p>① <strong>测试槽位先被证明灵敏</strong>：MMIM 自带的对比项在同一槽位让验证 MAE
+动 <strong>|d|=1.39</strong>，而那个模型经权重复制等价测试与参照<strong>逐比特一致</strong>
+（最大绝对差 <code>0.000e+00</code>）。灵敏度不是假设，是测量值。</p>
+<p>② <strong>每个"没检出"都附最小可检测效应</strong>。MOSI 上 MDE 是 0.013 MAE、
+seed 批间极差 0.0103，而全部候选效应落在 0.0004–0.017——<strong>这个数据集分辨不了
+这个量级</strong>，是算术上的事实，事前就能算出来。</p>
+<p>③ <strong>三条假线索被预注册的复现批次抓住</strong>：「组合优于纯 L1」(p=0.045) 在第三批
+seed 上<strong>符号翻转</strong>；<code>dcl</code> 的优势<strong>缩了一半</strong>；
+<code>label_dcl</code> 的机制增量<strong>归零</strong>（+0.0044 → +0.0004，Corr 符号翻转）。</p>
+<p>损失线上最后能站住的只有：<strong>一个文献已有的去耦合对比项（<code>dcl</code>）
+让 MMIM 在 MOSEI 上改进约 0.007 MAE（相对 1.3%）</strong>——那不是我们的设计。</p></div>
+
+<div class="box key"><p><strong>产出形式是完整的：</strong>设计了一个损失、做了单一机制的
+消融（退化关系由闸门数值断言）、三批独立 seed、判据全部先立后测。
+<strong>结论是负面的，而这个负面结论本身是可信的产出。</strong></p></div>
+
+<h2>第 3 阶段：对标 8 篇含对比学习的论文</h2>
+
+<p>既然自己测不出收益，下一个问题就是：<strong>那些论文报的收益，在受控协议下还剩多少。</strong>
+选取标准：方法里确有对比学习项、在 MOSI/MOSEI 上报回归指标、覆盖 2021–2024，优先有公开代码。</p>
+
+<table>
+<thead><tr><th>档</th><th>论文</th><th>会议 / 年份</th><th>代码</th><th>进度</th></tr></thead>
+<tbody>
+<tr><td><span class="tier tA">A</span></td><td>MMIM</td><td>EMNLP 2021</td><td>有</td><td>五步全部走完（含数值等价测试）</td></tr>
+<tr><td><span class="tier tA">A</span></td><td>ConFEDE</td><td>ACL 2023</td><td>有</td><td>已复现，与论文值比完</td></tr>
+<tr><td><span class="tier tA">A</span></td><td>HSCL</td><td>MMM 2024</td><td>有</td><td>已跑通，两臂对照完</td></tr>
+<tr><td><span class="tier tB">B</span></td><td>UniMSE</td><td>EMNLP 2022</td><td>有</td><td>单独排期（T5 + 两个额外数据集）</td></tr>
+<tr><td><span class="tier tC">C</span></td><td>HyCon / ConKI / CMSBERT-CLR / MMCL</td><td>2022–2023</td><td>无</td><td>只引用报告值，标注"待检验的主张"</td></tr>
+</tbody></table>
+
+<p><strong>分档是这一阶段的方法前提</strong>：把我们测的数字和论文自己报的数字放进一张
+无标注的表，是这个方向最容易犯、也最难被外人发现的错误。理由不是谨慎，是实测——
+同一个 MMIM，我们的实现比参照实现好约 1 个标准差，<strong>原因排除了 8 个候选后至今没定位</strong>。</p>
+
+<h3>ConFEDE 已复现</h3>
+
+<p>原作者代码逐字节未改，读我们 sha256 校验过的特征，用它自己的 5 个 seed：
+MAE <strong>0.7379 ± 0.0050</strong> 对论文 0.742，Corr 0.7805 对 0.784，
+Acc-7 <strong>44.90</strong> 对 42.27。<strong>MAE 与 Corr 都在论文值 0.004 以内。</strong></p>
+
+<p>但它报的 seed 方差不能按字面读：<code>main.py</code> <strong>没有 seed 循环</strong>，
+三个编码器只预训练一次，五个融合 seed 共用同一套预训练权重——
+<strong>那个 ±0.0007 只覆盖融合阶段的随机性。</strong></p>
+
+<h3>HSCL：两条靠读代码和跑对照才拿到的发现</h3>
+
+<p><strong>① 它的模型选择读了测试集。</strong>上报的那一轮必须同时"验证变好"<strong>且</strong>
+"测试变好"。泄漏是真的；但它对上报指标是抬高还是压低，<strong>在 n=5 下测不出来</strong>
+（MAE 差 +0.0057，MDE 0.0338）——要分辨它每臂需 n≈143、共约 12 小时。
+<strong>那个数字本身就是结论：这条规则的效应小于该模型自身运行噪声在任何合理预算下能分辨的量。</strong></p>
+
+<p><strong>② 它固定 seed 也不可复现。</strong>同一份发布版代码、同一个 seed、连跑两次：</p>
+
+<table>
+<thead><tr><th>发布版，seed 42</th><th>第 1 轮 valid</th><th>上报 MAE</th></tr></thead>
+<tbody class="num">
+<tr><td>run 1</td><td>1.1825</td><td>0.7019</td></tr>
+<tr><td>run 2</td><td>1.1794</td><td>0.7098</td></tr>
+<tr><td>20 轮中逐位相同</td><td><strong>0 轮</strong></td><td class="bad">差 0.0079</td></tr>
+</tbody></table>
+
+<h2>三个阶段合起来说明的一件事</h2>
+
+<p>五条独立证据，都来自第 3 阶段：</p>
+
+<ol>
+<li><strong>同一个已发表的 MMIM，在 MOSI 上被报成两个数</strong>：它自己（unaligned）报
+0.700，MMCL 的基线表（token-aligned）报 0.738。两边都没错——设置不同。
+但差 <strong>0.038</strong>，是我们 MOSI 分辨极限（0.013）的<strong>三倍</strong>。</li>
+<li><strong>HyCon 自己的消融声称对比学习值 0.056 MAE</strong>。这是我们 MOSI 上 MDE 的
+四倍多——<strong>若在我们的协议下成立，不可能测不出来</strong>。而我们在 MMIM 上的
+受控 on/off 对照（n=20，模型已证与参照逐比特一致）测到 MOSI 上 0.0046 不显著、
+MOSEI 上显著<span class="bad">有害</span>（|d|=1.39）。</li>
+<li><strong>HSCL 的模型选择读测试集</strong>，且效应小于其自身噪声可分辨的量。</li>
+<li><strong>HSCL 固定 seed 重跑一次，上报 MAE 就差 0.0079</strong>——比对标表里好几个
+"改进"还大（MMCL 相对 MMIM 是 0.005，CMSBERT-CLR 相对 Self-MM 是 0.005）。
+它单 seed 间的 MAE 极差更有 0.039，<strong>比整张对标表 0.681→0.742 的全部跨度还宽</strong>。</li>
+<li><strong>ConFEDE 报的 seed 方差不覆盖预训练阶段</strong>。</li>
+</ol>
+
+<div class="box key"><p><strong>这解释了第 2 阶段为什么反复测不出东西——不是方法不行，
+是那个效应量本来就在噪声以下。</strong>也因此，对标真正该回答的问题不是"谁的数字更高"，
+而是<strong>"这些论文报的对比学习收益，在一个受控、多 seed、可复现的协议下还剩多少"</strong>。</p>
+<p>而回答这个问题需要的东西，我们已经有了：<strong>12 道自动闸门</strong>（含"同机器连跑
+两次是否逐比特一致"）、<strong>1271 次可重算的入库运行</strong>、<strong>预注册判据 + BH 校正
++ 每个空结论都附 MDE</strong>、以及<strong>权重复制的数值等价测试</strong>。
+第 3 阶段的五条证据，全部是这套基础设施的直接产物。</p></div>
+
+<h2>下一步</h2>
+
+<ul>
+<li><strong>把 8 篇的覆盖面做完</strong>（已定：优先覆盖面，ConFEDE 的移植推后）。
+移植经勘定是一整天量级，而两篇里最有价值的发现都来自<strong>读代码 + 在它们自己的代码上
+做受控对照</strong>，不是来自重写进我们的框架。</li>
+<li><strong>UniMSE 单独排期</strong>——它是 B 档里唯一代码公开的，T5 骨干加两个额外数据集。</li>
+<li><strong>已记录但未做</strong>：QKV 门控加权（拟作为 ALMT 的消融，先在 MOSEI 上验证，
+因为 MOSEI 的 5 个 seed 已优于 MOSI 的 20 个）；分类线（计划与约 30 小时成本已记入决策文档）；
+MMIM 与参照实现之间那残余约 1 个标准差的协议差异定位。</li>
+</ul>
+
+<div class="foot">
+全部数字可从仓库重算：<code>scripts/verify_runs.py</code> 从落盘预测重算指标，
+<code>scripts/reproduce_all.sh</code> 重跑全部实验，<code>scripts/check_all.sh</code> 跑 12 道闸门。
+文档：<code>docs/storyline.md</code>（逐模型复盘）、<code>docs/experiments.md</code>（全部数字）、
+<code>docs/investigations.md</code>（排查记录，含每一次自我更正）、
+<code>docs/decisions.md</code>（为什么这样做）、<code>docs/benchmark_contrastive.md</code>（8 篇名单与分档）。
+</div>
+
+</body></html>
