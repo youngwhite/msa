@@ -2548,3 +2548,76 @@ torch.__version__"式的检查都会通过。
 而 `uv run` 默认就是这么做的、且不打印它改了什么。这不是 uv 的错——是"环境的权威
 在 lock 文件里"这件事没有被任何机制保护。目前唯一的保护就是 `check_env.py`，所以
 **不要在跑实验前跳过它**。
+
+## UniMSE 的发布版跑不到一个 batch，原因不在兼容性 {#unimse-partial-release}
+
+**2026-09-11。** 结论：**UniMSE 无法在我们统一的特征上复现**，从 B 档降到 C 档
+（只引用论文报告值）。理由是可检验的，逐条记在这里。
+
+### 兼容性问题都解决了，不是卡在这里
+
+`.mmsa-reference/compat/unimse_compat.py`，论文源码逐字节未改：
+
+| 问题 | 处理 |
+|---|---|
+| transformers 四个模块搬了家（`generation_utils` / `generation_beam_search` / `generation_logits_process` / `generation_stopping_criteria` → `transformers.generation.*`） | 模块别名，**25 个下游符号逐一核对存在**后才做 |
+| `sklearn.metrics.plot_confusion_matrix`（1.2 起移除） | 注入**调用即抛异常**的桩——它在 UniMSE 里只被 import、从未被调用，桩保证这个假设一旦不成立我们立刻知道 |
+| `ReduceLROnPlateau(verbose=)`（torch 2.9 起移除） | 与 `scripts/mmsa_reference.py` 给 MMSA 打的**同一处**补丁、同一种写法 |
+| `matplotlib` 缺失（`modules/adapters.py` 模块层 import pyplot） | 装进参照 shim |
+
+装好之后：**数据按我们的划分加载成功（1284 / 229 / 686）、T5-base 载入、adapter 与
+T5 微调分组建好、optimizer 与 scheduler 建好**。然后死在第一个 batch。
+
+### 真正的原因：发布版里那条读原始 pickle 的路径不是作者跑的那条
+
+```
+data_loader.py:260  [task_prefix + sequence for sequence in inputs_seq]
+TypeError: can only concatenate str (not "list") to str
+```
+
+`create_dataset.py` 的 `MOSI` 类把文本存成 **单词列表**（`actual_words`），而
+`collate_fn` 拿它去和字符串前缀相加。同一处还有第二个不一致：`score = str(sample[1])`
+作用在形状 (1,1) 的标签上会得到 `"[-0.5]"` 这种 T5 目标串，而它旁边被注释掉的那行
+写的是 `str(sample[1][0][0])`。
+
+**作者实际跑的是 `data_processor.py`**，它读 `new_train_align_v4_0610.pkl` 一类
+带日期的预处理文件——**仓库里没有**，只在 README 的百度网盘 / Google Drive 链接里。
+
+### 为什么不能"顺手补那两行"
+
+因为要补的不是格式，是论文的核心贡献。看解码侧就清楚：
+
+```python
+def pre_gen(results):                       # solver.py
+    if len(str(ele).split(',')) == 1:       # ← 目标串是逗号分隔的复合标签
+        ...
+# 同文件被注释掉的测试分支把 pred_token 拆成四段：
+#   por_pred_token / score_pred_token / meld_pred_token / iemocap_pred_token
+```
+
+**T5 的目标是一个跨四个数据集的逗号分隔复合串**，正是论文那个"统一标签空间"，由
+`Simcse/Sim_Process_v3.py` 生成。补那两行等于**替作者发明这个标签格式**——那不是
+修 bug，产出的数字也不是 UniMSE 的数字。
+
+README 自己也写着 "Code: we will open the source codes in the future"——**这是一次
+明确的部分发布**，不是我们哪里配错了。
+
+### 下载它自己的特征是另一个问题，不是这个问题
+
+它的 Drive 链接是活的（撞的是我们已经会绕的病毒扫描中间页）。但：
+
+- 它的预处理 pickle **把统一标签烘进去了**，所以**没法把我们的特征替换进去**——
+  也就永远达不到 A 档的定义（"在我们 sha256 校验过的特征上跑起来"）。
+- 用它自己的特征跑，回答的是"它的流水线能不能复现它自己报的数字"，而不是
+  "它的方法在与别人相同的特征上表现如何"。两个问题都有价值，但**不能混为一谈**，
+  更不能把结果放进与我们数字并列的那张表。
+
+要把 UniMSE 提到 A 档，需要的是它的 `Simcse` 步骤在我们特征上重跑一遍并产出统一标签
+——那是重写它的预处理，成本高于 ConFEDE 的移植（后者已估为一整天，见 `roadmap.md`），
+且同样不改变对标要回答的那个问题。**因此按 C 档处理。**
+
+### 一条顺带的观察
+
+这张对标表里 **MOSI 上报告值最好的那一篇（MAE 0.691，全表最低）**，恰好是发布代码
+**一个 batch 都跑不起来**的那一篇。这不是指控——部分发布是作者的权利。但它精确说明了
+分档为什么必要：**报告值的高低与该数字可被检验的程度之间没有关系。**

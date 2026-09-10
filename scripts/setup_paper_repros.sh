@@ -38,6 +38,10 @@ clone() {  # clone <目录名> <仓库地址>
 
 clone ConFEDE https://github.com/XpastaX/ConFEDE.git
 clone HSCL     https://github.com/Turdidae810/HSCL.git
+# UniMSE 只为留档：它跑不到一个 batch，原因不是兼容性，见
+# investigations.md#unimse-partial-release。clone 它是为了让那份诊断可复核，
+# 不是为了跑出数字——所以下面**不**给它下 t5-base（851MB）。
+clone UniMSE  https://github.com/LeMei/UniMSE.git
 
 echo "== 装 ConFEDE 需要的 pytorch-metric-learning 进 shim"
 "$ROOT/.mmsa-reference/env/bin/python" -m pip install -q "pytorch-metric-learning==0.9.99"
@@ -68,6 +72,12 @@ ln -sfn "$ROOT/datasets/CMU-MOSI/label.csv" "$PAPERS/HSCL/data/MOSI/MOSI-label.c
 # 每次重建源 pickle 都要连带删掉缓存。
 rm -f "$PAPERS/HSCL/data/MOSI"/{train,dev,test}.pkl
 
+echo "== UniMSE：只做数据软链（它跑不通，理由见 investigations.md#unimse-partial-release）"
+mkdir -p "$PAPERS/UniMSE/datasets/MOSI"
+ln -sfn "$PAPERS/HSCL/data/MOSI/mosi_data_noalign.pkl" \
+        "$PAPERS/UniMSE/datasets/MOSI/mosi_data_noalign.pkl"
+ln -sfn "$ROOT/datasets/CMU-MOSI/label.csv" "$PAPERS/UniMSE/datasets/MOSI/MOSI-label.csv"
+
 cat <<'EOF'
 
 配置完成。怎么跑：
@@ -81,6 +91,10 @@ cat <<'EOF'
 
   # HSCL：两臂各 5 seed（约 25 分钟），跑完自动出对照表
   bash scripts/run_hscl_arms.sh
+
+  # UniMSE：跑不通，别花时间。它需要 ../t5-base/（851MB）和仓库里没有的预处理
+  # pickle，而后者把论文的统一标签空间烘在里面。诊断已固化在
+  # docs/investigations.md#unimse-partial-release，不需要重跑来确认。
 
 注意 ConFEDE 的检查点约 2.9G（文本编码器单个 438MB），HSCL 的 SDK pickle 442MB。
 本机磁盘余量一直在 5G 上下，跑之前先 df -h /。
