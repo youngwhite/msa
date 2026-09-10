@@ -21,7 +21,6 @@ import json
 from pathlib import Path
 
 import numpy as np
-
 from _stats import benjamini_hochberg, minimum_detectable_effect, welch_one_sided
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -75,7 +74,7 @@ def main() -> int:
 
     print(f"\nWelch 单侧 + BH q={Q}，{len(tests)} 个检验")
     print(f"{'arm':<26}{'metric':<8}{'improvement':>13}{'d':>8}{'p':>9}{'MDE':>9}  判定")
-    for test, keep in zip(tests, rejected):
+    for test, keep in zip(tests, rejected, strict=True):
         mde = minimum_detectable_effect(test["pooled_sd"], len(SEEDS))
         verdict = "检出" if keep else "未检出"
         print(f"{test['arm']:<26}{test['metric']:<8}{test['improvement']:>13.4f}"

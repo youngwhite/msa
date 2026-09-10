@@ -2485,3 +2485,66 @@ torch.__version__"式的检查都会通过。
 已验证修复后 `check_mmim_equivalence.py` 仍报 `EQUIVALENT`（最大绝对差 `0.000e+00`），
 且 torch / numpy 来自主 venv、transformers / matplotlib / pytorch_metric_learning
 来自 shim。
+
+## `uv run` 在项目目录里把 `.venv` 重同步了，CUDA 随之失效 {#uv-run-resync}
+
+**2026-09-10。** 也是自己造的，而且比 [`#shim-torch-leak`](#shim-torch-leak) 更隐蔽——
+它改的是**主环境**，影响所有后续训练。
+
+### 症状
+
+跑 UniMSE 时 `torch.cuda.is_available()` 返回 `False`，报「NVIDIA driver too old
+(found version 12060)」。**纯 venv、不加任何 `PYTHONPATH` 也一样**，所以不是 shim 的事。
+
+### 不是驱动变了
+
+先查这个，因为"驱动被人动了"是最省事的解释：
+
+| 事实 | 值 |
+|---|---|
+| 机器已连续运行 | 5 周 3 天 |
+| `nvidia` 内核模块加载于 | 2026-08-03 |
+| 驱动版本 | 560.35.05（CUDA 12.6） |
+| **1271 次已入库运行记录的 torch** | **全部是 `2.11.0+cu128`** |
+| 当时 venv 里的 torch | `2.14.0+cu130` |
+
+驱动一个多月没动。**是 venv 里的 torch 被升到了 cu130**，而 cu130 需要比 560 新的驱动。
+
+### 原因
+
+`pyproject.toml` 里 `torch` 是**不带版本约束**声明的。而我为了渲染 PDF 在**仓库根目录**
+跑了 `uv run --with weasyprint python -c ...`——`uv run` 在有 `pyproject.toml` 的目录里
+会**先把项目环境同步到 pyproject 的解析结果**（不是 `requirements-lock.txt`），于是
+`.venv` 里 19 个包被升到最新：
+
+- `torch` → `2.14.0+cu130`（CUDA 直接失效）
+- **`transformers` → `5.17.0`**，而它按 `decisions.md` 2026-08-01 是**钉死 5.14.1** 的，
+  八个 BERT 系模型依赖那个版本的输出契约
+- 另 17 个（numpy / scipy / tokenizers / huggingface_hub / setuptools …）
+
+时间线吻合：HSCL 那批 03:xx 的运行都正常用了 GPU，第一次 `uv run` 是 12:25 渲染
+第 3 阶段 PDF。
+
+### 闸门抓住了它
+
+`check_env.py` 是 12 道闸门里专门问"环境是不是产生那些数字的环境"的那一道，它直接
+列出了 19 个版本不符。**这一次它救的是"接下来所有训练都跑在一个没人记录过的环境里"**
+——而那种损坏是静默的：CUDA 掉到 CPU 只会让训练变慢，`transformers` 跨大版本才是
+真正会改数字的那一半。
+
+### 修复与规避
+
+1. `pip install torch==2.11.0 --index-url https://download.pytorch.org/whl/cu128`，
+   再 `pip install -r requirements-lock.txt` 恢复其余 18 个。恢复后 `check_env.py`
+   报 `environment matches the recorded one`，torch 回到 `2.11.0+cu128`、
+   `device cuda:0 RTX 3090 (sm_86)`。
+2. **以后在本仓库里用 `uv run` 一律加 `--no-project`**（或在仓库外跑）。渲染 PDF、
+   转图这类一次性工具不该碰项目环境。
+
+### 值得记的一条
+
+`pyproject.toml` 与 `requirements-lock.txt` 在这个仓库里**分工不同**：前者声明"需要什么"，
+后者钉死"产生那些数字的是什么"。**任何按 `pyproject.toml` 解析的工具都会绕过后者**，
+而 `uv run` 默认就是这么做的、且不打印它改了什么。这不是 uv 的错——是"环境的权威
+在 lock 文件里"这件事没有被任何机制保护。目前唯一的保护就是 `check_env.py`，所以
+**不要在跑实验前跳过它**。
