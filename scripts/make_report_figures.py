@@ -13,12 +13,16 @@ from __future__ import annotations
 
 import glob
 import json
+import statistics
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")
+
 import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib import font_manager  # noqa: E402
+from matplotlib.transforms import blended_transform_factory  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "report" / "figures"
@@ -80,11 +84,14 @@ def figure_progression() -> None:
                     fontsize=8.5, color=colour,
                     weight="bold" if kind != "ns" else None)
 
-    ax.set_xticks([]); ax.set_ylabel("测试集 MAE ↓")
+    ax.set_xticks([])
+    ax.set_ylabel("测试集 MAE ↓")
     ax.set_ylim(0.655, 1.02)
     ax.set_title("图 1　八年演进里只有三步显著，而中间那步是「开始微调 BERT」",
                  loc="left", fontsize=10.5, weight="bold", pad=26)
-    fig.tight_layout(); fig.savefig(OUT / "fig1_progression.png", bbox_inches="tight"); plt.close(fig)
+    fig.tight_layout()
+    fig.savefig(OUT / "fig1_progression.png", bbox_inches="tight")
+    plt.close(fig)
 
 
 # ── 图 2：效应量 vs 可检测下限（核心图）────────────────────────────────
@@ -111,7 +118,6 @@ def figure_effects_vs_mde() -> None:
 
     # 两条刻度线的标注放到坐标区**下方**，与竖线对齐——放在图内无论摆哪都会压住
     # 条形自己的数值标签。
-    from matplotlib.transforms import blended_transform_factory
     below = blended_transform_factory(ax.transData, ax.transAxes)
     ax.axvline(0.013, color=GREEN, lw=1.6, ls="--", zorder=4)
     ax.annotate("MOSI 分辨极限 0.013 (n=20)", xy=(0.013, -0.135), xycoords=below,
@@ -120,14 +126,16 @@ def figure_effects_vs_mde() -> None:
     ax.annotate("MOSEI 0.0039", xy=(0.0039, -0.215), xycoords=below,
                 ha="center", color=GREEN, fontsize=8)
 
-    for y, (_, value, _) in zip(ys, items):
+    for y, (_, value, _) in zip(ys, items, strict=True):
         ax.annotate(f"{value:.4f}", (value, y), textcoords="offset points",
                     xytext=(4, 0), va="center", fontsize=7.5, color=INK)
     ax.set_xlabel("MAE 上的效应量（绝对值）", labelpad=26)
     ax.set_xlim(0, 0.064)
     ax.set_title("图 2　橙=论文声称　红=纯噪声　黑=我们实测\n绿线＝这台仪器读得出的最小刻度",
                  loc="left", fontsize=10, weight="bold")
-    fig.tight_layout(); fig.savefig(OUT / "fig2_effects_vs_mde.png", bbox_inches="tight"); plt.close(fig)
+    fig.tight_layout()
+    fig.savefig(OUT / "fig2_effects_vs_mde.png", bbox_inches="tight")
+    plt.close(fig)
 
 
 # ── 图 3：8 篇的报告值 vs 它可被检验的程度 ─────────────────────────────
@@ -144,10 +152,11 @@ def figure_benchmark() -> None:
            color=[colour[p[2]] for p in shown], width=0.6, zorder=3)
     ax.set_xticks(list(xs))
     ax.set_xticklabels([p[0] for p in shown], fontsize=8.5, rotation=20, ha="right")
-    for x, p in zip(xs, shown):
+    for x, p in zip(xs, shown, strict=True):
         ax.annotate(f"{p[1]:.3f}", (x, p[1]), textcoords="offset points",
                     xytext=(0, 3), ha="center", fontsize=8)
-    ax.set_ylim(0.6, 0.78); ax.set_ylabel("论文自报的 MOSI MAE ↓")
+    ax.set_ylim(0.6, 0.78)
+    ax.set_ylabel("论文自报的 MOSI MAE ↓")
 
     ax.annotate("报告值最好的两篇都无法检验：ConKI 从未公开代码，\n"
                 "UniMSE 公开了但跑不到一个 batch",
@@ -161,8 +170,9 @@ def figure_benchmark() -> None:
                 fontsize=8, color=INK)
     ax.set_title("图 3　八篇对标：报告值的高低与它可被检验的程度无关",
                  loc="left", fontsize=10.5, weight="bold")
-    fig.tight_layout(); fig.savefig(OUT / "fig3_benchmark.png",
-                                    bbox_inches="tight"); plt.close(fig)
+    fig.tight_layout()
+    fig.savefig(OUT / "fig3_benchmark.png", bbox_inches="tight")
+    plt.close(fig)
 
 
 # ── 图 4：不同数据集/模型上，重跑一次的噪声有多大 ───────────────────────
@@ -173,7 +183,6 @@ def figure_noise() -> None:
                 ("MMIM / MOSI", test_mae("mmim_diag_mosi_unaligned_off")),
                 ("MMIM / MOSEI", test_mae("mmim_diag_mosei_unaligned_off")),
                 ("LF-LSTM / MOSEI", test_mae("lf_lstm_mosei_cuda"))]
-    import statistics
     rows = [(name, statistics.stdev(v), len(v)) for name, v in measured if len(v) > 1]
 
     fig, ax = plt.subplots(figsize=(7.2, 3.1))
@@ -183,16 +192,19 @@ def figure_noise() -> None:
             height=0.6, zorder=3)
     ax.set_yticks(list(ys))
     ax.set_yticklabels([f"{n}  (n={k})" for n, _, k in rows], fontsize=8.5)
-    for y, (_, sd, _) in zip(ys, rows):
+    for y, (_, sd, _) in zip(ys, rows, strict=True):
         ax.annotate(f"{sd:.4f}", (sd, y), textcoords="offset points",
                     xytext=(4, 0), va="center", fontsize=8)
     ax.axvspan(0.005, 0.03, color=AMBER, alpha=0.16, zorder=1)
     ax.annotate("文献里「改进」常见的量级 0.005 – 0.03", xy=(0.0175, 2.55),
                 fontsize=8.5, color=AMBER, ha="center", weight="bold")
     ax.set_xlabel("测试集 MAE 的 seed 间标准差")
-    ax.set_title("图 4　换个 seed 重跑的波动，普遍与论文声称的改进同量级\nMOSEI 是例外，也是唯一分辨得开的地方",
+    ax.set_title("图 4　换个 seed 重跑的波动，普遍与论文声称的改进同量级\n"
+                 "MOSEI 是例外，也是唯一分辨得开的地方",
                  loc="left", fontsize=10, weight="bold")
-    fig.tight_layout(); fig.savefig(OUT / "fig4_noise.png", bbox_inches="tight"); plt.close(fig)
+    fig.tight_layout()
+    fig.savefig(OUT / "fig4_noise.png", bbox_inches="tight")
+    plt.close(fig)
 
 
 if __name__ == "__main__":
