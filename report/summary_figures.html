@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<title>多模态情感分析：工作汇报（图表版）</title>
+<style>
+@page { size: A4; margin: 18mm 16mm 16mm; @bottom-center { content: counter(page); font-size: 9pt; color: #999; } }
+@page :first { margin-top: 24mm; }
+body { font-family: "Noto Serif CJK SC", "Source Han Serif SC", serif; font-size: 10.5pt; line-height: 1.66; color: #1a1a1a; }
+h1 { font-size: 18.5pt; margin: 0 0 3pt; }
+.sub { color: #666; font-size: 9.5pt; margin-bottom: 12pt; }
+.lede { background: #f3f3f3; border-left: 3px solid #1a1a1a; padding: 9pt 12pt; margin: 0 0 16pt; }
+.lede p { margin: 4pt 0; }
+h2 { font-size: 13pt; margin: 18pt 0 7pt; padding-bottom: 3pt; border-bottom: 1.5px solid #1a1a1a; page-break-after: avoid; }
+p { margin: 6pt 0; }
+figure { margin: 10pt 0 4pt; page-break-inside: avoid; }
+figure img { width: 100%; }
+figcaption { font-size: 8.8pt; color: #555; margin-top: 2pt; }
+table { border-collapse: collapse; width: 100%; font-size: 8.8pt; margin: 7pt 0 9pt; page-break-inside: avoid; }
+th, td { border: .5px solid #bbb; padding: 3pt 5pt; text-align: left; }
+td.n, th.n { text-align: right; }
+th { background: #efefef; font-weight: 600; text-align: center; }
+td:first-child, th:first-child { text-align: left; }
+tbody tr:nth-child(even) { background: #fafafa; }
+.num { font-family: "DejaVu Sans Mono", monospace; font-size: 8.3pt; }
+.good { color: #0a5d00; font-weight: 600; } .bad { color: #9b1010; font-weight: 600; }
+.box { border-left: 3px solid #1a1a1a; background: #f6f6f6; padding: 7pt 11pt; margin: 9pt 0; page-break-inside: avoid; }
+.box.key { border-left-color: #0a5d00; background: #f2f7f1; }
+.box.warn { border-left-color: #9b1010; background: #fdf4f4; }
+.box p:first-child { margin-top: 0; } .box p:last-child { margin-bottom: 0; }
+code { font-family: "DejaVu Sans Mono", monospace; font-size: 8.5pt; background: #efefef; padding: 0 2pt; }
+ul, ol { margin: 5pt 0 8pt; padding-left: 17pt; } li { margin: 2.5pt 0; }
+.foot { margin-top: 14pt; padding-top: 6pt; border-top: .5px solid #ccc; font-size: 8.5pt; color: #666; }
+.numcell td:not(:first-child) { text-align: right; }
+</style></head><body>
+
+<h1>多模态情感分析：工作汇报</h1>
+<div class="sub">CMU-MOSI / CMU-MOSEI &nbsp;·&nbsp; 2026-09-12 &nbsp;·&nbsp; 1271 次已入库运行 · 154 个实验组 · 17 个模型 · 16 个对比损失 · 12 道自动闸门</div>
+
+<div class="lede">
+<p><strong>三个阶段测出的是同一件事：这个方向上"改进"的报告口径，普遍宽于测量精度本身。</strong></p>
+<p>本报告按四张图展开。<strong>图 2 是核心</strong>——它把「论文声称的效应」「纯噪声」
+「我们实测的效应」放在同一根坐标轴上，与这套数据能分辨的最小刻度比。</p>
+</div>
+
+<h2>图 1　八年技术演进，重新测了一遍</h2>
+
+<figure><img src="figures/fig1_progression.png" alt="技术演进台阶">
+<figcaption>纵轴为我们复现的测试集 MAE（越低越好）；相邻台阶的判定来自配对 bootstrap
+（2000 次重采样）。全部数字出自 <code>outputs/</code> 下可重算的落盘结果。</figcaption></figure>
+
+<p>复现 14 个模型（2017–2023）后，<strong>逐一检验相邻台阶是否真的显著</strong>，
+得到的图景与榜单排序很不一样：</p>
+
+<ul>
+<li><strong>2017–2019 的三个模型之间没有显著差异</strong>。LMF 的 19 倍参数压缩确实不花钱，
+MFN 的跨时间记忆也确实买不到东西。</li>
+<li><strong>只有三步显著</strong>：TFN→MulT、MulT→MISA、MISA→Self-MM。</li>
+<li><strong>2021 年之后进入平台期</strong>。CENET(2022) 在 MAE 上还<span class="bad">显著更差</span>，
+TETFN(2023) 与 Self-MM(2021) 统计不可区分。</li>
+</ul>
+
+<div class="box key"><p><strong>红线是这张图的关键。</strong>我们加了一个对照组：
+<strong>只微调 BERT、完全不用音视频</strong>，得到 0.8018——<strong>显著优于 MulT
+及此前全部冻结特征的模型</strong>，与 MISA 在 Corr 和 Acc-2 上统计不可区分。</p>
+<p>把两件事合起来读：真正显著的三步里，中间那步恰好是"开始微调 BERT"。
+<strong>这条八年演进可归结为：冻结特征时代内部无显著进步 → 换成微调文本编码器带来
+唯一一次真实跃升 → 此后进入平台期。融合结构的设计贡献，远小于编码器换代。</strong></p></div>
+
+<h2>图 2　效应量与这台仪器的刻度（核心图）</h2>
+
+<figure><img src="figures/fig2_effects_vs_mde.png" alt="效应量与最小可检测效应">
+<figcaption>橙＝论文自己声称的效应；红＝与方法无关的纯噪声；黑＝我们实测的效应。
+绿线为最小可检测效应（MDE，80% 检出力）：MOSI 在 n=20 下是 0.013，MOSEI 是 0.0039。</figcaption></figure>
+
+<p>这张图要说的是：<strong>横轴上这些量，有一大半落在绿线左边——也就是这套数据
+根本分辨不出来。</strong></p>
+
+<table>
+<thead><tr><th>读法</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td>红条落在绿线右边</td><td><strong>纯噪声比分辨极限还大。</strong>MOSI 上 LF-LSTM 换个 seed 重跑，MAE 波动 0.0387</td></tr>
+<tr><td>橙条 0.038</td><td>同一个已发表的 MMIM，在两篇论文里被报成 0.700 与 0.738（一个 unaligned、一个 aligned，<strong>两边都没错</strong>）——<strong>跨论文分歧是我们分辨极限的三倍</strong></td></tr>
+<tr><td>橙条 0.056</td><td>HyCon 自己的消融声称对比学习值这么多。<strong>若在我们的协议下成立，不可能测不出来</strong></td></tr>
+<tr><td>黑条最长者 0.0174</td><td>我们第 2 阶段全部对比损失效应的<strong>上界</strong>——整批候选都挤在绿线附近</td></tr>
+</tbody></table>
+
+<div class="box warn"><p><strong>这解释了第 2 阶段为什么反复测不出东西：不是方法不行，
+是那个效应量本来就在噪声以下。</strong>而这不是事后辩解——MDE 只取决于样本量和标准差，
+<strong>事前就能算出来</strong>。</p></div>
+
+<h2>第 2 阶段：负面结论为什么可信</h2>
+
+<p>老师最该追问的是"是不是没调好"。三条正面回答：</p>
+
+<ol>
+<li><strong>测试槽位事先被证明灵敏。</strong>MMIM 自带的对比项在同一槽位让验证 MAE 动
+<strong>|d|=1.39</strong>，而那个模型经权重复制的数值等价测试，与参照实现
+<strong>逐比特一致</strong>（最大绝对差 <code>0.000e+00</code>）。灵敏度是测量值，不是假设。</li>
+<li><strong>每个"没检出"都附最小可检测效应</strong>（图 2 的绿线）。</li>
+<li><strong>三条假线索被预注册的复现批次抓住</strong>：「组合优于纯 L1」(p=0.045) 在第三批
+seed 上<strong>符号翻转</strong>；<code>dcl</code> 的优势<strong>缩了一半</strong>；
+我们自己设计的 <code>label_dcl</code>，机制增量<strong>归零</strong>（+0.0044 → +0.0004，
+Corr 符号翻转）。</li>
+</ol>
+
+<p>损失线上最后站得住的只有：<strong>一个文献已有的去耦合对比项（<code>dcl</code>）让
+MMIM 在 MOSEI 上改进约 0.007 MAE（相对 1.3%）</strong>——那不是我们的设计。
+产出形式仍然完整：设计了损失、做了单一机制的消融、三批独立 seed、判据全部先立后测。
+<strong>结论是负面的，而这个负面结论本身是可信的产出。</strong></p>
+
+<h2>图 3　八篇对标：报告值的高低与它可被检验的程度无关</h2>
+
+<figure><img src="figures/fig3_benchmark.png" alt="八篇对标的报告值与分档">
+<figcaption>各篇论文自报的 MOSI MAE，全部从其 PDF 抄录并注明表号（见
+<code>docs/benchmark_contrastive.md</code>），<strong>无一凭记忆填写</strong>。</figcaption></figure>
+
+<p>老师要求复现 8 篇含对比学习的论文做对标，篇目由我们自定。选取标准：方法里确有
+对比学习项、在 MOSI/MOSEI 上报回归指标、覆盖 2021–2024，并优先有公开代码——
+<strong>能跑通的才叫复现</strong>。</p>
+
+<table>
+<thead><tr><th>档</th><th>篇数</th><th>论文</th></tr></thead>
+<tbody>
+<tr><td><strong>A</strong>　在我们 sha256 校验过的特征上跑通</td><td><strong>3</strong></td><td>MMIM、ConFEDE、HSCL</td></tr>
+<tr><td>B</td><td>0</td><td>——</td></tr>
+<tr><td><strong>C</strong>　只能引用论文报告值</td><td><strong>5</strong></td><td>UniMSE、HyCon、ConKI、CMSBERT-CLR、MMCL</td></tr>
+</tbody></table>
+
+<div class="box warn"><p><strong>这个计数本身是结论的一部分。</strong>八篇里
+<strong>四篇从未公开代码</strong>；第五篇 UniMSE 公开了，但兼容层全部做完、数据按我们的
+划分加载成功、T5 载入、optimizer 建好之后，<strong>死在第一个 batch</strong>——它发布版
+读原始数据的那条路径与自己的 <code>collate_fn</code> 不一致，作者实际跑的预处理文件
+不在仓库里，而那些文件把论文的"统一标签空间"烘在里面，<strong>我们的特征无从替换</strong>。
+而 UniMSE 恰好是全表<strong>报告值第二好</strong>的那篇。</p></div>
+
+<p><strong>A 档里靠读代码和跑受控对照拿到的三条：</strong></p>
+<ul>
+<li><strong>ConFEDE 已复现</strong>：MAE 0.7379±0.0050 对论文 0.742，Corr 0.7805 对 0.784，
+<strong>都在 0.004 以内</strong>；Acc-7 反而高 2.6 个点。但它报的 seed 方差不能按字面读——
+<code>main.py</code> <strong>没有 seed 循环</strong>，三个编码器只预训练一次，
+五个融合 seed 共用同一套权重。</li>
+<li><strong>HSCL 的模型选择读了测试集</strong>：上报的那一轮必须同时"验证变好"
+<strong>且</strong>"测试变好"。</li>
+<li><strong>HSCL 固定 seed 也不可复现</strong>（见图 4 的讨论）。</li>
+</ul>
+
+<h2>图 4　重跑一次的噪声，与论文声称的改进同量级</h2>
+
+<figure><img src="figures/fig4_noise.png" alt="各模型的 seed 噪声">
+<figcaption>测试集 MAE 的 seed 间标准差，全部由我们自己的落盘运行重算得到。
+浅色带为文献中"改进"常见的幅度区间。</figcaption></figure>
+
+<p>这张图解释了<strong>为什么我们坚持多 seed、以及为什么要转向 MOSEI</strong>：</p>
+
+<ul>
+<li><strong>MOSI 上换个 seed 就有 0.019–0.039 的波动</strong>，横跨整个"改进"区间。
+在这样的噪声上报单次运行的数字，等于报一个量级不明的数。</li>
+<li><strong>MOSEI 小一个量级</strong>（LF-LSTM 0.0049）。这直接推翻了"大数据集跑不起"的
+担忧：MOSEI 上 5 个 seed 的分辨力已优于 MOSI 上 20 个，而单 seed 只慢 3.1 倍。</li>
+<li><strong>HSCL 更极端</strong>：同一份发布版代码、同一个 seed、连跑两次，20 轮里
+<strong>0 轮逐位相同</strong>，上报 MAE 差 <strong>0.0079</strong>——
+<strong>比图 3 里好几个"改进"还大</strong>（MMCL 相对 MMIM 是 0.005）。原因是它只设了
+<code>cudnn.deterministic</code>，那只管 cuDNN 卷积，管不到 BERT 反向里的原子加。</li>
+</ul>
+
+<div class="box key"><p>对照我们自己的做法：<code>check_repro.py</code> 是 12 道闸门之一，
+专门问"同一台机器连跑两次是否逐比特一致"；LF-LSTM 默认路径的预测哈希
+<code>172967c7dced83b2</code> 贯穿多次重构未变。<strong>这不是讲究——没有这道闸门，
+"改动 A 带来了 0.005 的提升"这句话根本无法成立</strong>，而这整个阶段读到的就是
+这句话被反复说出来。</p></div>
+
+<h2>正在进行：QKV 门控加权</h2>
+
+<p>老师提的第三件事。改的位置是 ALMT 的 <code>_HyperLayer</code>：文本做 query、音频与
+视觉各做 key/value，<strong>两路注意力结果以固定权重 1 相加</strong>才过输出投影——
+从不相互加权。门控从形成 query 的那份文本读出两个权重去加权这两路。</p>
+
+<p><strong><code>alpha=0</code> 逐比特等于发布版 ALMT，而这是测出来的。</strong>
+把门控参数加上 10 倍标准差的随机扰动后：</p>
+
+<table>
+<thead><tr><th>检查</th><th>输出最大绝对差</th><th>要求</th></tr></thead>
+<tbody class="num numcell">
+<tr><td>alpha=0，门控参数被大幅扰动</td><td class="good">0.000e+00</td><td>须为 0（门控确实够不到输出）</td></tr>
+<tr><td>alpha=0.5</td><td>2.29e-03</td><td>须非 0（门控确实接上了）</td></tr>
+</tbody></table>
+
+<p><strong>两头都测</strong>是必要的：只测前者，"等价"也可能是因为门控压根没接上——
+那样消融两臂之差恒为零，会<strong>以"无效应"的面目通过，而其实什么都没测</strong>。
+这道检查已进 <code>check_all.sh</code>。</p>
+
+<p><strong>判据在运行前已定稿并推送</strong>：seeds 200–219（n=20 每臂）、验证集 MAE 与
+Corr、Welch 单侧 + BH 校正、<strong>效应必须达到 MDE 0.0114 否则记「未检出」</strong>、
+<strong>不做 alpha 扫描</strong>（图 2 已经说明，在检出力不足处多试取值只会制造假线索）。</p>
+
+<p>为什么这值得测、而不是又一个微弱杠杆：<strong>第 1 阶段的模态消融显示 MOSI 上音视频
+几乎不携带信息，而 ALMT 恰好把这两路无条件等权相加。</strong>门控若有用，方向应当是
+学会压低无信息的那一路——一个有机制、可证伪的预测。</p>
+
+<div class="foot">
+全部数字可从仓库重算：<code>scripts/verify_runs.py</code> 从落盘预测重算指标，
+<code>scripts/reproduce_all.sh</code> 重跑全部实验，<code>scripts/check_all.sh</code> 跑 12 道闸门，
+<code>scripts/make_report_figures.py</code> 重画本报告四张图。
+文档：<code>docs/storyline.md</code>（逐模型复盘）、<code>docs/experiments.md</code>（全部数字）、
+<code>docs/investigations.md</code>（排查记录，含每一次自我更正）、
+<code>docs/decisions.md</code>（判据与理由）、<code>docs/benchmark_contrastive.md</code>（8 篇名单与分档）。
+</div>
+
+</body></html>
