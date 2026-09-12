@@ -238,12 +238,23 @@ class _HyperLayer(nn.Module):
 
     The two contributions are summed *before* the output projection, so audio and
     vision are never weighted against each other — they are simply added.
+
+    `gate_strength` is our addition, not the paper's: it weights those two
+    contributions by a gate read off the text query, instead of adding them with
+    a fixed weight of one each. **At `gate_strength=0.0` it is exactly the
+    published layer** — the factor below is identically 1 and the gate's
+    parameters, though present, cannot reach the output. That exact degeneracy is
+    the point, and `scripts/check_almt_gate_equivalence.py` asserts it
+    numerically rather than by reading the code; it is the same discipline
+    `label_dcl` had to meet against `dcl`.
     """
 
-    def __init__(self, dim: int, heads: int, dim_head: int, dropout: float = 0.0) -> None:
+    def __init__(self, dim: int, heads: int, dim_head: int, dropout: float = 0.0,
+                 gate_strength: float = 0.0) -> None:
         super().__init__()
         inner = dim_head * heads
         self.heads, self.scale = heads, dim_head ** -0.5
+        self.gate_strength = float(gate_strength)
         # All four inputs are normalised, the hyper-modality included — so the
         # residual below accumulates onto the normalised copy, not the raw one.
         self.norm_text, self.norm_audio, self.norm_vision, self.norm_hyper = (
@@ -255,6 +266,12 @@ class _HyperLayer(nn.Module):
         self.to_v_a = nn.Linear(dim, inner, bias=False)
         self.to_v_v = nn.Linear(dim, inner, bias=False)
         self.to_out = nn.Sequential(nn.Linear(inner, dim), nn.Dropout(dropout))
+        # One scalar gate per (sample, token) per modality, read off the same
+        # normalised text that forms the query -- so the gate sees what the query
+        # sees. Built unconditionally so that a state_dict is the same shape with
+        # the gate on or off, which is what lets the equivalence test copy
+        # weights across the two configurations.
+        self.to_gate = nn.Linear(dim, 2)
 
     def forward(self, text: torch.Tensor, audio: torch.Tensor, vision: torch.Tensor,
                 hyper: torch.Tensor) -> torch.Tensor:
@@ -268,17 +285,28 @@ class _HyperLayer(nn.Module):
             v = _split_heads(to_v(source), self.heads)
             attention = torch.softmax(q @ k.transpose(-1, -2) * self.scale, dim=-1)
             contributions.append(_join_heads(attention @ v))
-        return hyper + self.to_out(contributions[0] + contributions[1])
+        audio_part, vision_part = contributions
+        if self.gate_strength:
+            # sigmoid is centred by construction: 2*sigmoid - 1 lies in (-1, 1)
+            # and is 0 at a zero pre-activation, so `factor` is 1 there. The
+            # published layer is the alpha -> 0 limit, not an approximation of it.
+            gate = torch.sigmoid(self.to_gate(text))
+            factor = 1.0 + self.gate_strength * (2.0 * gate - 1.0)
+            audio_part = factor[..., :1] * audio_part
+            vision_part = factor[..., 1:] * vision_part
+        return hyper + self.to_out(audio_part + vision_part)
 
 
 class _HyperEncoder(nn.Module):
     """One `_HyperLayer` per text level; level i reads text hidden state i."""
 
     def __init__(self, dim: int, depth: int, heads: int, dim_head: int,
-                 dropout: float = 0.0) -> None:
+                 dropout: float = 0.0, gate_strength: float = 0.0) -> None:
         super().__init__()
-        self.layers = nn.ModuleList(_HyperLayer(dim, heads, dim_head, dropout)
-                                    for _ in range(depth))
+        self.layers = nn.ModuleList(
+            _HyperLayer(dim, heads, dim_head, dropout, gate_strength)
+            for _ in range(depth)
+        )
 
     def forward(self, text_levels: list[torch.Tensor], audio: torch.Tensor,
                 vision: torch.Tensor, hyper: torch.Tensor) -> torch.Tensor:
@@ -321,6 +349,9 @@ class ALMT(MSAModel):
         fusion_mlp_dim: int = 128,
         pretrained: str = "bert-base-uncased",
         finetune: bool = True,
+        # Ours, not the paper's. 0.0 reproduces published ALMT exactly; see
+        # _HyperLayer and scripts/check_almt_gate_equivalence.py.
+        gate_strength: float = 0.0,
     ) -> None:
         super().__init__()
         self.encoder = BertTextEncoder(pretrained, finetune)
@@ -345,7 +376,8 @@ class ALMT(MSAModel):
                                                text_encoder_heads, dim_head=64,
                                                mlp_dim=dim)
         self.hyper_encoder = _HyperEncoder(dim, ahl_depth, ahl_heads,
-                                           dim_head=dim // ahl_heads)
+                                           dim_head=dim // ahl_heads,
+                                           gate_strength=gate_strength)
         self.fusion = _CrossTransformer(token_len, token_len, dim, fusion_depth,
                                         fusion_heads, dim_head=64,
                                         mlp_dim=fusion_mlp_dim)
