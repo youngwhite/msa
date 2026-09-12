@@ -61,6 +61,9 @@ disk_note
 run "environment"          $PY scripts/check_env.py
 run "lint"                 $PY -m ruff check src scripts --select E,F,W,B,SIM,I,UP --line-length 100
 run "contrastive losses"   $PY scripts/check_losses.py
+# QKV 门控在 alpha=0 时必须逐比特退化为发布版 ALMT，否则那个消融的两臂
+# 不止一个变量。判据见 decisions.md 2026-09-12。
+run "almt gate degeneracy" $PY scripts/check_almt_gate_equivalence.py
 run "data integrity"       $PY scripts/check_data.py
 run "invariants"           $PY scripts/check_invariants.py
 run "stored results"       $PY scripts/verify_runs.py --quiet
