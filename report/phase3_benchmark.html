@@ -31,7 +31,7 @@ ul, ol { margin: 5pt 0 8pt; padding-left: 18pt; } li { margin: 2.5pt 0; }
 </style></head><body>
 
 <h1>对比学习方向的论文对标</h1>
-<div class="sub">第 3 阶段工作汇报 &nbsp;·&nbsp; 2026-09-10 &nbsp;·&nbsp; CMU-MOSI / CMU-MOSEI</div>
+<div class="sub">第 3 阶段工作汇报 &nbsp;·&nbsp; 2026-09-12 &nbsp;·&nbsp; CMU-MOSI / CMU-MOSEI</div>
 
 <h2>一、这一阶段的任务与交付</h2>
 
@@ -48,7 +48,7 @@ ul, ol { margin: 5pt 0 8pt; padding-left: 18pt; } li { margin: 2.5pt 0; }
 <tr><td><span class="tier tA">A</span></td><td>MMIM</td><td>EMNLP 2021</td><td>分层互信息最大化，两个 InfoNCE 形式的下界项</td><td>有</td></tr>
 <tr><td><span class="tier tA">A</span></td><td>ConFEDE</td><td>ACL 2023</td><td>特征分解 + 样本间对比</td><td>有</td></tr>
 <tr><td><span class="tier tA">A</span></td><td>HSCL</td><td>MMM 2024</td><td>分层有监督对比（模态内 / 模态间 / 样本间）</td><td>有</td></tr>
-<tr><td><span class="tier tB">B</span></td><td>UniMSE</td><td>EMNLP 2022</td><td>模态间 + 样本间对比，统一 MSA 与 ERC 标签空间</td><td>有</td></tr>
+<tr><td><span class="tier tC">C</span></td><td>UniMSE</td><td>EMNLP 2022</td><td>模态间 + 样本间对比，统一 MSA 与 ERC 标签空间</td><td>有但<strong>不完整</strong></td></tr>
 <tr><td><span class="tier tC">C</span></td><td>HyCon</td><td>IEEE TAFFC 2022</td><td>模态内 / 模态间对比 + 半对比</td><td>无</td></tr>
 <tr><td><span class="tier tC">C</span></td><td>ConKI</td><td>ACL Findings 2023</td><td>知识注入 + 三层次对比</td><td>无</td></tr>
 <tr><td><span class="tier tC">C</span></td><td>CMSBERT-CLR</td><td>ICASSP 2022</td><td>上下文驱动模态偏移 + 对比对齐</td><td>无</td></tr>
@@ -56,8 +56,21 @@ ul, ol { margin: 5pt 0 8pt; padding-left: 18pt; } li { margin: 2.5pt 0; }
 </tbody></table>
 
 <p><span class="tier tA">A</span> <strong>在我们自己 sha256 校验过的特征上真的跑起来了</strong>，是唯一能与我们自己的结果同表并列的档。
-<span class="tier tB">B</span> 代码公开、值得移植，但工作量单独排期（UniMSE 是 T5 骨干 + MELD/IEMOCAP 两个额外数据集）。
-<span class="tier tC">C</span> 无公开代码，<strong>只能引用论文自己报的数字，一律标注为"待检验的主张"</strong>。</p>
+<span class="tier tB">B</span> 原本是"代码公开、值得移植"这一档，<strong>现在是空的</strong>——它只有 UniMSE 一篇，已于 2026-09-11 降入 C 档（第四节）。
+<span class="tier tC">C</span> 无法在统一特征上复现，<strong>只能引用论文自己报的数字，一律标注为"待检验的主张"</strong>。</p>
+
+<table class="keep">
+<thead><tr><th>档</th><th>篇数</th><th>论文</th></tr></thead>
+<tbody>
+<tr><td><span class="tier tA">A</span> 在我们校验过的特征上跑通</td><td><strong>3</strong></td><td>MMIM、ConFEDE、HSCL</td></tr>
+<tr><td><span class="tier tB">B</span></td><td>0</td><td>——</td></tr>
+<tr><td><span class="tier tC">C</span> 只引用论文报告值</td><td><strong>5</strong></td><td>UniMSE、HyCon、ConKI、CMSBERT-CLR、MMCL</td></tr>
+</tbody></table>
+
+<div class="box warn"><p><strong>这个计数本身是结论的一部分。</strong>八篇里
+<strong>四篇从未公开代码</strong>，第五篇（UniMSE）公开了但<strong>一个 batch 都跑不起来</strong>
+——而它恰好是<strong>全表 MOSI 报告值最好的那一篇</strong>（MAE 0.691）。
+<strong>报告值的高低，与那个数字可被检验的程度之间没有关系。</strong>这句话现在是数出来的。</p></div>
 
 <div class="box"><p><strong>为什么必须分档。</strong>把我们测的数字和论文自己报的数字放进一张无标注的表，
 是这个方向最容易犯、也最难被外人发现的错误。理由不是谨慎，是实测：同一个 MMIM，
@@ -183,9 +196,40 @@ clean 上报的是验证损失最低的那一轮；as-released 要求验证改�
 贯穿多次重构未变。<strong>这不是我们比谁讲究——没有这道闸门，"改动 A 带来了 0.005
 的提升"这句话根本无法成立</strong>，而这整个阶段读到的就是这句话被反复说出来。</p>
 
+<h3>UniMSE：兼容性全解决了，卡点不在那里</h3>
+
+<p>它原定 B 档（代码公开、值得移植）。兼容层做完后——四个搬了家的 transformers 模块
+做别名（<strong>25 个下游符号逐一核对存在</strong>后才做）、<code>plot_confusion_matrix</code>
+注入<strong>调用即抛异常</strong>的桩、<code>ReduceLROnPlateau(verbose=)</code> 用与 MMSA
+那处<strong>同一种写法</strong>的补丁——它<strong>按我们的划分加载了数据（1284/229/686）、
+载入 T5-base、建好 adapter 与 T5 参数分组、建好 optimizer 与 scheduler</strong>，
+然后<strong>死在第一个 batch</strong>：</p>
+
+<div class="box warn"><p class="num">data_loader.py:260&nbsp;&nbsp;[task_prefix + sequence for sequence in inputs_seq]<br>
+TypeError: can only concatenate str (not "list") to str</p></div>
+
+<p><code>create_dataset.py</code> 把文本存成<strong>单词列表</strong>，而 <code>collate_fn</code>
+拿它去和字符串前缀相加。旁边还有第二处不一致：<code>score = str(sample[1])</code> 会得到
+<code>"[-0.5]"</code> 这种 T5 目标串，而被注释掉的那行写的是 <code>str(sample[1][0][0])</code>。
+<strong>这条路径不是作者跑的那条</strong>——他们跑的是 <code>data_processor.py</code>，
+读仓库里没有、只在网盘链接里的预处理文件。</p>
+
+<p><strong>补那两行的念头，是按证据否掉的。</strong><code>solver.py</code> 里
+<code>pre_gen</code> 与被注释的测试分支把生成串按逗号拆成
+<code>por / score / meld / iemocap</code> 四段——<strong>T5 的目标是跨四个数据集的
+逗号分隔复合标签</strong>，正是论文那个"统一标签空间"，由它的 SimCSE 步骤生成。
+补那两行等于<strong>替作者发明论文的核心贡献</strong>，产出的数字不是 UniMSE 的数字。
+README 自己写着 "we will open the source codes in the future"——<strong>这是明确的
+部分发布，不是我们配错了。</strong></p>
+
+<p><strong>下载它自己的特征是活路，但回答的是另一个问题。</strong>它的预处理 pickle
+把统一标签烘进去了，<strong>我们的特征没法替换进去</strong>，A 档定义永远达不到。
+用它的特征跑，问的是"它的流水线能否复现它自己报的数字"，而不是"它的方法在与别人
+相同特征上如何"。两个都值得知道，<strong>但都不能放进与我们数字并列的表</strong>。</p>
+
 <h2>四、核心发现：这个方向"改进"的报告口径宽于测量精度</h2>
 
-<p>五条独立证据，都来自这一阶段：</p>
+<p>六条独立证据，都来自这一阶段：</p>
 
 <ol>
 <li><strong>同一个已发表的 MMIM，在 MOSI 上被报成两个数。</strong>MMIM 自己（unaligned）
@@ -209,6 +253,9 @@ MOSEI 上显著<span class="bad">有害</span>（|d|=1.39）。</li>
 
 <li><strong>ConFEDE 的 5 seed 方差不覆盖预训练阶段</strong>（上一节）——
 <code>main.py</code> 没有 seed 循环，五个融合 seed 共用同一套预训练编码器。</li>
+
+<li><strong>八篇里只有三篇能在统一特征上跑通</strong>：四篇从未公开代码，第五篇
+公开了但跑不到一个 batch——<strong>而那一篇的 MOSI 报告值是全表最好的</strong>。</li>
 </ol>
 
 <div class="box"><p><strong>合起来是一个连贯的结论。</strong>这既解释了为什么第 2 阶段
@@ -218,17 +265,20 @@ MOSEI 上显著<span class="bad">有害</span>（|d|=1.39）。</li>
 
 <h2>五、下一步与排期</h2>
 
-<p>A 档的完整流水线是五步：跑通 → 与论文值比 → 移植进我们的注册表 → 数值等价测试
-（权重复制 + 前向比对）→ 多 seed。前两篇已到第 2 步，MMIM 走完了全部五步。</p>
+<p><strong>八篇已全部处理完毕</strong>，分档定稿为 3 / 0 / 5。A 档的完整流水线是五步：
+跑通 → 与论文值比 → 移植进我们的注册表 → 数值等价测试（权重复制 + 前向比对）→ 多 seed。
+ConFEDE 与 HSCL 停在第 2 步，MMIM 走完了全部五步。</p>
 
 <p><strong>ConFEDE 的移植成本已勘定：一整天量级。</strong>三处与我们的模型契约不兼容——
 它的 <code>forward</code> 一次吃两批（每个锚点配 6 个伴随样本）、检索集是预训练编码器
 的中间产物、四阶段流水线。约 600 行要重写而非转抄，因此必须做数值等价测试，而四个
 阶段都要对上是最难的一环。</p>
 
-<p><strong>建议先做覆盖面，把移植推后。</strong>理由是 ConFEDE 在"对比学习收益还剩多少"
-这个方向上最有用的一条已经拿到了（seed 方差不覆盖预训练），靠读代码就得到，不需要
-移植。移植换来的是绝对数字可并列，优先级低于覆盖面。</p>
+<p><strong>覆盖面已做完，移植仍建议推后。</strong>理由被这一轮加强了：ConFEDE 与 HSCL
+上全部四条有价值的发现——共用预训练、模型选择读测试集、固定 seed 不可复现、效应小于
+自身噪声——<strong>没有一条是移植换来的</strong>，都来自读它们的代码、以及在它们自己的
+代码上做受控对照。移植买的是绝对数字可并列，<strong>只有当我们要写"统一协议下的横向表"
+时才成为必需</strong>。</p>
 
 <div class="foot">
 所有数字可从仓库重现：<code>bash scripts/setup_paper_repros.sh</code> 配置，

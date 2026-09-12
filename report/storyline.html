@@ -31,7 +31,7 @@ ul, ol { margin: 5pt 0 8pt; padding-left: 17pt; } li { margin: 2.5pt 0; }
 </style></head><body>
 
 <h1>多模态情感分析：工作故事线</h1>
-<div class="sub">CMU-MOSI / CMU-MOSEI &nbsp;·&nbsp; 截至 2026-09-10 &nbsp;·&nbsp; 1271 次已入库运行 · 154 个实验组 · 17 个模型 · 16 个对比损失</div>
+<div class="sub">CMU-MOSI / CMU-MOSEI &nbsp;·&nbsp; 截至 2026-09-12 &nbsp;·&nbsp; 1271 次已入库运行 · 154 个实验组 · 17 个模型 · 16 个对比损失</div>
 
 <div class="lede">
 <p><strong>一句话：这三个阶段合起来测出了同一件事——这个方向上"改进"的报告口径，
@@ -43,7 +43,9 @@ ul, ol { margin: 5pt 0 8pt; padding-left: 17pt; } li { margin: 2.5pt 0; }
 同一篇已发表方法在两篇论文里差 0.038，而我们在 MOSI 上的分辨极限是 0.013。</p>
 <p><strong>这不是"没做出提升"的托词。</strong>负面结论之所以值钱，是因为它建立在
 12 道自动闸门、逐比特可复现性、以及预注册判据之上——而这三样东西，正是被对标的
-那些论文里普遍缺失的。</p>
+那些论文里普遍缺失的。最直接的一个计数：<strong>八篇里只有三篇能在统一特征上跑通</strong>，
+四篇从未公开代码，第五篇公开了但一个 batch 都跑不起来——<strong>而那一篇的 MOSI
+报告值恰好是全表最好的</strong>。</p>
 </div>
 
 <h2>第 1 阶段：把这条技术演进重新测一遍</h2>
@@ -152,7 +154,7 @@ seed 上<strong>符号翻转</strong>；<code>dcl</code> 的优势<strong>缩了
 <tr><td><span class="tier tA">A</span></td><td>MMIM</td><td>EMNLP 2021</td><td>有</td><td>五步全部走完（含数值等价测试）</td></tr>
 <tr><td><span class="tier tA">A</span></td><td>ConFEDE</td><td>ACL 2023</td><td>有</td><td>已复现，与论文值比完</td></tr>
 <tr><td><span class="tier tA">A</span></td><td>HSCL</td><td>MMM 2024</td><td>有</td><td>已跑通，两臂对照完</td></tr>
-<tr><td><span class="tier tB">B</span></td><td>UniMSE</td><td>EMNLP 2022</td><td>有</td><td>单独排期（T5 + 两个额外数据集）</td></tr>
+<tr><td><span class="tier tC">C</span></td><td>UniMSE</td><td>EMNLP 2022</td><td>有但<strong>不完整</strong></td><td><strong>跑不到一个 batch</strong>，降入 C 档</td></tr>
 <tr><td><span class="tier tC">C</span></td><td>HyCon / ConKI / CMSBERT-CLR / MMCL</td><td>2022–2023</td><td>无</td><td>只引用报告值，标注"待检验的主张"</td></tr>
 </tbody></table>
 
@@ -187,6 +189,27 @@ Acc-7 <strong>44.90</strong> 对 42.27。<strong>MAE 与 Corr 都在论文值 0.
 <tr><td>20 轮中逐位相同</td><td><strong>0 轮</strong></td><td class="bad">差 0.0079</td></tr>
 </tbody></table>
 
+<h3>八篇的最终分档</h3>
+
+<table>
+<thead><tr><th>档</th><th>篇数</th><th>论文</th></tr></thead>
+<tbody>
+<tr><td><span class="tier tA">A</span> 在我们校验过的特征上跑通</td><td><strong>3</strong></td><td>MMIM、ConFEDE、HSCL</td></tr>
+<tr><td><span class="tier tB">B</span></td><td>0</td><td>——</td></tr>
+<tr><td><span class="tier tC">C</span> 只引用论文报告值</td><td><strong>5</strong></td><td>UniMSE、HyCon、ConKI、CMSBERT-CLR、MMCL</td></tr>
+</tbody></table>
+
+<p>UniMSE 原定 B 档。兼容层全部做完后它<strong>按我们的划分加载了数据、载入 T5-base、
+建好 optimizer</strong>，然后死在第一个 batch：发布版读原始 pickle 的路径与它自己的
+<code>collate_fn</code> 不一致（文本是单词列表、却去和字符串前缀相加）。作者实际跑的
+预处理文件不在仓库里，而那些文件把论文的"统一标签空间"烘在里面——<strong>所以我们的
+特征无从替换，A 档定义永远达不到</strong>。补那两行等于替作者发明论文的核心贡献，
+因此没有补。</p>
+
+<div class="box key"><p><strong>这个计数本身是结论的一部分：报告值的高低，与那个数字
+可被检验的程度之间没有关系。</strong>全表 MOSI 最好的报告值（UniMSE，MAE 0.691）
+来自一篇代码跑不起来的论文。这句话现在是数出来的，不是感觉出来的。</p></div>
+
 <h2>三个阶段合起来说明的一件事</h2>
 
 <p>五条独立证据，都来自第 3 阶段：</p>
@@ -220,7 +243,11 @@ MOSEI 上显著<span class="bad">有害</span>（|d|=1.39）。</li>
 <li><strong>把 8 篇的覆盖面做完</strong>（已定：优先覆盖面，ConFEDE 的移植推后）。
 移植经勘定是一整天量级，而两篇里最有价值的发现都来自<strong>读代码 + 在它们自己的代码上
 做受控对照</strong>，不是来自重写进我们的框架。</li>
-<li><strong>UniMSE 单独排期</strong>——它是 B 档里唯一代码公开的，T5 骨干加两个额外数据集。</li>
+<li><strong>八篇对标已全部处理完</strong>，分档定稿 <strong>A 3 / B 0 / C 5</strong>。
+UniMSE 原定 B 档，兼容层全做完、数据按我们的划分加载成功、T5 与 optimizer 都建好，
+<strong>死在第一个 batch</strong>——发布版读原始 pickle 的路径与它自己的
+<code>collate_fn</code> 不一致，作者实际跑的预处理文件不在仓库里，而那些文件把论文的
+"统一标签空间"烘在里面，<strong>我们的特征无从替换</strong>。</li>
 <li><strong>已记录但未做</strong>：QKV 门控加权（拟作为 ALMT 的消融，先在 MOSEI 上验证，
 因为 MOSEI 的 5 个 seed 已优于 MOSI 的 20 个）；分类线（计划与约 30 小时成本已记入决策文档）；
 MMIM 与参照实现之间那残余约 1 个标准差的协议差异定位。</li>
